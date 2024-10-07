@@ -1,9 +1,9 @@
-# DrWatsonExample
+# TopoStochSim
 
 This code base is using the [Julia Language](https://julialang.org/) and
 [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project named
-> DrWatsonExample
+> TopoStochSim
 
 It is authored by Jan Kocka.
 
@@ -25,6 +25,6 @@ everything should work out of the box, including correctly finding local paths.
 You may notice that most scripts start with the commands:
 ```julia
 using DrWatson
-@quickactivate "DrWatsonExample"
+@quickactivate "TopoStochSim"
 ```
 which auto-activate the project and enable local path handling from DrWatson.
