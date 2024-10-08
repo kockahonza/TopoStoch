@@ -8,7 +8,7 @@ using StaticArrays
 using PyFormattedStrings
 
 struct State{N,T<:Integer}
-    extstate::SVector{N,T}
+    extstate::Union{SVector{N,T}, MVector{N,T}}
     substate::T
 end
 
@@ -27,6 +27,11 @@ function itostate(gm::AbstractGraphModel, i)
 end
 function plotGM(gm::AbstractGraphModel, args...; kwargs...)
     throw(ErrorException(f"No method of \"plotGM\" was provided for type \"{typeof(gm)}\""))
+end
+
+function edgecolorbar((f, a, p))
+    edgeploti = findfirst(typeof(plot) <: Plot{GraphMakie.edgeplot} for plot in p.plots)
+    Colorbar(f[1, 2], p.plots[edgeploti])
 end
 
 ################################################################################
@@ -120,7 +125,7 @@ function sfs_subtype_to_letter(subtype)
     'A' + subtype - 1
 end
 
-function plotGM(sfs::SimpleFourStateGM, args...; kwargs...)
+function plotGM(sfs::SimpleFourStateGM, args...; ecolorbar=true, kwargs...)
     states_ = states(sfs)
     offsets = SA[Point(1, 1), Point(1, -1), Point(-1, -1), Point(-1, 1)] .* 0.15
     layout = [Point(s.extstate[1], s.extstate[2]) + offsets[s.substate] for s in states_]
@@ -128,7 +133,16 @@ function plotGM(sfs::SimpleFourStateGM, args...; kwargs...)
     ilabels = [sfs_subtype_to_letter(s.substate) for s in states_]
     node_color = [:snow3 for _ in 1:length(states_)]
 
-    graphplot(sfs.graph, args...; layout, ilabels, node_color, kwargs...)
+    edge_color = [e.weight for e in edges(graph(sfs))]
+    edge_attr = arrow_attr = (; colormap=:blues)
+
+    fap = graphplot(sfs.graph, args...; layout, ilabels, node_color, edge_color, edge_attr, arrow_attr, kwargs...)
+
+    if ecolorbar
+        edgecolorbar(fap)
+    end
+
+    fap
 end
 
 ################################################################################
@@ -222,7 +236,7 @@ function states(agm::Allostery3D1)
     agm.states
 end
 
-function plotGM(agm::Allostery3D1, args...; kwargs...)
+function plotGM(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
     states_ = states(agm)
     layout = [Point(s.extstate[2], s.extstate[3], s.extstate[1]) for s in states_]
 
@@ -231,7 +245,13 @@ function plotGM(agm::Allostery3D1, args...; kwargs...)
 
     edge_color = [e.weight for e in edges(graph(agm))]
 
-    graphplot(agm.graph, args...; layout, node_color, node_size, edge_color, kwargs...)
+    fap = graphplot(agm.graph, args...; layout, node_color, node_size, edge_color, kwargs...)
+
+    if ecolorbar
+        edgecolorbar(fap)
+    end
+
+    fap
 end
 
 ################################################################################
@@ -243,7 +263,7 @@ function find_next_vertex(graph, v)
 end
 
 function simGM(gm::AbstractGraphModel, steps; initial_vertex=nothing, delay=0.5, plot=true, print=false, kwargs...)
-    vertex = isnothing(initial_vertex) ? rand(1:length(states(gm))) : initial_vertex
+    vertex = isnothing(initial_vertex) ? rand(1:nv(graph(gm))) : initial_vertex
 
     if plot
         f, a, p = plotGM(gm; kwargs...)
@@ -275,4 +295,15 @@ function simGM(gm::AbstractGraphModel, steps; initial_vertex=nothing, delay=0.5,
     end
 
     vertex
+end
+
+function run_sample_sfs()
+    sfs = SimpleFourStateGM(5, 5; γi=0.05, γe=1.95)
+    simGM(sfs, 10000000; delay=0.01)
+end
+
+function run_sample_agm()
+    agm = Allostery3D1(6; weights=:random)
+    simGM(agm, 1000; delay=0.05)
+    # simGM(agm, 1000; delay=0.05, layout=Spring(dim=3))
 end
