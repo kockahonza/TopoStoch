@@ -7,6 +7,8 @@ using StatsBase
 using StaticArrays
 using PyFormattedStrings
 
+include("general.jl")
+
 
 ################################################################################
 # Abstract type and API definitions

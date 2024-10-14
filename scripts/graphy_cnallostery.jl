@@ -7,7 +7,8 @@ using Graphs, MetaGraphsNext, SimpleWeightedGraphs
 using GLMakie, GraphMakie, NetworkLayout
 using StatsBase
 using Symbolics
-using StaticArrays, NamedArrays
+using StaticArrays, DataFrames
+using PrettyTables
 using PyFormattedStrings
 
 import Base: copy, broadcastable, show
@@ -164,10 +165,27 @@ function make_EM_sym_C2(B)
     EnergyMatrices(monomer, interactions)
 end
 
+function make_EM_sym_C2_simpler(B)
+    monomer = Matrix{Num}(undef, 2, B + 1)
+    @variables εt, Δεr
+    monomer[1, 1] = 0
+    monomer[2, 1] = Δεr
+    monomer[1, 2:B+1] .= εt .* collect(1:B)
+    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- Δεr
+
+    eb = Symbolics.variable(:εb)
+    interactions = [0 eb; eb 0]
+    EnergyMatrices(monomer, interactions)
+end
+
 function validEM(em::EnergyMatrices, C, B)
     (size(em.monomer) == (C, B + 1)) && (size(em.interactions) == (C, C))
 end
 validEM(em::EnergyMatrices, ca::ComplexAllosteryGM) = validEM(em, ca.C, ca.B)
+
+function get_variables(em::EnergyMatrices)
+    unique(Iterators.flatten(Symbolics.get_variables.(Iterators.flatten((em.monomer, em.interactions)))))
+end
 
 # Simple calculator functions
 function calc_energy(st::CAState, em::EnergyMatrices, ::Chain)
@@ -351,40 +369,79 @@ end
 function eq_stats_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     fig = Figure()
 
-    variables = [filter(!iszero, ca.energy_matrices.monomer); unique(filter(!iszero, ca.energy_matrices.interactions))]
+    variables = Num.(get_variables(ca.energy_matrices))
     @variables μ, kT
     append!(variables, μ)
 
-    sliders = [(label=repr(var), range=-2.0:0.01:50.0) for var in variables]
+    sliders = [(label=repr(var), range=0.0:0.01:10.0, startvalue=1.0) for var in variables]
     sg = SliderGrid(fig[1, 1], sliders...)
     variable_observables = [x.value for x in sg.sliders]
 
     overall_stats = GridLayout()
     fig[1, 2] = overall_stats
-    colsize!(fig.layout, 2, 20)
+    colsize!(fig.layout, 2, 30)
 
     partition_function_f = build_function(substitute(calc_partition_function(ca), (kT => 1)), variables; expression=Val(false))
 
     avg_numligands_f = build_function(substitute(calc_avg_numligands(ca), (kT => 1)), variables; expression=Val(false))
-    avg_numligands_o = lift((args...) -> f"{avg_numligands_f(args):.3g}", variable_observables...)
+    avg_numligands_o = lift((args...) -> f"N={avg_numligands_f(args):.3g}", variable_observables...)
     Label(overall_stats[1, 1], avg_numligands_o)
 
     avg_energy_f = build_function(substitute(calc_avg_energy(ca), (kT => 1)), variables; expression=Val(false))
-    avg_energy_o = lift((args...) -> f"{avg_energy_f(args):.3g}", variable_observables...)
+    avg_energy_o = lift((args...) -> f"E={avg_energy_f(args):.3g}", variable_observables...)
     Label(overall_stats[2, 1], avg_energy_o)
+
+    # Do the barplot
+    state_reordering = sortperm(calc_numligands.(allstates(ca)); alg=Base.Sort.DEFAULT_STABLE)
+    state_labels = repr.(allstates(ca))[state_reordering]
+    ax = Axis(fig[2, :];
+        xticks=(1:numstates(ca), state_labels),
+        xticklabelrotation=pi / 5
+    )
+    ylims!(ax, 0.0, 0.5)
+
+    gfs = substitute.(calc_gibbs_factor.(allstates(ca), ca), (kT => 1.0))
+    gfs_fs = build_function.(gfs, Ref(variables); expression=Val(false))
+
+    probabilities = lift(variable_observables...) do (vars...)
+        pfval = partition_function_f(vars)
+        [gfs_fs[i](vars) / pfval for i in 1:numstates(ca)][state_reordering]
+    end
+
+    bp = barplot!(ax, 1:numstates(ca), probabilities)
+
+    Makie.FigureAxisPlot(fig, ax, bp)
+end
+
+function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
+    fig = Figure()
+
+    energy_vars = get_variables(ca.energy_matrices)
+    @variables μ, εsol, kT, c
+
+    slider_vars = [energy_vars; εsol]
+
+    sliders = [(label=repr(var), range=0.0:0.01:10.0, startvalue=1.0) for var in slider_vars]
+    sg = SliderGrid(fig[1, 1], sliders...)
+    slider_observables = [x.value for x in sg.sliders]
 
     ax = Axis(fig[2, :])
 
-    for statei in 1:numstates(ca)
-        state = itostate(statei, ca)
-        text!(ax, 0, statei, text=repr(state), align=(:center, :center))
+    prepped_expression = substitute(calc_avg_numligands(ca), Dict(
+        kT => 1,
+        μ => εsol + log(c)
+    ))
+    avg_numligands_f = build_function(prepped_expression, [energy_vars; εsol; c]; expression=Val(false))
 
-        gibbs_factor_f = build_function(substitute(calc_gibbs_factor(state, ca), (kT => 1)), variables; expression=Val(false))
-        avg_energy_o = lift((args...) -> f"{gibbs_factor_f(args)/partition_function_f(args):.5g}", variable_observables...)
-        text!(ax, 0.5, statei, text=avg_energy_o, align=(:center, :center))
+    conc_range = LinRange(0, 10, 300)
+
+    avg_numligands = lift(slider_observables...) do (vars...)
+        [avg_numligands_f((vars..., cval)) for cval in conc_range]
     end
 
-    fig, sg, ax
+    sc = scatter!(ax, conc_range, avg_numligands)
+
+    Makie.FigureAxisPlot(fig, ax, sc)
 end
 
 function simple_inttext()
@@ -407,12 +464,70 @@ function simple_inttext()
 end
 
 function make_simple(N, B)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2(B), sym_graph=true)
+    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B), sym_graph=true)
 
-    add_edges_sym!(ca)
+    # Label occupancy changes using r_(ci)+-
+    occ_increase_rates = Symbolics.variables(:a, 1:2)
+    occ_decrease_rates = Symbolics.variables(:m, 1:2)
+    # Label conformational changes via increasing indices or ri
+    rates_i = 1
+    function add_new_indexed_rate(v1, v2)
+        if (v1 < v2)
+            rate = Symbolics.variable(:ri, rates_i)
+            add_edge!(ca.graph, v1, v2, rate)
+            add_edge!(ca.graph, v2, v1, rate)
+            rates_i += 1
+        end
+    end
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in 1:ca.C
+                if new_c != state.conformations[i]
+                    new_state = copy(state)
+                    new_state.conformations[i] = new_c
+                    add_new_indexed_rate(vertex, statetoi(new_state, ca))
+                end
+            end
+        end
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ > 0
+                new_state = copy(state)
+                new_state.occupations[i] -= 1
+                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_decrease_rates[state.conformations[i]])
+            end
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_increase_rates[state.conformations[i]])
+            end
+        end
+    end
 
     ca
 end
 
-named_adj_matrix(ca) = NamedArray(Matrix(adjacency_matrix(ca.graph)); names=(repr.(allstates(ca)), repr.(allstates(ca))))
-named_gibbs_factors(ca) = collect(zip(repr.(allstates(ca)), calc_gibbs_factor.(allstates(ca), ca)))
+function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), short=false)
+    file = open(plotsdir(savename("adjmat", ca, "table")), "w")
+
+    row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
+    modified_matrix = [row_names Matrix{Any}(adjacency_matrix(ca.graph))]
+    header = if short
+        [""; repr.(1:numstates(ca))]
+    else
+        [""; repr.(allstates(ca))]
+    end
+
+    pretty_table(file, modified_matrix; header)
+    close(file)
+end
+
+function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
+    file = open(plotsdir(savename("gibbsfs", ca, "table")), "w")
+    data = [repr.(allstates(ca)) repr.(calc_gibbs_factor.(allstates(ca), ca))]
+    pretty_table(file, data; header=["state", "gibbs factor"])
+    close(file)
+end
