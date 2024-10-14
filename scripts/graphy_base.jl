@@ -1,43 +1,18 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
+include(srcdir("GraphModels.jl"))
+
 using Graphs, MetaGraphsNext, SimpleWeightedGraphs
 using GLMakie, GraphMakie, NetworkLayout
 using StatsBase
 using StaticArrays
 using PyFormattedStrings
 
-struct State{N,T<:Integer}
-    extstate::Union{SVector{N,T}, MVector{N,T}}
-    substate::T
-end
-
-abstract type AbstractGraphModel{N,T<:Integer} end
-function graph(gm::AbstractGraphModel)
-    throw(ErrorException(f"No method of \"graph\" was provided for type \"{typeof(gm)}\""))
-end
-function states(gm::AbstractGraphModel)
-    throw(ErrorException(f"No method of \"states\" was provided for type \"{typeof(gm)}\""))
-end
-function statetoi(gm::AbstractGraphModel{N,T}, state::State{N,T}) where {N,T}
-    findfirst(x -> x == state, states(gm))
-end
-function itostate(gm::AbstractGraphModel, i)
-    states(gm)[i]
-end
-function plotGM(gm::AbstractGraphModel, args...; kwargs...)
-    throw(ErrorException(f"No method of \"plotGM\" was provided for type \"{typeof(gm)}\""))
-end
-
-function edgecolorbar((f, a, p))
-    edgeploti = findfirst(typeof(plot) <: Plot{GraphMakie.edgeplot} for plot in p.plots)
-    Colorbar(f[1, 2], p.plots[edgeploti])
-end
-
 ################################################################################
 # Simple four state mode
 ################################################################################
-struct SimpleFourStateGM <: AbstractGraphModel{2,Int}
+struct SimpleFourStateGM <: AbstractStatefulGraphModel{2,Int}
     Nx::Int
     Ny::Int
     γe::Float64
@@ -146,9 +121,9 @@ function plotGM(sfs::SimpleFourStateGM, args...; ecolorbar=true, kwargs...)
 end
 
 ################################################################################
-# 3D allostery model
+# 3D counting allostery model
 ################################################################################
-struct Allostery3D1 <: AbstractGraphModel{3,Int}
+struct Allostery3D1 <: AbstractStatefulGraphModel{3,Int}
     N::Int
     graph::SimpleWeightedDiGraph{Int,Float64}
     states::Vector{State{3,Int}}
@@ -255,48 +230,22 @@ function plotGM(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
 end
 
 ################################################################################
-# Running a graph model
+# Complex network allostery model
 ################################################################################
-function find_next_vertex(graph, v)
-    options = neighbors(graph, v)
-    sample(options, Weights([get_weight(graph, v, o) for o in options]))
+struct CAState{T}
+    conformations::Vector{T}
+    occupations::Vector{T}
 end
 
-function simGM(gm::AbstractGraphModel, steps; initial_vertex=nothing, delay=0.5, plot=true, print=false, kwargs...)
-    vertex = isnothing(initial_vertex) ? rand(1:nv(graph(gm))) : initial_vertex
-
-    if plot
-        f, a, p = plotGM(gm; kwargs...)
-        display(f)
-        p.node_color[][vertex] = :red
-        p.node_color = p.node_color[]
-    end
-
-    try
-        for _ in 1:steps
-            sleep(delay)
-            if plot
-                p.node_color[][vertex] = :snow3
-            end
-            if print
-                println(f"{vertex:<10d} - {itostate(gm, vertex)}")
-            end
-            vertex = find_next_vertex(graph(gm), vertex)
-            if plot
-                p.node_color[][vertex] = :red
-                p.node_color = p.node_color[]
-            end
-        end
-    catch InterruptException
-        try
-            GLMakie.closeall()
-        catch TaskFailedException
-        end
-    end
-
-    vertex
+struct ComplexAllostery <: AbstractGraphModel
+    N::Int # Number of monomers
+    C::Int # Number of possible conformational states per monomer
+    B::Int # Number of ligand binding sites per monomer
 end
 
+################################################################################
+# Sample run functions for the future when I don't remember how to use these
+################################################################################
 function run_sample_sfs()
     sfs = SimpleFourStateGM(5, 5; γi=0.05, γe=1.95)
     simGM(sfs, 10000000; delay=0.01)
