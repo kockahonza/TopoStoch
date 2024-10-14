@@ -167,13 +167,13 @@ end
 
 function make_EM_sym_C2_simpler(B)
     monomer = Matrix{Num}(undef, 2, B + 1)
-    @variables εt, Δεr
+    @variables ε_t, Δε_r
     monomer[1, 1] = 0
-    monomer[2, 1] = Δεr
-    monomer[1, 2:B+1] .= εt .* collect(1:B)
-    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- Δεr
+    monomer[2, 1] = Δε_r
+    monomer[1, 2:B+1] .= ε_t .* collect(1:B)
+    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- Δε_r
 
-    eb = Symbolics.variable(:εb)
+    eb = Symbolics.variable(:ε_b)
     interactions = [0 eb; eb 0]
     EnergyMatrices(monomer, interactions)
 end
@@ -326,6 +326,73 @@ function add_edges_sym!(ca::ComplexAllosteryGM)
 end
 
 ################################################################################
+# The simple case, C=2 and B mostly 1
+################################################################################
+
+function make_simple(N, B)
+    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B), sym_graph=true)
+
+    # Label occupancy changes using r_(ci)+-
+    occ_increase_rates = Symbolics.variables(:a, 1:2)
+    occ_decrease_rates = Symbolics.variables(:m, 1:2)
+    # Label conformational changes via increasing indices or ri
+    rates_i = 1
+    function add_new_indexed_rate(v1, v2)
+        if (v1 < v2)
+            rate = Symbolics.variable(:ri, rates_i)
+            add_edge!(ca.graph, v1, v2, rate)
+            add_edge!(ca.graph, v2, v1, rate)
+            rates_i += 1
+        end
+    end
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in 1:ca.C
+                if new_c != state.conformations[i]
+                    new_state = copy(state)
+                    new_state.conformations[i] = new_c
+                    add_new_indexed_rate(vertex, statetoi(new_state, ca))
+                end
+            end
+        end
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ > 0
+                new_state = copy(state)
+                new_state.occupations[i] -= 1
+                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_decrease_rates[state.conformations[i]])
+            end
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_increase_rates[state.conformations[i]])
+            end
+        end
+    end
+
+    ca
+end
+
+function find_a1(ca::ComplexAllosteryGM)
+    el = Symbolics.variable(:a, 1)
+    am = adjacency_matrix(ca.graph)
+
+    cis = findall(x -> isequal(x, el), am)
+
+    equal_items = []
+    # push!(equal_items, el / Symbolics.variable(:m, 1))
+    for ci in cis
+        (i, j) = Tuple(ci)
+        push!(equal_items, calc_gibbs_factor(itostate(j, ca), ca) / calc_gibbs_factor(itostate(i, ca), ca))
+    end
+
+    equal_items
+end
+
+################################################################################
 # Util and run function
 ################################################################################
 # Plotting, also used by simGM
@@ -442,72 +509,6 @@ function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     sc = scatter!(ax, conc_range, avg_numligands)
 
     Makie.FigureAxisPlot(fig, ax, sc)
-end
-
-function simple_inttext()
-    fig = Figure()
-
-    sliders = [
-        (label="x", range=-10.0:0.1:10.0),
-        (label="y", range=-10.0:0.1:10.0)
-    ]
-    sg = SliderGrid(fig[1, 1], sliders...)
-    ax = Axis(fig[2, 1])
-
-    a = [x.value for x in sg.sliders]
-    to = lift((a, b) -> f"{a}, {b}", a...)
-    tt = Label(fig[:, 2], to)
-
-    text!(ax, 5, 5, text=to, align=(:center, :center))
-
-    fig, sg, ax
-end
-
-function make_simple(N, B)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B), sym_graph=true)
-
-    # Label occupancy changes using r_(ci)+-
-    occ_increase_rates = Symbolics.variables(:a, 1:2)
-    occ_decrease_rates = Symbolics.variables(:m, 1:2)
-    # Label conformational changes via increasing indices or ri
-    rates_i = 1
-    function add_new_indexed_rate(v1, v2)
-        if (v1 < v2)
-            rate = Symbolics.variable(:ri, rates_i)
-            add_edge!(ca.graph, v1, v2, rate)
-            add_edge!(ca.graph, v2, v1, rate)
-            rates_i += 1
-        end
-    end
-    for vertex in 1:numstates(ca)
-        state = itostate(vertex, ca)
-        # Add conformational change transitions
-        for i in 1:ca.N
-            for new_c in 1:ca.C
-                if new_c != state.conformations[i]
-                    new_state = copy(state)
-                    new_state.conformations[i] = new_c
-                    add_new_indexed_rate(vertex, statetoi(new_state, ca))
-                end
-            end
-        end
-        # Add ligand (de)binding rates
-        for i in 1:ca.N
-            cur_occ = state.occupations[i]
-            if cur_occ > 0
-                new_state = copy(state)
-                new_state.occupations[i] -= 1
-                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_decrease_rates[state.conformations[i]])
-            end
-            if cur_occ < ca.B
-                new_state = copy(state)
-                new_state.occupations[i] += 1
-                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_increase_rates[state.conformations[i]])
-            end
-        end
-    end
-
-    ca
 end
 
 function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), short=false)
