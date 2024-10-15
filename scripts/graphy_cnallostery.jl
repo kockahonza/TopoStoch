@@ -8,8 +8,11 @@ using GLMakie, GraphMakie, NetworkLayout
 using StatsBase
 using Symbolics
 using StaticArrays, DataFrames
-using PrettyTables
+using PrettyTables, Latexify
 using PyFormattedStrings
+
+import SymbolicUtils
+import SymbolicUtils.Rewriters
 
 import Base: copy, broadcastable, show
 
@@ -65,7 +68,7 @@ end
 function copy((; conformations, occupations)::CAState)
     CAState(copy(conformations), copy(occupations))
 end
-show(io::IO, st::CAState) = print(io, f"({st.conformations}, {st.occupations})")
+show(io::IO, mime::MIME"text/plain", st::CAState) = print(io, f"({st.conformations}, {st.occupations})")
 
 abstract type Symmetry end
 struct Chain <: Symmetry end
@@ -77,32 +80,44 @@ struct EnergyMatrices{F<:Number}
     interactions::Matrix{F}
 end
 broadcastable(em::EnergyMatrices) = Ref(em)
+function show(io::IO, mime::MIME"text/plain", em::EnergyMatrices)
+    pretty_table(io, em.monomer; show_header=false, title="Monomer")
+    pretty_table(io, em.interactions; show_header=false, title="Interactions")
+end
 
 mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractGraphModel
     N::T # Number of monomers
     C::T # Number of possible conformational states per monomer
     B::T # Number of ligand binding sites per monomer
 
-    energy_matrices::EnergyMatrices
+    energy_matrices::Union{Nothing,EnergyMatrices{F}}
 
     graph::SimpleWeightedDiGraph{T,F}
-    function ComplexAllosteryGM(N::T, C::T, B::T; _::S=Chain(), energy_matrices=nothing, sym_graph=false) where {T<:Integer,S}
-        Ftype = sym_graph ? Num : Float64
 
-        graph = SimpleWeightedDiGraph{T,Ftype}(numstates(N, C, B))
-
-        if isnothing(energy_matrices)
-            energy_matrices = make_EM_sym_general(C, B)
-        else
-            if !validEM(energy_matrices, C, B)
-                throw(ArgumentError(f"the provided energy matrices do not have the right shape for the given system"))
-            end
+    function ComplexAllosteryGM(N::T, C::T, B::T;
+        symmetry::S=Chain(),
+        energy_matrices=nothing,
+        numtype::Val{F}=Val(Num)
+    ) where {S,F,T<:Integer}
+        if !isnothing(energy_matrices) && !validEM(energy_matrices, C, B)
+            throw(ArgumentError(f"the provided energy matrices do not have the right shape for the given system"))
         end
-        new{S,Ftype,T}(N, C, B, energy_matrices, graph)
+
+        graph = SimpleWeightedDiGraph{T,F}(numstates(N, C, B))
+
+        new{S,F,T}(N, C, B, energy_matrices, graph)
     end
 end
 broadcastable(ca::ComplexAllosteryGM) = Ref(ca)
 graph(ca::ComplexAllosteryGM) = ca.graph
+function show(io::IO, mime::MIME"text/plain", ca::ComplexAllosteryGM{S,F,T}) where {F,S,T}
+    println(f"CAGM{{{S}, {F}, {T}}}")
+    println(f"N={ca.N}, C={ca.C}, B={ca.B}")
+    println(f"energy_matrices:")
+    show(io, mime, ca.energy_matrices)
+    println(f"graph:")
+    show(io, mime, ca.graph)
+end
 
 # Utils state related functions
 function numstates(N, C, B)
@@ -325,14 +340,76 @@ function add_edges_sym!(ca::ComplexAllosteryGM)
     end
 end
 
+function add_edges_balanced_universtal_scale!(ca::ComplexAllosteryGM)
+    universal_scale = Symbolics.variable(:r)
+    gibbs_factors = calc_gibbs_factor.(allstates(ca), ca)
+
+    function add_new_rate(v1, v2)
+        if (v1 < v2)
+            divp = gibbs_factors[v2] / gibbs_factors[v1]
+            expfactor = sqrt(divp)
+            add_edge!(ca.graph, v1, v2, simplify(universal_scale * expfactor))
+            add_edge!(ca.graph, v2, v1, simplify(universal_scale / expfactor))
+        end
+    end
+
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in 1:ca.C
+                if new_c != state.conformations[i]
+                    new_state = copy(state)
+                    new_state.conformations[i] = new_c
+                    add_new_rate(vertex, statetoi(new_state, ca))
+                end
+            end
+        end
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ > 0
+                new_state = copy(state)
+                new_state.occupations[i] -= 1
+                add_new_rate(vertex, statetoi(new_state, ca))
+            end
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                add_new_rate(vertex, statetoi(new_state, ca))
+            end
+        end
+    end
+end
+
+function check_detailed_balance(ca::ComplexAllosteryGM)
+    gfs = calc_gibbs_factor.(allstates(ca), ca)
+
+    conditions = []
+    for i in 1:numstates(ca)
+        for j in 1:numstates(ca)
+            wij = get_weight(ca.graph, i, j)
+            wji = get_weight(ca.graph, j, i)
+            zero1 = iszero(wij)
+            zero2 = iszero(wji)
+            if !zero1 && !zero2
+                push!(conditions, (gfs[i] * wij) - (gfs[j] * wji))
+            elseif !(zero1 && zero2)
+                @error f"detailed balance is not satisfied as some non-zero transitions do not have a reverse transition! (i, j)={(i, j)}"
+            end
+        end
+    end
+    conditions
+end
+
 ################################################################################
 # The simple case, C=2 and B mostly 1
 ################################################################################
-
 function make_simple(N, B)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B), sym_graph=true)
+    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B))
 
     # Label occupancy changes using r_(ci)+-
+    rate_occ_change = Symbolics.variable(:r)
     occ_increase_rates = Symbolics.variables(:a, 1:2)
     occ_decrease_rates = Symbolics.variables(:m, 1:2)
     # Label conformational changes via increasing indices or ri
@@ -353,7 +430,7 @@ function make_simple(N, B)
                 if new_c != state.conformations[i]
                     new_state = copy(state)
                     new_state.conformations[i] = new_c
-                    add_new_indexed_rate(vertex, statetoi(new_state, ca))
+                    # add_new_indexed_rate(vertex, statetoi(new_state, ca))
                 end
             end
         end
@@ -511,6 +588,7 @@ function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     Makie.FigureAxisPlot(fig, ax, sc)
 end
 
+# Saving internal data
 function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), short=false)
     file = open(plotsdir(savename("adjmat", ca, "table")), "w")
 
@@ -531,4 +609,20 @@ function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
     data = [repr.(allstates(ca)) repr.(calc_gibbs_factor.(allstates(ca), ca))]
     pretty_table(file, data; header=["state", "gibbs factor"])
     close(file)
+end
+
+# Symbolics helper functions
+function get_rewriter()
+    rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
+    rules_explog = [
+        (@rule exp(log(~z)) => ~z),
+        (@rule exp(~y * log(~z)) => ~z^~y),
+        (@rule exp(~x + ~y * log(~z)) => exp(~x) * ~z^~y)
+    ]
+
+    Rewriters.Chain([
+        rule_divexp,
+        rules_explog...,
+        SymbolicUtils.serial_simplifier
+    ])
 end
