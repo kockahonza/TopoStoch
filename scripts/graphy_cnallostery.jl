@@ -21,7 +21,8 @@ import Base: copy, broadcastable, show
 ################################################################################
 
 """
-Returns true if `perm` has length `N` and all its elements are between `base`(inclusive) and `base` + `E`(exclusive).
+Returns true if `perm` has length `N` and all its elements are between `base`(inclusive)
+and `base` + `E`(exclusive).
 """
 function validperm(perm::AbstractVector{<:Integer}, E, N; base=1)
     if length(perm) != N
@@ -68,7 +69,7 @@ end
 function copy((; conformations, occupations)::CAState)
     CAState(copy(conformations), copy(occupations))
 end
-show(io::IO, mime::MIME"text/plain", st::CAState) = print(io, f"({st.conformations}, {st.occupations})")
+show(io::IO, st::CAState) = print(io, f"({st.conformations}, {st.occupations})")
 
 abstract type Symmetry end
 struct Chain <: Symmetry end
@@ -170,26 +171,15 @@ function make_EM_sym_general(C, B)
 end
 
 function make_EM_sym_C2(B)
-    monomer = Matrix{Num}(undef, 2, B + 1)
-    monomer[1, 1] = 0
-    monomer[1, 2:B+1] = Symbolics.variables(:εt, 1:B)
-    monomer[2, 1:B+1] = Symbolics.variables(:εr, 0:B)
+    @variables ε_t, Δε_r, ε_b
 
-    eb = Symbolics.variable(:εb)
-    interactions = [0 eb; eb 0]
-    EnergyMatrices(monomer, interactions)
-end
-
-function make_EM_sym_C2_simpler(B)
     monomer = Matrix{Num}(undef, 2, B + 1)
-    @variables ε_t, Δε_r
     monomer[1, 1] = 0
     monomer[2, 1] = Δε_r
     monomer[1, 2:B+1] .= ε_t .* collect(1:B)
     monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- Δε_r
 
-    eb = Symbolics.variable(:ε_b)
-    interactions = [0 eb; eb 0]
+    interactions = [0 ε_b; ε_b 0]
     EnergyMatrices(monomer, interactions)
 end
 
@@ -382,7 +372,7 @@ function add_edges_balanced_universtal_scale!(ca::ComplexAllosteryGM)
     end
 end
 
-function check_detailed_balance(ca::ComplexAllosteryGM)
+function check_detailed_balance(ca::ComplexAllosteryGM; sim=false, fil=true)
     gfs = calc_gibbs_factor.(allstates(ca), ca)
 
     conditions = []
@@ -399,19 +389,48 @@ function check_detailed_balance(ca::ComplexAllosteryGM)
             end
         end
     end
+
+    if sim
+        conditions = simplify.(conditions; rewriter=get_rewriter())
+    end
+
+    if fil
+        conditions = filter(!iszero, conditions)
+    end
+
     conditions
 end
 
 ################################################################################
 # The simple case, C=2 and B mostly 1
 ################################################################################
-function make_simple(N, B)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2_simpler(B))
+function make_simple(N, B; edge_t=:EL1)
+    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2(B))
 
-    # Label occupancy changes using r_(ci)+-
+    if edge_t == :EL1
+        add_edges_simple_EL1!(ca)
+    elseif edge_t == :EL2
+        add_edges_simple_EL2!(ca)
+    else
+        throw(ArgumentError(f"edge_t \"{edge_t}\" not recognised"))
+    end
+
+    ca
+end
+
+"""
+Energy landscape inspired symbolic edges that use energy height barriers
+and and some physicsy arguments done on pen and paper. Maybe works?
+"""
+function add_edges_simple_EL1!(ca::ComplexAllosteryGM)
+    # variables for occupancy change rates
     rate_occ_change = Symbolics.variable(:r)
-    occ_increase_rates = Symbolics.variables(:a, 1:2)
-    occ_decrease_rates = Symbolics.variables(:m, 1:2)
+    @variables ε_t, Δε_r, ε_b, μ, kT
+    fact_1_dec = exp(-(-ε_t + μ) / kT)
+    fact_2_inc_0 = exp(-(-Δε_r) / kT)
+    fact_2_inc = exp(-(Δε_r) / kT)
+    fact_2_dec = exp(-(-ε_t + μ + Δε_r) / kT)
+
     # Label conformational changes via increasing indices or ri
     rates_i = 1
     function add_new_indexed_rate(v1, v2)
@@ -422,6 +441,7 @@ function make_simple(N, B)
             rates_i += 1
         end
     end
+
     for vertex in 1:numstates(ca)
         state = itostate(vertex, ca)
         # Add conformational change transitions
@@ -434,39 +454,132 @@ function make_simple(N, B)
                 end
             end
         end
+
         # Add ligand (de)binding rates
         for i in 1:ca.N
             cur_occ = state.occupations[i]
-            if cur_occ > 0
-                new_state = copy(state)
-                new_state.occupations[i] -= 1
-                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_decrease_rates[state.conformations[i]])
-            end
-            if cur_occ < ca.B
-                new_state = copy(state)
-                new_state.occupations[i] += 1
-                add_edge!(ca.graph, vertex, statetoi(new_state, ca), occ_increase_rates[state.conformations[i]])
+            cur_con = state.conformations[i]
+            if cur_con == 1
+                if cur_occ < ca.B
+                    new_state = copy(state)
+                    new_state.occupations[i] += 1
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate_occ_change
+                    )
+                end
+                if cur_occ > 0
+                    new_state = copy(state)
+                    new_state.occupations[i] -= 1
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate_occ_change * fact_1_dec
+                    )
+                end
+            elseif cur_con == 2
+                if cur_occ == 0
+                    new_state = copy(state)
+                    new_state.occupations[i] += 1
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate_occ_change * fact_2_inc_0
+                    )
+                elseif cur_occ < ca.B
+                    new_state = copy(state)
+                    new_state.occupations[i] += 1
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate_occ_change * fact_2_inc
+                    )
+                end
+                if cur_occ > 0
+                    new_state = copy(state)
+                    new_state.occupations[i] -= 1
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate_occ_change * fact_2_dec
+                    )
+                end
+            else
+                throw(ErrorException("kaka"))
             end
         end
     end
-
-    ca
 end
 
-function find_a1(ca::ComplexAllosteryGM)
-    el = Symbolics.variable(:a, 1)
-    am = adjacency_matrix(ca.graph)
+"""
+Energy landscape inspired symbolic edges that use energy height barriers
+and the actual gibbs factors for getting the rates. This however could very
+well lead to rates > 1. Hence not ready!
+"""
+function add_edges_simple_EL2!(ca::ComplexAllosteryGM)
+    gfs = calc_gibbs_factor.(allstates(ca), ca)
 
-    cis = findall(x -> isequal(x, el), am)
+    # Label occupancy changes using r_(ci)+-
+    rate_occ_change = Symbolics.variable(:r)
+    @variables ε_t, Δε_r, ε_b, μ, kT
 
-    equal_items = []
-    # push!(equal_items, el / Symbolics.variable(:m, 1))
-    for ci in cis
-        (i, j) = Tuple(ci)
-        push!(equal_items, calc_gibbs_factor(itostate(j, ca), ca) / calc_gibbs_factor(itostate(i, ca), ca))
+    # Label conformational changes via increasing indices or ri
+    rates_i = 1
+    function add_new_indexed_rate(v1, v2)
+        if (v1 < v2)
+            rate = Symbolics.variable(:ri, rates_i)
+            add_edge!(ca.graph, v1, v2, rate)
+            add_edge!(ca.graph, v2, v1, rate)
+            rates_i += 1
+        end
     end
 
-    equal_items
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in 1:ca.C
+                if new_c != state.conformations[i]
+                    new_state = copy(state)
+                    new_state.conformations[i] = new_c
+                    # add_new_indexed_rate(vertex, statetoi(new_state, ca))
+                end
+            end
+        end
+
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                rate = rate_occ_change * exp(-cur_occ * (ε_t - μ) / kT) / gfs[vertex]
+                add_edge!(
+                    ca.graph,
+                    vertex,
+                    statetoi(new_state, ca),
+                    simplify(rate; rewriter=get_rewriter())
+                )
+            end
+            if cur_occ > 0
+                new_state = copy(state)
+                new_state.occupations[i] -= 1
+                rate = rate_occ_change * exp(-(cur_occ - 1) * (ε_t - μ) / kT) / gfs[vertex]
+                add_edge!(
+                    ca.graph,
+                    vertex,
+                    statetoi(new_state, ca),
+                    simplify(rate; rewriter=get_rewriter())
+                )
+            end
+        end
+    end
 end
 
 ################################################################################
@@ -507,7 +620,12 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
 end
 
 function plot_CA_sym(ca::ComplexAllosteryGM, args...; kwargs...)
-    plotGM(ca, args...; nlabels=repr.(allstates(ca)), elabels=repr.(weight.(edges(ca.graph))), elabels_shift=0.3, kwargs...)
+    plotGM(ca, args...;
+        nlabels=repr.(allstates(ca)),
+        elabels=repr.(weight.(edges(ca.graph))),
+        elabels_shift=0.4,
+        kwargs...
+    )
 end
 
 function eq_stats_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
@@ -612,8 +730,10 @@ function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
 end
 
 # Symbolics helper functions
+
+rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
+
 function get_rewriter()
-    rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
     rules_explog = [
         (@rule exp(log(~z)) => ~z),
         (@rule exp(~y * log(~z)) => ~z^~y),
