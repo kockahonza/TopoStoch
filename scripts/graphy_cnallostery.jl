@@ -7,9 +7,10 @@ using Graphs, MetaGraphsNext, SimpleWeightedGraphs
 using GLMakie, GraphMakie, NetworkLayout
 using StatsBase
 using Symbolics
-using StaticArrays, DataFrames
+using StaticArrays, SparseArrays, DataFrames
 using PrettyTables, Latexify
 using PyFormattedStrings
+using Base.Threads
 
 import SymbolicUtils
 import SymbolicUtils.Rewriters
@@ -82,8 +83,10 @@ struct EnergyMatrices{F<:Number}
 end
 broadcastable(em::EnergyMatrices) = Ref(em)
 function show(io::IO, mime::MIME"text/plain", em::EnergyMatrices)
-    pretty_table(io, em.monomer; show_header=false, title="Monomer")
-    pretty_table(io, em.interactions; show_header=false, title="Interactions")
+    print(io, "monomer energies ")
+    show(io, mime, em.monomer)
+    print(io, "\ninteraction energies ")
+    show(io, mime, em.interactions)
 end
 
 mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractGraphModel
@@ -95,18 +98,27 @@ mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractG
 
     graph::SimpleWeightedDiGraph{T,F}
 
+    environment::Union{Nothing,Tuple{F,F}} # Pair of μ and kT
+    metadata
     function ComplexAllosteryGM(N::T, C::T, B::T;
         symmetry::S=Chain(),
+        numtype::Val{F}=Val(Num),
         energy_matrices=nothing,
-        numtype::Val{F}=Val(Num)
+        graph=nothing,
+        environment=nothing,
+        metadata=nothing
     ) where {S,F,T<:Integer}
         if !isnothing(energy_matrices) && !validEM(energy_matrices, C, B)
             throw(ArgumentError(f"the provided energy matrices do not have the right shape for the given system"))
         end
 
-        graph = SimpleWeightedDiGraph{T,F}(numstates(N, C, B))
+        if isnothing(graph)
+            graph = SimpleWeightedDiGraph{T,F}(numstates(N, C, B))
+        elseif nv(graph) != numstates(N, C, B)
+            throw(ArgumentError(f"the provided graph does not have the right number of vertices for the given system"))
+        end
 
-        new{S,F,T}(N, C, B, energy_matrices, graph)
+        new{S,F,T}(N, C, B, energy_matrices, graph, environment, metadata)
     end
 end
 broadcastable(ca::ComplexAllosteryGM) = Ref(ca)
@@ -116,8 +128,14 @@ function show(io::IO, mime::MIME"text/plain", ca::ComplexAllosteryGM{S,F,T}) whe
     println(f"N={ca.N}, C={ca.C}, B={ca.B}")
     println(f"energy_matrices:")
     show(io, mime, ca.energy_matrices)
-    println(f"graph:")
+    println(f"\ngraph:")
     show(io, mime, ca.graph)
+    println(f"\nenvironment:")
+    show(io, mime, ca.environment)
+    if !isnothing(ca.metadata)
+        println(f"\nmetadata:")
+        show(io, mime, ca.metadata)
+    end
 end
 
 # Utils state related functions
@@ -188,56 +206,80 @@ function validEM(em::EnergyMatrices, C, B)
 end
 validEM(em::EnergyMatrices, ca::ComplexAllosteryGM) = validEM(em, ca.C, ca.B)
 
-function get_variables(em::EnergyMatrices)
-    unique(Iterators.flatten(Symbolics.get_variables.(Iterators.flatten((em.monomer, em.interactions)))))
+# Simple calculator functions
+function get_neighbors(st::CAState, i, ::Chain)
+    N = length(st.conformations)
+    if N == 1
+        return (nothing, nothing)
+    end
+
+    if i == 1
+        (st.conformations[i+1], nothing)
+    elseif i == N
+        (st.conformations[N-1], nothing)
+    else
+        (st.conformations[i-1], st.conformations[i+1])
+    end
+end
+function get_neighbors(st::CAState, i, ::Loop)
+    N = length(st.conformations)
+    if N == 1
+        return (nothing, nothing)
+    end
+
+    if i == 1
+        (st.conformations[N], st.conformations[i+1],)
+    elseif i == N
+        (st.conformations[N-1], st.conformations[1])
+    else
+        (st.conformations[i-1], st.conformations[i+1])
+    end
+end
+function get_neighbors(st::CAState, i, _::ComplexAllosteryGM{S}) where {S}
+    get_neighbors(st, i, S())
 end
 
-# Simple calculator functions
-function calc_energy(st::CAState, em::EnergyMatrices, ::Chain)
+function calc_neighbors_energy(st::CAState, i, em::EnergyMatrices, s::Symmetry)
+    (left, right) = get_neighbors(st, i, s)
     energy = 0
-    for i in 1:length(st.conformations)
-        energy += em.monomer[st.conformations[i], st.occupations[i]+1]
+    if !isnothing(left)
+        energy += em.interactions[left, st.conformations[i]]
     end
-    energy += 0.5 * em.interactions[st.conformations[1], st.conformations[2]]
-    for i in 2:length(st.conformations)-1
-        energy += 0.5 * (
-            em.interactions[st.conformations[i-1], st.conformations[i]] +
-            em.interactions[st.conformations[i], st.conformations[i+1]]
-        )
+    if !isnothing(right)
+        energy += em.interactions[st.conformations[i], right]
     end
-    energy += 0.5 * em.interactions[st.conformations[end-1], st.conformations[end]]
     energy
 end
-function calc_energy(st::CAState, em::EnergyMatrices, ::Loop)
+calc_neighbors_energy(st::CAState, i, ca::ComplexAllosteryGM{S}) where {S} = calc_neighbors_energy(st, i, ca.energy_matrices, S())
+
+function calc_energy(st::CAState, em::EnergyMatrices, s::Symmetry)
     energy = 0
     for i in 1:length(st.conformations)
         energy += em.monomer[st.conformations[i], st.occupations[i]+1]
+        energy += 0.5 * calc_neighbors_energy(st, i, em, s)
     end
-    energy += 0.5 * (
-        em.interactions[st.conformations[end], st.conformations[1]] +
-        em.interactions[st.conformations[1], st.conformations[2]]
-    )
-    for i in 2:length(st.conformations)-1
-        energy += 0.5 * (
-            em.interactions[st.conformations[i-1], st.conformations[i]] +
-            em.interactions[st.conformations[i], st.conformations[i+1]]
-        )
-    end
-    energy += 0.5 * (
-        em.interactions[st.conformations[end-1], st.conformations[end]] +
-        em.interactions[st.conformations[end-1], st.conformations[end]]
-    )
     energy
 end
 function calc_energy(st::CAState, ca::ComplexAllosteryGM{S}) where {S}
     calc_energy(st, ca.energy_matrices, S())
 end
+
 calc_numligands(st::CAState) = sum(st.occupations)
-function calc_gibbs_factor(st::CAState, em::EnergyMatrices, symmetry)
-    @variables kT, μ
-    exp(-(calc_energy(st, em, symmetry) - μ * calc_numligands(st)) / kT)
+
+function calc_gibbs_factor(st::CAState, em::EnergyMatrices,
+    s::Symmetry, μ=Symbolics.variable(:μ), kT=Symbolics.variable(:kT))
+    exp(-(calc_energy(st, em, s) - μ * calc_numligands(st)) / kT)
 end
-calc_gibbs_factor(st::CAState, ca::ComplexAllosteryGM{S}) where {S} = calc_gibbs_factor(st, ca.energy_matrices, S())
+function calc_gibbs_factor(st::CAState, ca::ComplexAllosteryGM{S}, args...) where {S}
+    env = if length(args) > 0
+        args
+    elseif !isnothing(ca.environment)
+        ca.environment
+    else
+        ()
+    end
+    calc_gibbs_factor(st, ca.energy_matrices, S(), env...)
+end
 
 # Calculating equilibrium observables
 function calc_all_gibbs_factors(ca::ComplexAllosteryGM{S}) where {S}
@@ -391,15 +433,82 @@ function check_detailed_balance(ca::ComplexAllosteryGM; sim=false, fil=true)
     end
 
     if sim
-        conditions = simplify.(conditions; rewriter=get_rewriter())
+        # FIX: This is not 100% working idk why but not work the time...
+        @threads for i in eachindex(conditions)
+            kaka = simplify(conditions[i]; rewriter=get_rewriter())
+            if !iszero(kaka)
+                println(kaka)
+            end
+        end
     end
 
     if fil
         conditions = filter(!iszero, conditions)
     end
 
-    conditions
+    nothing
 end
+
+################################################################################
+# "Concretizing" - plugging values for symbolic terms and making everything Float
+################################################################################
+function get_variables(arr::Array{Num})
+    variables = Set{Num}()
+    for term in arr
+        for var in Symbolics.get_variables(term)
+            push!(variables, var)
+        end
+    end
+    variables
+end
+get_variables(::Nothing) = Set{Num}()
+function get_variables(em::EnergyMatrices{Num})
+    union(get_variables(em.monomer), get_variables(em.interactions))
+end
+function get_variables(ca::ComplexAllosteryGM{S,Num}) where {S}
+    variables = Set{Num}()
+    for edge in edges(ca.graph)
+        for var in Symbolics.get_variables(weight(edge))
+            push!(variables, var)
+        end
+    end
+    union(variables, get_variables(ca.energy_matrices))
+end
+
+
+function substitute_to_float_(arr, farr, terms::Dict{Num,Float64})
+    for i in eachindex(arr, farr)
+        farr[i] = Float64(Symbolics.symbolic_to_float(substitute(arr[i], terms)))
+    end
+end
+function substitute_to_float(arr::Array, terms::Dict{Num,Float64})
+    farr = Array{Float64}(undef, size(arr))
+    substitute_to_float_(arr, farr, terms)
+    farr
+end
+function substitute_to_float(arr::AbstractSparseMatrix, terms::Dict{Num,Float64})
+    farr = similar(arr, Float64)
+    substitute_to_float_(arr, farr, terms)
+    farr
+end
+function substitute_to_float(em::EnergyMatrices, terms::Dict{Num,Float64})
+    EnergyMatrices{Float64}(substitute_to_float(em.monomer, terms), substitute_to_float(em.interactions, terms))
+end
+function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}) where {S}
+    new_energy_matrices = substitute_to_float(ca.energy_matrices, terms)
+    new_graph = SimpleWeightedDiGraph(
+        substitute_to_float(adjacency_matrix(ca.graph), terms)
+    )
+    ComplexAllosteryGM(ca.N, ca.C, ca.B;
+        symmetry=S(),
+        numtype=Val(Float64),
+        energy_matrices=new_energy_matrices,
+        graph=new_graph,
+        environment=(terms[Symbolics.variable(:μ)], terms[Symbolics.variable(:kT)]),
+        metadata=terms
+    )
+end
+
 
 ################################################################################
 # The simple case, C=2 and B mostly 1
@@ -423,24 +532,13 @@ Energy landscape inspired symbolic edges that use energy height barriers
 and and some physicsy arguments done on pen and paper. Maybe works?
 """
 function add_edges_simple_EL1!(ca::ComplexAllosteryGM)
-    # variables for occupancy change rates
-    rate_occ_change = Symbolics.variable(:r)
+    rate_occ_change = Symbolics.variable(:r_B)
+    rate_conf_change = Symbolics.variable(:r_C)
     @variables ε_t, Δε_r, ε_b, μ, kT
     fact_1_dec = exp(-(-ε_t + μ) / kT)
     fact_2_inc_0 = exp(-(-Δε_r) / kT)
     fact_2_inc = exp(-(Δε_r) / kT)
     fact_2_dec = exp(-(-ε_t + μ + Δε_r) / kT)
-
-    # Label conformational changes via increasing indices or ri
-    rates_i = 1
-    function add_new_indexed_rate(v1, v2)
-        if (v1 < v2)
-            rate = Symbolics.variable(:ri, rates_i)
-            add_edge!(ca.graph, v1, v2, rate)
-            add_edge!(ca.graph, v2, v1, rate)
-            rates_i += 1
-        end
-    end
 
     for vertex in 1:numstates(ca)
         state = itostate(vertex, ca)
@@ -450,7 +548,25 @@ function add_edges_simple_EL1!(ca::ComplexAllosteryGM)
                 if new_c != state.conformations[i]
                     new_state = copy(state)
                     new_state.conformations[i] = new_c
-                    # add_new_indexed_rate(vertex, statetoi(new_state, ca))
+                    exponent_term = Num(0)
+                    if state.occupations[i] != 0
+                        exponent_term += ε_t
+                        if state.conformations[i] == 2
+                            exponent_term -= Δε_r
+                        end
+                    else
+                        if state.conformations[i] == 2
+                            exponent_term += Δε_r
+                        end
+                    end
+                    exponent_term += calc_neighbors_energy(state, i, ca)
+                    rate = rate_conf_change / exp(-exponent_term / kT)
+                    add_edge!(
+                        ca.graph,
+                        vertex,
+                        statetoi(new_state, ca),
+                        rate
+                    )
                 end
             end
         end
@@ -582,35 +698,107 @@ function add_edges_simple_EL2!(ca::ComplexAllosteryGM)
     end
 end
 
+function terms_simple(mu, et, der, eb, rB, rC, kT_=1.0)
+    @variables μ, ε_t, Δε_r, ε_b, r_B, r_C, kT
+    Dict(
+        μ => mu,
+        ε_t => et,
+        Δε_r => der,
+        ε_b => eb,
+        r_B => rB,
+        r_C => rC,
+        kT => kT_
+    )
+end
+terms_simple0() = terms_simple(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+
+function terms_simple1(et, eb_option, mu_option)
+    eb = if eb_option == 1
+        0.0
+    elseif eb_option == 2
+        0.5 * et
+    else
+        throw(ArgumentError("eb_option must be 1 or 2"))
+    end
+    mu = if mu_option == 1
+        0.3 * et
+    elseif mu_option == 2
+        0.8 * et
+    elseif mu_option == 3
+        1.2 * et
+    else
+        throw(ArgumentError("mu_option must be 1, 2 or 3"))
+    end
+    terms_simple(mu, et, 0.2 * et, eb, exp(-et), exp(-2.5 * et), 1.0)
+end
+
 ################################################################################
 # Util and run function
 ################################################################################
 # Plotting, also used by simGM
+@inline function p_get_adjmat_symsafe(ca::ComplexAllosteryGM{S,F}) where {S,F}
+    if F == Num
+        map(x -> if iszero(x)
+                0.0
+            else
+                1.0
+            end, adjacency_matrix(ca.graph))
+    else
+        adjacency_matrix(ca.graph)
+    end
+end
+
 function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
-    interactive=false, sub_layout=Shell(), z_scale=1.0, layout=nothing, kwargs...
+    interactive=false,
+    layout=(:c1, Shell(), 1.0),
+    node_size_scale=2.0,
+    kwargs...
 ) where {S,F}
-    @inline function get_adj_matrix()
-        if F == Num
-            map(x -> if iszero(x)
-                    0.0
-                else
-                    1.0
-                end, adjacency_matrix(ca.graph))
+    if isa(layout, NetworkLayout.AbstractLayout)
+        layout = layout(p_get_adjmat_symsafe(ca))
+    else
+        (type, layout_args...) = layout
+        if type == :c1
+            sub_layout, z_scale = layout_args
+            layout = [
+                (x, y, z * z_scale) for ((x, y), z) in zip(sub_layout(p_get_adjmat_symsafe(ca)), calc_numligands.(allstates(ca)))
+            ]
+        elseif type == :c2
+            z_scale = layout_args[1]
+            layout = [
+                (calc_numligands(st), calc_energy(st, ca), rand() * z_scale) for st in allstates(ca)
+            ]
+        elseif type == :c3
+            z_scale = layout_args[1]
+            layout = [
+                (calc_numligands(st), calc_energy(st, ca), z_scale * log(calc_gibbs_factor(st, ca))) for st in allstates(ca)
+            ]
         else
-            adjacency_matrix(ca.graph)
+            throw(ArgumentError(f"layout of {layout} is not recognised"))
         end
     end
 
     if isnothing(layout)
-        layout = [(x, y, z * z_scale) for ((x, y), z) in zip(sub_layout(get_adj_matrix()), calc_numligands.(allstates(ca)))]
     elseif isa(layout, NetworkLayout.AbstractLayout)
-        layout = layout(get_adj_matrix())
+        layout = layout(p_get_adjmat_symsafe(ca))
     end
 
     node_color = [:snow3 for _ in 1:numstates(ca)]
-    node_size = [10 for _ in 1:numstates(ca)]
+    if F != Num
+        node_size = nv(ca.graph) * node_size_scale * calc_gibbs_factor.(allstates(ca), ca) / calc_partition_function(ca)
+        edge_color = weight.(edges(ca.graph))
+    else
+        node_size = [10.0 for _ in 1:numstates(ca)]
+        edge_color = [0.0 for _ in 1:ne(ca.graph)]
+    end
 
-    fap = graphplot(ca.graph, args...; layout, node_color, node_size, curve_distance_usage=false, kwargs...)
+    fap = graphplot(ca.graph, args...;
+        layout,
+        node_color,
+        node_size,
+        edge_color,
+        kwargs...
+    )
 
     if interactive
         make_interactive(fap)
@@ -678,12 +866,12 @@ end
 function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     fig = Figure()
 
-    energy_vars = get_variables(ca.energy_matrices)
+    energy_vars = collect(get_variables(ca.energy_matrices))
     @variables μ, εsol, kT, c
 
     slider_vars = [energy_vars; εsol]
 
-    sliders = [(label=repr(var), range=0.0:0.01:10.0, startvalue=1.0) for var in slider_vars]
+    sliders = [(label=repr(var), range=-5.0:0.1:10.0, startvalue=1.0) for var in slider_vars]
     sg = SliderGrid(fig[1, 1], sliders...)
     slider_observables = [x.value for x in sg.sliders]
 
@@ -695,7 +883,7 @@ function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     ))
     avg_numligands_f = build_function(prepped_expression, [energy_vars; εsol; c]; expression=Val(false))
 
-    conc_range = LinRange(0, 10, 300)
+    conc_range = LinRange(0, 200, 5000)
 
     avg_numligands = lift(slider_observables...) do (vars...)
         [avg_numligands_f((vars..., cval)) for cval in conc_range]
@@ -711,12 +899,18 @@ function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), sh
     file = open(plotsdir(savename("adjmat", ca, "table")), "w")
 
     row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
-    modified_matrix = [row_names Matrix{Any}(adjacency_matrix(ca.graph))]
-    header = if short
-        [""; repr.(1:numstates(ca))]
+    am = Matrix{Any}(adjacency_matrix(ca.graph))
+    if short
+        header = [""; repr.(1:numstates(ca))]
+        am = map(x -> if iszero(x)
+                0
+            else
+                1
+            end, am)
     else
-        [""; repr.(allstates(ca))]
+        header = [""; repr.(allstates(ca))]
     end
+    modified_matrix = [row_names am]
 
     pretty_table(file, modified_matrix; header)
     close(file)
@@ -730,19 +924,17 @@ function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
 end
 
 # Symbolics helper functions
-
-rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
-
 function get_rewriter()
+    rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
     rules_explog = [
         (@rule exp(log(~z)) => ~z),
         (@rule exp(~y * log(~z)) => ~z^~y),
         (@rule exp(~x + ~y * log(~z)) => exp(~x) * ~z^~y)
     ]
 
-    Rewriters.Chain([
+    Rewriters.Prewalk(Rewriters.Chain([
         rule_divexp,
         rules_explog...,
-        SymbolicUtils.serial_simplifier
-    ])
+        SymbolicUtils.default_simplifier()
+    ]))
 end

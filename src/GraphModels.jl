@@ -39,40 +39,65 @@ end
 ################################################################################
 # Running a graph model
 ################################################################################
-function find_next_vertex(graph, v)
+function next_vertex_random_proportional(graph, v)
     options = neighbors(graph, v)
     sample(options, Weights([get_weight(graph, v, o) for o in options]))
 end
 
-function simGM(gm::AbstractGraphModel, steps; initial_vertex=nothing, delay=0.5, plot=true, print=false, kwargs...)
-    vertex = isnothing(initial_vertex) ? rand(1:nv(graph(gm))) : initial_vertex
+function next_vertex_choose_max(graph, v)
+    options = neighbors(graph, v)
+    weights = [get_weight(graph, v, o) for o in options]
+    findmax(weights)[2]
+end
+
+function simGM(gm::AbstractGraphModel, steps;
+    initial_vertices=nothing,
+    num_vertices=1, next_vertex_func=next_vertex_random_proportional, delay=0.5,
+    plot=true,
+    print=false,
+    kwargs...
+)
+    vertex = isnothing(initial_vertices) ? rand(1:nv(graph(gm))) : initial_vertices
+
+    if isnothing(initial_vertices)
+        vertices = [rand(1:nv(graph(gm))) for _ in 1:num_vertices]
+    end
 
     if plot
         f, a, p = plotGM(gm; kwargs...)
         display(f)
-        p.node_color[][vertex] = :red
-        p.node_color = p.node_color[]
-        p.node_size[][vertex] = 20
-        p.node_size = p.node_size[]
+        for vertex in vertices
+            p.node_color[][vertex] = :red
+            p.node_color = p.node_color[]
+            p.node_size[][vertex] = 20
+            p.node_size = p.node_size[]
+        end
     end
 
     try
         for _ in 1:steps
             sleep(delay)
             if plot
-                p.node_color[][vertex] = :snow3
-                p.node_size[][vertex] = 10
+                for vertex in vertices
+                    p.node_color[][vertex] = :snow3
+                    p.node_size[][vertex] = 10
+                end
             end
             if print
-                println(f"{vertex:<10d}")
-                # println(f"{vertex:<10d} - {itostate(gm, vertex)}")
+                for vertex in vertices
+                    println(f"{vertex:<10d}")
+                end
             end
-            vertex = find_next_vertex(graph(gm), vertex)
+            for i in eachindex(vertices)
+                vertices[i] = next_vertex_func(graph(gm), vertices[i])
+            end
             if plot
-                p.node_color[][vertex] = :red
-                p.node_color = p.node_color[]
-                p.node_size[][vertex] = 20
-                p.node_size = p.node_size[]
+                for vertex in vertices
+                    p.node_color[][vertex] = :red
+                    p.node_color = p.node_color[]
+                    p.node_size[][vertex] = 20
+                    p.node_size = p.node_size[]
+                end
             end
         end
     catch InterruptException
@@ -82,7 +107,7 @@ function simGM(gm::AbstractGraphModel, steps; initial_vertex=nothing, delay=0.5,
         end
     end
 
-    vertex
+    vertices
 end
 
 ################################################################################
