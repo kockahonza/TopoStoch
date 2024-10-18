@@ -1,7 +1,7 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-include(srcdir("GraphModels.jl"))
+include(srcdir("graphmodels.jl"))
 
 using Graphs, MetaGraphsNext, SimpleWeightedGraphs
 using GLMakie, GraphMakie, NetworkLayout

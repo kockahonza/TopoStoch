@@ -1,7 +1,7 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-include(srcdir("GraphModels.jl"))
+include(srcdir("graphmodels.jl"))
 
 using Graphs, MetaGraphsNext, SimpleWeightedGraphs
 using GLMakie, GraphMakie, NetworkLayout
@@ -107,11 +107,12 @@ function plotGM(sfs::SimpleFourStateGM, args...; ecolorbar=true, kwargs...)
 
     ilabels = [sfs_subtype_to_letter(s.substate) for s in states_]
     node_color = [:snow3 for _ in 1:length(states_)]
+    node_size = [15 for _ in 1:length(states_)]
 
     edge_color = [e.weight for e in edges(graph(sfs))]
     edge_attr = arrow_attr = (; colormap=:blues)
 
-    fap = graphplot(sfs.graph, args...; layout, ilabels, node_color, edge_color, edge_attr, arrow_attr, kwargs...)
+    fap = graphplot(sfs.graph, args...; layout, ilabels, node_color, node_size, edge_color, edge_attr, arrow_attr, kwargs...)
 
     if ecolorbar
         edgecolorbar(fap)
@@ -216,7 +217,7 @@ function plotGM(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
     layout = [Point(s.extstate[2], s.extstate[3], s.extstate[1]) for s in states_]
 
     node_color = [:snow4 for _ in 1:length(states_)]
-    node_size = 15
+    node_size = [15 for _ in 1:length(states_)]
 
     edge_color = [e.weight for e in edges(graph(agm))]
 
