@@ -66,12 +66,24 @@ function simGM(gm::AbstractGraphModel, steps;
     if plot
         f, a, p = plotGM(gm; kwargs...)
         display(f)
-        for vertex in vertices
+        base_node_color = copy(p.node_color[])
+        base_node_size = copy(p.node_size[])
+        function highlight_node(vertex)
             p.node_color[][vertex] = :red
+            p.node_size[][vertex] = 15
+        end
+        function unhighlight_node(vertex)
+            p.node_color[][vertex] = base_node_color[vertex]
+            p.node_size[][vertex] = base_node_size[vertex]
+        end
+        function update_observables()
             p.node_color = p.node_color[]
-            p.node_size[][vertex] = 20
             p.node_size = p.node_size[]
         end
+        for vertex in vertices
+            highlight_node(vertex)
+        end
+        update_observables()
     end
 
     try
@@ -79,8 +91,7 @@ function simGM(gm::AbstractGraphModel, steps;
             sleep(delay)
             if plot
                 for vertex in vertices
-                    p.node_color[][vertex] = :snow3
-                    p.node_size[][vertex] = 10
+                    unhighlight_node(vertex)
                 end
             end
             if print
@@ -93,11 +104,9 @@ function simGM(gm::AbstractGraphModel, steps;
             end
             if plot
                 for vertex in vertices
-                    p.node_color[][vertex] = :red
-                    p.node_color = p.node_color[]
-                    p.node_size[][vertex] = 20
-                    p.node_size = p.node_size[]
+                    highlight_node(vertex)
                 end
+                update_observables()
             end
         end
     catch InterruptException
