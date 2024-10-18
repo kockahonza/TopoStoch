@@ -47,7 +47,7 @@ end
 function next_vertex_choose_max(graph, v)
     options = neighbors(graph, v)
     weights = [get_weight(graph, v, o) for o in options]
-    findmax(weights)[2]
+    options[findmax(weights)[2]]
 end
 
 function simGM(gm::AbstractGraphModel, steps;
@@ -117,6 +117,32 @@ function simGM(gm::AbstractGraphModel, steps;
     end
 
     vertices
+end
+
+################################################################################
+# Custom graph analysis
+################################################################################
+# TODO: FIX: This is not finished!!
+function find_cycles(graph, next_vertex_func=next_vertex_choose_max)
+    cycles = []
+    cycle_map = Vector{Union{Nothing,Int}}(nothing, nv(graph))
+    for vertex in 1:nv(graph)
+        if isnothing(cycle_map[vertex])
+            cycle = []
+            true_cycle_start_i = findfirst(x -> x == vertex, cycle)
+            while isnothing(true_cycle_start_i)
+                push!(cycle, vertex)
+                vertex = next_vertex_func(graph, vertex)
+                true_cycle_start_i = findfirst(x -> x == vertex, cycle)
+            end
+            for v in cycle
+                cycle_map[v] = length(cycles) + 1
+            end
+            cycle = cycle[true_cycle_start_i:end]
+            push!(cycles, cycle)
+        end
+    end
+    (cycles, cycle_map)
 end
 
 ################################################################################

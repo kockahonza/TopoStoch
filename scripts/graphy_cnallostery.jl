@@ -531,7 +531,6 @@ function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}
     )
 end
 
-
 ################################################################################
 # The simple case, C=2 and B mostly 1
 ################################################################################
@@ -758,20 +757,43 @@ function terms_simple1(et, eb_option, mu_option)
 end
 
 ################################################################################
-# Util and run function
+# ca/graph manipulations
 ################################################################################
-# Plotting, also used by simGM
-function filter_edges(ca::ComplexAllosteryGM{S,F}, threshold) where {S,F}
-    if F == Num
-        throw(ArgumentError(f"function filter_edges is only valid for ComplexAllosteryGM types with a concrete weight type - aka F != Num"))
-    end
-    for e in edges(ca.graph)
+function filter_edges!(graph, threshold)
+    for e in edges(graph)
         if weight(e) < threshold
-            rem_edge!(ca.graph, e)
+            rem_edge!(graph, e)
         end
     end
 end
+function filter_edges!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
+    if F == Num
+        throw(ArgumentError(f"function filter_edges! is only valid for ComplexAllosteryGM types with a concrete weight type - aka F != Num"))
+    end
+    filter_edges!(ca.graph, args...)
+end
 
+function keep_best_only!(graph, next_vertex_func=next_vertex_choose_max)
+    for vertex in 1:nv(graph)
+        best = next_vertex_func(graph, vertex)
+        kaka = copy(neighbors(graph, vertex))
+        for neighbor in kaka
+            if neighbor != best
+                rem_edge!(graph, vertex, neighbor)
+            end
+        end
+    end
+end
+function keep_best_only!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
+    if F == Num
+        throw(ArgumentError(f"function keep_best_only! is only valid for ComplexAllosteryGM types with a concrete weight type - aka F != Num"))
+    end
+    keep_best_only!(ca.graph, args...)
+end
+
+################################################################################
+# Running, plotting and saving functions
+################################################################################
 @inline function p_get_adjmat_symsafe(ca::ComplexAllosteryGM{S,F}) where {S,F}
     if F == Num
         map(x -> if iszero(x)
@@ -784,11 +806,12 @@ end
     end
 end
 
+# Plotting, also used by simGM
 function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
     layout=(:c1, Shell(), 1.0),
     jitter_devs=0.01,
     node_size_scale=10.0,
-    interactive=false,
+    interactive=:auto,
     colorbar=:auto,
     colormap=:dense,
     edges_filter=nothing,
@@ -796,13 +819,14 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
 ) where {S,F}
     if !isnothing(edges_filter)
         ca = copy(ca)
-        filter_edges(ca, edges_filter)
+        filter_edges!(ca, edges_filter)
     end
 
     dim = nothing
     axis_labels = nothing
     if isa(layout, NetworkLayout.AbstractLayout)
         layout = layout(p_get_adjmat_symsafe(ca))
+        dim = length(layout[1])
     else
         (type, layout_args...) = layout
         add_jitter = false
@@ -901,6 +925,9 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
         kwargs...
     )
 
+    if interactive == :auto
+        interactive = (dim == 2)
+    end
     if interactive
         make_interactive(fap)
     end
@@ -917,7 +944,7 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
     end
 
     if colorbar == :auto
-        colorbar = F != Num
+        colorbar = (F != Num) && (dim == 3)
     end
     if colorbar
         edgecolorbar(fap)
