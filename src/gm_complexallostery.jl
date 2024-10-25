@@ -875,6 +875,9 @@ function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     Makie.FigureAxisPlot(fig, ax, sc)
 end
 
+# Random util
+transition_matrix(ca::ComplexAllosteryGM) = Matrix(transpose(adjacency_matrix(ca.graph)))
+
 # Saving internal data
 """
 The adjacency matrix elements A_ij correspond to the rate/probability of 
@@ -886,6 +889,9 @@ function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), sh
 
     row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
     am = Matrix{Any}(adjacency_matrix(ca.graph))
+    if transpose
+        am = Base.transpose(am)
+    end
     if short
         header = [""; repr.(1:numstates(ca))]
         am = map(x -> if iszero(x)
@@ -894,7 +900,7 @@ function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), sh
                 1
             end, am)
     else
-        header = [""; repr.(allstates(ca))]
+        header = [""; row_names]
     end
     modified_matrix = [row_names am]
 
