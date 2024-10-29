@@ -576,6 +576,48 @@ function get_test_terms(args...)
     terms
 end
 
+"""
+Achieves a similar goal to the above but much faster especially for multiple calls.
+Each of these createsm a "factory" for making the given object given values for all
+the variables in it. These are then very fast to use.
+"""
+function make_factory(arr, variables=Num.(get_variables(arr)); kwargs...)
+    num_vars = length(variables)
+
+    bfunc = build_function(arr, variables; expression=Val(false), kwargs...)[1]
+
+    function (args...)
+        if length(args) != num_vars
+            throw(ArgumentError(f"closure expected {num_vars} arguments but received {length(args)}"))
+        end
+        bfunc(SVector(args))
+    end
+end
+function make_factory(em::EnergyMatrices, variables=Num.(get_variables(em)); kwargs...)
+    mono_fact = make_factory(em.monomer, variables; kwargs...)
+    int_fact = make_factory(em.interactions, variables; kwargs...)
+
+    function (args...)
+        EnergyMatrices(
+            Matrix{Float64}(mono_fact(args...)),
+            Matrix{Float64}(int_fact(args...))
+        )
+    end
+end
+function make_factory(ca::ComplexAllosteryGM{S}, variables=Num.(get_variables(ca)); kwargs...) where {S}
+    em_fact = make_factory(ca.energy_matrices, variables; kwargs...)
+    adjmat_fact = make_factory(adjacency_matrix(ca.graph), variables; kwargs...)
+
+    function (args...)
+        ComplexAllosteryGM(ca.N, ca.C, ca.B;
+            symmetry=S(),
+            numtype=Val(Float64),
+            energy_matrices=em_fact(args...),
+            graph=SimpleWeightedDiGraph(adjmat_fact(args...))
+        )
+    end
+end
+
 ################################################################################
 # ca/graph manipulations
 ################################################################################
@@ -628,6 +670,7 @@ end
 
 # Plotting, also used by simGM
 function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
+    ax=nothing,
     layout=(:NRbs3,),
     jitter_devs=0.01,
     node_size_scale=10.0,
@@ -705,7 +748,7 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
             add_jitter = true
         elseif type == :N1
             layout = [
-                (Float64(calc_numligands(st)), 0.) for st in allstates(ca)
+                (Float64(calc_numligands(st)), 0.0) for st in allstates(ca)
             ]
             maxs = maximum(layout)
             axis_labels = (f"N({maxs[1]})", "")
@@ -752,29 +795,40 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
         auto_kwargs[:elabels_shift] = 0.4
     end
 
-    fap = graphplot(ca.graph, args...;
-        layout,
-        node_color,
-        node_size,
-        auto_kwargs...,
-        kwargs...
-    )
+    if isnothing(ax)
+        (fig, ax, plot) = graphplot(ca.graph, args...;
+            layout,
+            node_color,
+            node_size,
+            auto_kwargs...,
+            kwargs...
+        )
+    else
+        fig = ax.parent
+        plot = graphplot!(ax, ca.graph, args...;
+            layout,
+            node_color,
+            node_size,
+            auto_kwargs...,
+            kwargs...
+        )
+    end
 
     if interactive == :auto
         interactive = (dim == 2)
     end
     if interactive
-        make_interactive(fap)
+        make_interactive(ax, plot)
     end
 
     if !isnothing(axis_labels)
         if dim == 3
-            xlabel!(fap.axis.scene, axis_labels[1])
-            ylabel!(fap.axis.scene, axis_labels[2])
-            zlabel!(fap.axis.scene, axis_labels[3])
+            xlabel!(ax.scene, axis_labels[1])
+            ylabel!(ax.scene, axis_labels[2])
+            zlabel!(ax.scene, axis_labels[3])
         elseif dim == 2
-            fap.axis.xlabel[] = axis_labels[1]
-            fap.axis.ylabel[] = axis_labels[2]
+            ax.xlabel[] = axis_labels[1]
+            ax.ylabel[] = axis_labels[2]
         end
     end
 
@@ -782,10 +836,10 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
         colorbar = (F != Num) && (dim == 3)
     end
     if colorbar
-        edgecolorbar(fap)
+        edgecolorbar(fig, plot)
     end
 
-    fap
+    Makie.FigureAxisPlot(fig, ax, plot)
 end
 
 function plot_CA_sym(ca::ComplexAllosteryGM, args...; kwargs...)

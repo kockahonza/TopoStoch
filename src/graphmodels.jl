@@ -148,17 +148,19 @@ end
 ################################################################################
 # Utility functions
 ################################################################################
-function edgecolorbar((f, a, p))
-    edgeploti = findfirst(typeof(plot) <: Plot{GraphMakie.edgeplot} for plot in p.plots)
-    Colorbar(f[1, 2], p.plots[edgeploti])
+function edgecolorbar(fig, plot)
+    edgeploti = findfirst(typeof(plot_) <: Plot{GraphMakie.edgeplot} for plot_ in plot.plots)
+    Colorbar(fig[1, 2], plot.plots[edgeploti])
 end
+edgecolorbar((fig, ax, plot)) = edgecolorbar(fig, plot)
 
-function make_interactive((f, a, p))
-    deregister_interaction!(a, :rectanglezoom)
+function make_interactive(ax, plot)
+    deregister_interaction!(ax, :rectanglezoom)
     function node_drag_action(state, idx, event, axis)
-        p[:node_pos][][idx] = event.data
-        p[:node_pos][] = p[:node_pos][]
+        plot[:node_pos][][idx] = event.data
+        plot[:node_pos][] = plot[:node_pos][]
     end
     ndrag = NodeDragHandler(node_drag_action)
-    register_interaction!(a, :ndrag, ndrag)
+    register_interaction!(ax, :ndrag, ndrag)
 end
+make_interactive((_, ax, plot)) = make_interactive(ax, plot)
