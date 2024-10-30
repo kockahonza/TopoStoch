@@ -1,0 +1,290 @@
+\documentclass[11pt]{article}
+\usepackage[top=20mm,bottom=40mm,left=20mm,right=20mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage[version=4]{mhchem}
+\usepackage{graphics}
+\usepackage{tikz}
+\usetikzlibrary{math}
+
+\usepackage{stackengine}
+\usepackage{float}
+\usepackage{cleveref}
+\usepackage{lipsum}
+
+\allowdisplaybreaks
+
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0em}
+
+\newcommand\set[1]{\ensuremath{\{#1\}}}
+\newcommand\textbff[1]{\textbf{\boldmath #1}}
+\newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
+
+\begin{document}
+\begin{center}
+    \LARGE
+    \textbf{Summary of Model 2.5}
+    \vspace{1em}
+\end{center}
+
+Same as Model 2 but with the locality problem fixed and different $r_?$ parameters based on conformation.
+
+\section{Energies}\label{sec:energies}
+As before, to summarize:
+\begin{equation}\label{eq:energy}
+    E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{1}{2} \sum_i E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})
+\end{equation}
+where $E_M$ is a $C{\times}(B+1)$ matrix defining the energies of each individual monomer according to its conformation and number of bound ligands.
+And $E_I$ is a $C{\times}C$ matrix defining the monomer interaction energies, specifically $E_I(c_1, c_2)$ is the energy cost of having a monomer of conformation $c_1$ to the left of one in conformation $c_2$, hence the particular ordering in \cref{eq:energy}.
+The model is achiral if $E_I$ is symmetric.
+There is one caviat to \cref{eq:energy} which is why the $\simeq$ symbol is used and that is the problem of boundaries.
+Specifically, are we considering a single chain of monomers or a loop that joins its ends, \cref{eq:energy} is correct for a loop and can be easily corrected for a chain configuration.
+
+Notably, we can also write \cref{eq:energy} as
+\begin{equation}\label{eq:energy_ind}
+    E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})}{2} = \sum_i E_{i}
+\end{equation}
+where $E_i$ are the energies associated with each monomer and its state.
+
+\subsection{General case}
+In the general case we can write
+\begin{align}
+    E_M \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_{1,1} & \epsilon_{1,2} & \cdots \\
+        \epsilon_{2,0} & \epsilon_{2,1} & \epsilon_{2,2} & \cdots \\
+        \epsilon_{3,0} & \epsilon_{3,1} & \epsilon_{3,2} & \cdots \\
+        \vdots & \vdots & \vdots & \ddots
+    \end{pmatrix}
+    &&
+    E_I \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_{b,1} & \epsilon_{b,2} & \cdots \\
+        \epsilon_{b,1} & 0 & \epsilon_{b,B+1} & \cdots \\
+        \epsilon_{b,2} & \epsilon_{b,B+1} & 0 & \cdots \\
+        \vdots & \vdots & \vdots & \ddots
+    \end{pmatrix}
+\end{align}
+
+Restricting ourselves to the $C=2$, achiral case we can immediately simplify to
+\begin{align}
+    E_M \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_{T,1} & \epsilon_{T,2} & \cdots \\
+        \epsilon_{R,0} & \epsilon_{R,1} & \epsilon_{R,2} & \cdots \\
+    \end{pmatrix}
+    &&
+    E_I \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_b \\
+        \epsilon_b & 0 \\
+    \end{pmatrix}
+\end{align}
+borrowing the tense ($T$) and relaxed ($R$) conformation labels from haemoglobin models where presumably $\epsilon_{R,0} \geq 0$ and $\epsilon_{T,i} \geq \epsilon_{R,i}$ for most of $i \neq 0$.
+\subsection{Simplest case}
+However, to further reduce the number of parameters we use
+\begin{align}
+    E_M \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_t & 2\epsilon_t & \cdots \\
+        \Delta\epsilon_r & \epsilon_t - \Delta\epsilon_r & 2\epsilon_t - \Delta\epsilon_r & \cdots \\
+    \end{pmatrix}
+    &&
+    E_I \leftrightarrow \begin{pmatrix}
+        0 & \epsilon_b \\
+        \epsilon_b & 0 \\
+    \end{pmatrix}
+\end{align}
+where $\epsilon_t$ sets the overall energy of binding additional ligands and $\Delta\epsilon_r$ is a measure of how different the $R$ state is.
+
+\section{Equilibrium/Boltzmann Statistics}
+Firstly, defining our system as the polymer only (not any ligands or other chemicals floating around) its clear we are working in a Grand Canonical Ensamble.
+Thus for each microstate we are interested in what its energy is and how many ligands are bound in that microstate, denote these as $E_\alpha$ and $N_\alpha$.
+Then the probabilities of microstates being occupied is given by their Gibbs factors so that
+\begin{equation}
+    p_\alpha \propto \exp(-\beta(E_\alpha - \mu N_\alpha))
+\end{equation}
+with $\mu$ being the chemical potential of the ligand.
+This is a slightly problematic quantity as I'm not too sure how this fits in with the next section, however I suspect it should be kept as a separate thing as long as possible.
+
+\section{Modified Transition Rates}
+We still consider the recipe as in Model 2 where for a reaction
+\begin{equation}
+    \ce{S_1 + S_2 + $\cdots$ <=>[$r_f$][$r_b$] P_1 + P_2 + $\cdots$}
+\end{equation}
+we get
+\begin{equation}
+    \frac{r_f}{r_b} = \exp(\beta(\mu_{\text{S}_1} + \mu_{\text{S}_2} + \cdots - \mu_{\text{P}_1} - \mu_{\text{P}_2} - \cdots))
+\end{equation}
+where each $\mu_X = \epsilon_X + \si{k_B}T\ln(c_X)$ and we make a choice to split the terms so that
+\begin{align}
+    &r_f = r c_{\text{S}_1}c_{\text{S}_1}\cdots \exp(\beta(\theta_f(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots) - (1-\theta_b)(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots))) \\
+    &r_b = r c_{\text{P}_1}c_{\text{P}_1}\cdots \exp(\beta(\theta_b(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots) - (1-\theta_f)(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots)))
+\end{align}
+so that higher concentrations of any chemicals increase the rates of those reactions using them (reasonable) and then we can split the energetic contributions to the $\mu$ between the forward and backward rates using the dimensionless $\theta_?$ parameters.
+
+\subsection{Transition rates for Model 2.5}
+We still consider the following three processes
+\begin{align}
+    \text{Process 1:} && \ce{P + $S$ &<=>[$r_{1f}$][$r_{1b}$] $S'$} \\
+    \text{Process 2:} && \ce{ATP + $S$ &<=>[$r_{2f}$][$r_{2b}$] ADP + $S'$} \\
+    \text{Process 3:} && \ce{$S$ &<=>[$r_{3f}$][$r_{3b}$] $S'$}
+\end{align}
+where the $S$s are different in each process and denote different microstates of our polymer.
+
+Though here we examine the different $\mu_?$ in more detail.
+Specifically, for each outside chemical we use $\mu_{chem} = \epsilon_{chem}+\si{k_B}T\ln(c_{chem})$ as before.
+However, for the polymer states we only have a direct energetic contribution.
+In model 2 we used $\mu_S=\epsilon_S$ where $\epsilon_S$ was the energy of the whole microstate $S$ as given by \cref{eq:energy}, however this lead to the locality breaking in that model.
+To correct for that, we now change $\mu_S$ to be only that energy of the microstate $S$ that is associated with the monomer that undergoes a change.
+We label these $E^S_i$ as these correspond to the $E_i$ of \cref{eq:energy_ind} but depend on the microstate labelled by $S$ and throughout this section $i$ may refer to the index of the monomer that is affected by any of the processes.
+
+The second change to the transition rates in this model is that we allow the scaling parameters $r_?$ associated with processes 1 and 2 to depend on the affected monomers conformation.
+This is physically reasonable as the rates at which (de)binding happens very likely does depend on the conformation of the monomer besides just the energetic dependence already in model 2.
+We label these as $r_1(c_i)$ and $r_2(c_i)$ where again $i$ is the index of the affected monomer, but we still keep only one $r_3$.
+
+Taking all this into account we arrive at
+\begin{align}
+    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(E_i^S+\mu_P-E_i^{S'})) = c_P\exp(\beta(E_i^S+\epsilon_P-E_i^{S'})) \\
+    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(E_i^S+\mu_{ATP}-E_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(E_i^S+\epsilon_{ATP}-E_i^{S'}-\epsilon_{ADP})) \\
+    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(E_i^S-E_i^{S'}))
+\end{align}
+and so
+\begin{align}
+    &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(E_i^S+\epsilon_P)-(1-\theta_{1b})E_i^{S'})) \label{eq:rate1f} \\
+    &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}E_i^{S'}-(1-\theta_{1f})(E_i^S+\epsilon_P))) \label{eq:rate1b} \\
+    &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(E_i^S+\epsilon_{ATP})-(1-\theta_{2b})(E_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
+    &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(E_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(E_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
+    &r_{3f} = r_3\exp(\beta(\theta_{3f}E_i^S-(1-\theta_{3b})E_i^{S'})) \label{eq:rate3f} \\
+    &r_{3b} = r_3\exp(\beta(\theta_{3b}E_i^{S'}-(1-\theta_{3f})E_i^S)) \label{eq:rate3b}
+\end{align}
+where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
+
+\section{Parameters}
+The model has the following parameters
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+        Where they come from & parameters & units \\
+        \hline
+        Energy parameters & $\epsilon_t, \Delta\epsilon_r, \epsilon_b$ & \si{E} \\
+        Equilibrium statistics & $\mu, \si{k_b}T$ & \si{E} \\
+        Rates: overall scaling & $r_{1/2}(c_i),r_3$ -- $2C+1$ of these & rates -- \si{T^{-1}} \\
+        Rates: dimensionless concentrations & $c_P,c_{ATP},c_{ADP}$ & \si{1} \\
+        Rates: intrinsic chemical energies & $\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ & \si{E} \\
+        Rates: thetas/balancing & $\theta_{1/2/3,f/b}$ -- 6 of these & \si{1} \\
+    \end{tabular}
+\end{table}
+
+\subsection{Reducing parameters}
+Firstly, assuming constant $T$ we may choose $\si{k_B}T = 1\si{E}$ to be our energy unit.
+We can also reasonably take all the $\theta_?$ to be equal.
+Beyond this it gets more controversial.
+
+Perhaps we can start with the intrinsic chemical energies to be 0, the $\theta_?$ to be 1 and all the dimensionless concentrations to be 1?
+This seems like a first step of simplifying choices.
+This leaves us at having the energy parameters and the rate scales as parameters.
+It further seems reasonable for the rate scales to be ${\sim}1$, however we do have to implement a difference between the $c_i$ to have a chance at futile cycles.
+
+
+\section{Finding Futile Cycles}
+So on the last meeting with both Kabir and Jaime we talked about considering a single monomer in the polymer with $B=1$ and how that essentially gets 4 states to live in visualized in \cref{fig:4states}.
+(This essentially captures all the physics except the boundary interactions, so $E_I$ and $\epsilon_b$.)
+Now in the old Model 1 the situation was that two of these transitions are always "driven" just by the nature of the $R$ and $T$ states (this is still true in Model 2).
+And the other two arrows could either both point in the same direction or opposite each other, but only in the contraflow direction to the cycle direction given by the energetic transitions.
+Meaning we could not have a futile cycle on this level in that model, a major part of switching to Model 2 was to be able to drive it out of equilibrium due to having two different reactions and perhaps being able to complete this cycle.
+
+\begin{figure}[H]
+    \tikzmath{
+        \Dx = 5;
+        \Dy = 7;
+        \R = 0.4;
+        \LR = 0.1;
+        \Tb = 0.1;
+        \Tx = \Dx-2*(\R+\Tb);
+        \Ty = \Dy-2*(\R+\Tb);
+    }
+    \centering
+    \begin{tikzpicture}
+        \draw[black] (0,0) circle (\R);
+        \draw[black] (0-\R,\Dx-\R) rectangle (0+\R, \Dx+\R);
+        \draw[black] (\Dy,0) circle (\R);
+        \draw[black] (\Dy+\R+\LR,0) circle (\LR);
+        \draw[black] (\Dy-\R,\Dx-\R) rectangle (\Dy+\R, \Dx+\R);
+        \draw[black] (\Dy+\R+\LR,\Dx) circle (\LR);
+
+        \draw[->,blue] (0,\R+\Tb) -- node[sloped,above,text width=\Tx cm,align=center] {Energetically driven as $\Delta\epsilon_r > 0$} (0,\Dx-\R-\Tb);
+        \draw[->,blue] (\Dy,\Dx-\R-\Tb) -- node[sloped,above,text width=\Tx cm,align=center] {Energitically driven as $\epsilon_t>0$} (\Dy,\R+\Tb);
+
+        \draw[<->,red] (\R+\Tb,\Dx) -- node[sloped,above,text width=\Ty cm,align=center] {Energetically wants to go left, but can be driven right by chemical potentials} (\Dy-\R-\Tb,\Dx);
+        \draw[<->,red] (\R+\Tb,0) -- node[sloped,above,text width=\Ty cm,align=center] {Energetically wants to go left, but can be driven right by chemical potentials} (\Dy-\R-\Tb,0);
+    \end{tikzpicture}
+    \caption{
+        Diagram of single monomer transitions for $C=2,B=1$.
+        Top row is the tense conformational states, bottom is the relaxed ones.
+        Left column are without a ligand and right column with one ligand bound.
+    }\label{fig:4states}
+\end{figure}
+
+\subsection{Cannot complete the cycle in Model 2}\label{sec:noFC}
+In Model 2 the conditions to drive each of the red arrows in \cref{fig:4states} is that $\frac{r_{1f}+r_{2f}}{r_{1b}+r_{2b}} > 1$, however the energies $\epsilon_S$ and $\epsilon_{S'}$ will differ in either case.
+The question now is how do we set the various parameters to achieve different directions of the red arrows (and whether all are even attainable).
+
+However, it seems that even in this model we are still unable to complete the cycle and have the top red arrow point right and the bottom left.
+To show this we need to expand the condition of each transition being driven to the right
+\begin{align}
+    &\frac{r_{1f}+r_{2f}}{r_{1b}+r_{2b}} > 1 \\
+    &\frac{r_1c_P\exp(\beta(\theta_{1f}(\epsilon_S+\epsilon_P)-(1-\theta_{1b})\epsilon_{S'})) + r_2c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_{S'}+\epsilon_{ADP})))}{r_1\exp(\beta(\theta_{1b}\epsilon_{S'}-(1-\theta_{1f})(\epsilon_S+\epsilon_P))) + r_2c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_S+\epsilon_{ATP})))} > 1
+\end{align}
+the form of which with respect to the microstate energies is
+\begin{align}
+    &\frac{?\exp(\beta(?\epsilon_S-?\epsilon_{S'})) + ?\exp(\beta(?\epsilon_S-?\epsilon_{S'}))}{?\exp(\beta(?\epsilon_{S'}-?\epsilon_S)) + ?\exp(\beta(?\epsilon_{S'}-?\epsilon_S))} > 1
+\end{align}
+with all the $?$ being different expressions which are crucially all positive.
+
+Now if we focus on a particular monomer within the polymer undergoing a (de)binding process (with the rest of the polymer not changing), then there's only two cases depending on the monomer's conformation each of which correspond to one of the two arrows.
+If we consider $\epsilon_S$ and $\epsilon_{S'}$ to be the energies before and after a (de)binding process (or vice versa) for when the monomer is in the $T$ conformation (corresponds to top arrow).
+Then in the $R$ conformation (bottom arrow) those would change exactly by $+\Delta\epsilon_r$ and $-\Delta\epsilon_r$ respectively.
+Coming back to trying to complete the cycle in \cref{fig:4states} that would require us silmutaneously having
+\begin{equation}
+    &\frac{?\exp(\beta(?\epsilon_S-?\epsilon_{S'})) + ?\exp(\beta(?\epsilon_S-?\epsilon_{S'}))}{?\exp(\beta(?\epsilon_{S'}-?\epsilon_S)) + ?\exp(\beta(?\epsilon_{S'}-?\epsilon_S))} > 1 \\
+\end{equation}
+and
+\begin{equation}
+    &\frac{?\exp(\beta(?(\epsilon_S+\Delta\epsilon_r)-?(\epsilon_{S'}-\Delta\epsilon_r))) + ?\exp(\beta(?(\epsilon_S+\Delta\epsilon_r)-?(\epsilon_{S'}-\Delta\epsilon_r)))}{?\exp(\beta(?(\epsilon_{S'}-\Delta\epsilon_r)-?(\epsilon_S+\Delta\epsilon_r))) + ?\exp(\beta(?(\epsilon_{S'}-\Delta\epsilon_r)-?(\epsilon_S+\Delta\epsilon_r)))} < 1
+\end{equation}
+However, as all the different $?$ are positive then clearly the term in the second inequality is larger than the one in the first.
+Thus we cannot have both at the same time, in other words no matter how we tune the parameters we cannot achieve a simple futile cycle where a single monomer continuously undergoes binding, $T \rightarrow R$, debinding and $R \rightarrow T$ in this model.
+
+This does also seem to make some intuitive sense as no matter what the energy gap for (de)binding is always smaller when the monomer is in the the $R$ conformation, meaning it is logical that as one tunes the concentrations binding would always first occur in the $R$ conformation before taking place in $T$.
+
+Further, for a more vague and abstract argument for why we cannot make such a futile cycle in this system is because at the end of the day each of these reactions try to minimize the same thing (somewhat).
+In some way the red and blue arrows come from different processes, however they still all minimize the system energy plus some vague chemical potential contributions with the dominant direction of each arrow being decided by which state has a lower value of this total potential.
+If all of this is true then of course we cannot get a futile cycle as this would require having $E_1 < E_2 < E_3 < E_4 < E_1$ where these label the values of this abstract potential for each state of the monomer.
+
+\section{Breaking Locality}
+Another questionable feature of Model 2 as presented is that it seems to break locality where it does not seem physically reasonable.
+Given that all the rates $r_?$ depend on the energy of the microstate as a whole (I think it is very likely this point that should be changed!) we get that the rate of the 1st monomer binding a ligand would depend on both the conformational states and binding numbers of each of the other monomers as they each contribute to the energy.
+This just seems plain wrong and I think I ought to change the model to account for this, however the points from \cref{sec:noFC} would still hold.
+
+For example considering the $N=2,C=2,B=1$ system, the following table shows the rates of the first monomer binding a ligand for a couple of microstates differing by the state of the other ligand
+\begin{table}[H]
+    \scriptsize
+    \centering
+    \setlength\tabcolsep{3pt}
+    \begin{tabular}{| c | c | c | c | c |}
+        \hline
+        \multicolumn{2}{|c|}{pre-binding} & $\rightleftharpoons$ & \multicolumn{2}{c|}{post-binding} \\
+        \set{c_i} & \set{b_i} & rate & \set{c_i} & \set{b_i} \\
+        \hline
+        \set{1, 1} & \set{0, 0} & $r_1c_P e^{\beta(\theta_{1f}\epsilon_{P} - (1-\theta_{1b})\epsilon_t)} + r_2c_{ATP} e^{\beta(\theta_{2f}\epsilon_{ATP} - (1-\theta_{2b})(\epsilon_{ADP}+\epsilon_t))}$ & \set{1, 1} & \set{1, 0} \\ % 1 -> 5
+        \set{1, 2} & \set{0, 0} & $r_1c_P e^{\beta(\theta_{1f}(\epsilon_P+\Delta\epsilon_r+\epsilon_b) - (1-\theta_{1b})(\epsilon_t+\Delta\epsilon_r+\epsilon_b))} + r_2c_{ATP} e^{\beta(\theta_{2f}(\epsilon_{ATP}+\Delta\epsilon_r+\epsilon_b) - (1-\theta_{2b})(\epsilon_{ADP}+\epsilon_t+\Delta\epsilon_r+\epsilon_b))}$ & \set{1, 2} & \set{1, 0} \\ % 3 -> 7
+        \set{1, 1} & \set{0, 1} & $r_1c_P e^{\beta(\theta_{1f}(\epsilon_P+\epsilon_t) - (1-\theta_{1b})2\epsilon_t)} + r_2c_{ATP} e^{\beta(\theta_{2f}(\epsilon_{ATP}+\epsilon_t) - (1-\theta_{2b})(\epsilon_{ADP}+2\epsilon_t))}$ & \set{1, 1} & \set{1, 1} \\ % 9 -> 13
+        \hline
+    \end{tabular}
+\end{table}
+clearly these are different (even with $e_b=0$) despite the process at hand being the same.
+
+That said there is a notable exception to this when all $\theta_?$ are $\frac{1}{2}$ as then all the energy contributions from the distant parts (those unaffected by the process at hand) cancel out in the equations \cref{eq:rate1f,eq:rate1b,eq:rate2f,eq:rate2b,eq:rate3f,eq:rate3b}.
+
+\end{document}
