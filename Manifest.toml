@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.5"
+julia_version = "1.10.6"
 manifest_format = "2.0"
-project_hash = "5a760f5cf1236935536f561d96804c64251ea14d"
+project_hash = "d9df47c850513196e14fe2d4b792747bf6799910"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "eea5d80188827b35333801ef97a40c2ed653b081"
@@ -237,6 +237,18 @@ deps = ["CodecZlib", "DataValues", "FileIO", "HTTP", "IterableTables", "Iterator
 git-tree-sha1 = "2057fc0f258c2d67b31601d1a03319482a6f8b4c"
 uuid = "5d742f6a-9f54-50ce-8119-2520741973ca"
 version = "1.0.2"
+
+[[deps.Cairo]]
+deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
+git-tree-sha1 = "7b6ad8c35f4bc3bca8eb78127c8b99719506a5fb"
+uuid = "159f3aea-2a34-519c-b102-8c37f9878175"
+version = "1.1.0"
+
+[[deps.CairoMakie]]
+deps = ["CRC32c", "Cairo", "Cairo_jll", "Colors", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
+git-tree-sha1 = "7947d2b61995eda7d5ca50c697b12bb578b918e5"
+uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+version = "0.12.14"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -988,6 +1000,12 @@ deps = ["DataStructures", "GeometryBasics", "Graphs", "LinearAlgebra", "Makie", 
 git-tree-sha1 = "c8c3ece1211905888da48e16f438af85e951ea55"
 uuid = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 version = "0.5.12"
+
+[[deps.Graphics]]
+deps = ["Colors", "LinearAlgebra", "NaNMath"]
+git-tree-sha1 = "d61890399bc535850c4bf08e4e0d3a7ad0f21cbd"
+uuid = "a2bd30eb-e257-5431-a919-1863eab51364"
+version = "1.1.2"
 
 [[deps.Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
