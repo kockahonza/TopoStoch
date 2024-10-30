@@ -100,6 +100,7 @@ mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractG
 
     graph::SimpleWeightedDiGraph{T,F}
 
+    version::Union{Nothing,Float64}
     environment::Union{Nothing,Tuple{F,F}} # Pair of μ and kT
     metadata::Union{Nothing,Dict}
     function ComplexAllosteryGM(N::T, C::T, B::T;
@@ -107,6 +108,7 @@ mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractG
         numtype::Val{F}=Val(Num),
         energy_matrices=nothing,
         graph=nothing,
+        version=nothing,
         environment=nothing,
         metadata=nothing
     ) where {S,F,T<:Integer}
@@ -120,7 +122,7 @@ mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractG
             throw(ArgumentError(f"the provided graph does not have the right number of vertices for the given system"))
         end
 
-        new{S,F,T}(N, C, B, energy_matrices, graph, environment, metadata)
+        new{S,F,T}(N, C, B, energy_matrices, graph, version, environment, metadata)
     end
 end
 broadcastable(ca::ComplexAllosteryGM) = Ref(ca)
@@ -139,10 +141,12 @@ function show(io::IO, mime::MIME"text/plain", ca::ComplexAllosteryGM{S,F,T}) whe
     println(f"N={ca.N}, C={ca.C}, B={ca.B}")
     println(f"energy_matrices:")
     show(io, mime, ca.energy_matrices)
-    println(f"\ngraph:")
+    print(f"\ngraph: ")
     show(io, mime, ca.graph)
-    println(f"\nenvironment:")
+    print(f"\nenvironment: ")
     show(io, mime, ca.environment)
+    print(f"\nversion: ")
+    show(io, mime, ca.version)
     if !isnothing(ca.metadata)
         println(f"\nmetadata:")
         show(io, mime, ca.metadata)
@@ -933,19 +937,11 @@ end
 transition_matrix(ca::ComplexAllosteryGM) = Matrix(transpose(adjacency_matrix(ca.graph)))
 
 # Saving internal data
-"""
-The adjacency matrix elements A_ij correspond to the rate/probability of 
-transitioning from i to j. This is the transpose of a typical physics
-transition matrix. Setting transpose=true saves the transition matrix instead.
-"""
-function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), short=false, transpose=false)
-    file = open(plotsdir(savename("adjmat", ca, "table")), "w")
+function save_transmat(ca::ComplexAllosteryGM; name=savename("transmat", ca, "table"), short=false)
+    file = open(plotsdir(name), "w")
 
     row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
-    am = Matrix{Any}(adjacency_matrix(ca.graph))
-    if transpose
-        am = Base.transpose(am)
-    end
+    am = transmat(ca; mat=true)
     if short
         header = [""; repr.(1:numstates(ca))]
         am = map(x -> if iszero(x)
@@ -961,8 +957,6 @@ function save_adj_matrix(ca::ComplexAllosteryGM; name=savename("adjmat", ca), sh
     pretty_table(file, modified_matrix; header)
     close(file)
 end
-
-save_transition_matrix(ca::ComplexAllosteryGM; short=false) = save_adj_matrix(ca; name=savename("transmat", ca), transpose=true, short)
 
 function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
     file = open(plotsdir(savename("gibbsfs", ca, "table")), "w")

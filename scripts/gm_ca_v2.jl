@@ -7,7 +7,10 @@ include(srcdir("gm_complexallostery.jl"))
 # The simple case, C=2 and B mostly 1
 ################################################################################
 function make_v2(N, B; edge_t=:full)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_EM_sym_C2(B))
+    ca = ComplexAllosteryGM(N, 2, B;
+        energy_matrices=make_EM_sym_C2(B),
+        version=2
+    )
 
     if edge_t == :full
         add_edges_full!(ca)

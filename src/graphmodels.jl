@@ -148,6 +148,16 @@ end
 ################################################################################
 # Utility functions
 ################################################################################
+"""
+The standard Markov chain/Master equation transition matrix where the
+ij th element corresponds to a transition/rate from j to i.
+"""
+function transmat(gm::AbstractGraphModel; mat=false)
+    tm = transpose(adjacency_matrix(graph(gm)))
+    mat ? Matrix(tm) : tm
+end
+
+# Plotting
 function edgecolorbar(fig, plot)
     edgeploti = findfirst(typeof(plot_) <: Plot{GraphMakie.edgeplot} for plot_ in plot.plots)
     Colorbar(fig[1, 2], plot.plots[edgeploti])
