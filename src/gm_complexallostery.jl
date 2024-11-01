@@ -11,6 +11,7 @@ using StaticArrays, SparseArrays, DataFrames
 using PrettyTables, Latexify
 using PyFormattedStrings
 using Base.Threads
+using MathLink, SymbolicsMathLink
 
 import SymbolicUtils
 import SymbolicUtils.Rewriters
@@ -255,7 +256,12 @@ function get_neighbors(st::CAState, i, _::ComplexAllosteryGM{S}) where {S}
     get_neighbors(st, i, S())
 end
 
-function calc_neighbors_energy(st::CAState, i, em::EnergyMatrices, s::Symmetry)
+function calc_monomer_energy(st::CAState, i, em::EnergyMatrices)
+    em.monomer[st.conformations[i], st.occupations[i]+1]
+end
+calc_monomer_energy(st::CAState, i, ca::ComplexAllosteryGM) = calc_monomer_energy(st, i, ca.energy_matrices)
+
+function calc_interaction_energy(st::CAState, i, em::EnergyMatrices, s::Symmetry)
     (left, right) = get_neighbors(st, i, s)
     energy = 0
     if !isnothing(left)
@@ -264,15 +270,15 @@ function calc_neighbors_energy(st::CAState, i, em::EnergyMatrices, s::Symmetry)
     if !isnothing(right)
         energy += em.interactions[st.conformations[i], right]
     end
-    energy
+    0.5 * energy
 end
-calc_neighbors_energy(st::CAState, i, ca::ComplexAllosteryGM{S}) where {S} = calc_neighbors_energy(st, i, ca.energy_matrices, S())
+calc_interaction_energy(st::CAState, i, ca::ComplexAllosteryGM{S}) where {S} = calc_interaction_energy(st, i, ca.energy_matrices, S())
 
 function calc_energy(st::CAState, em::EnergyMatrices, s::Symmetry)
     energy = 0
     for i in 1:length(st.conformations)
-        energy += em.monomer[st.conformations[i], st.occupations[i]+1]
-        energy += 0.5 * calc_neighbors_energy(st, i, em, s)
+        energy += calc_monomer_energy(st, i, em)
+        energy += calc_interaction_energy(st, i, em, s)
     end
     energy
 end
@@ -655,6 +661,45 @@ function keep_best_only!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
         throw(ArgumentError(f"function keep_best_only! is only valid for ComplexAllosteryGM types with a concrete weight type - aka F != Num"))
     end
     keep_best_only!(ca.graph, args...)
+end
+
+################################################################################
+# ca/graph/matrix symbolics manipulation using Wolfram
+################################################################################
+function substitute_safenames(obj)
+    terms = Dict{Num,Num}()
+    letter = 'a'
+    for var in get_variables(obj)
+        terms[var] = Symbolics.variable(letter)
+        letter += 1
+        if letter > 'z'
+            throw(ErrorException("object has too many variables, ran out of alphabet"))
+        end
+    end
+    rev_terms = map(reverse, collect(terms))
+    substitute_partial(obj, terms), rev_terms
+end
+
+function make_safe(safe, obj)
+    if safe
+        sobj, rt = substitute_safenames(obj)
+        sobj, (srlst -> substitute_partial(srlst, rt))
+    else
+        obj, identity
+    end
+end
+
+function w_simplify(obj; full=true, safe=false)
+    obj, desafe = make_safe(safe, obj)
+    cmd = full ? "FullSimplify" : "Simplify"
+    rslt = wcall.(cmd, obj)
+    desafe(rslt)
+end
+
+function w_eigen(matrix; safe=true)
+    matrix, desafe = make_safe(safe, matrix)
+    rslt = wcall("Eigensystem", collect(transpose(matrix)))
+    (evals=desafe(rslt[1]), evecs=desafe.(rslt[2]))
 end
 
 ################################################################################
