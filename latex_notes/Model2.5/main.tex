@@ -136,8 +136,9 @@ Though here we examine the different $\mu_?$ in more detail.
 Specifically, for each outside chemical we use $\mu_{chem} = \epsilon_{chem}+\si{k_B}T\ln(c_{chem})$ as before.
 However, for the polymer states we only have a direct energetic contribution.
 In model 2 we used $\mu_S=\epsilon_S$ where $\epsilon_S$ was the energy of the whole microstate $S$ as given by \cref{eq:energy}, however this lead to the locality breaking in that model.
-To correct for that, we now change $\mu_S$ to be only that energy of the microstate $S$ that is associated with the monomer that undergoes a change.
-We label these $E^S_i$ as these correspond to the $E_i$ of \cref{eq:energy_ind} but depend on the microstate labelled by $S$ and throughout this section $i$ may refer to the index of the monomer that is affected by any of the processes.
+To correct for that, we now change $\mu_S$ to be only that energy of the microstate $S$ that is associated with the monomer that undergoes a change and relevant to the reaction.
+We label these $\epsilon^S_i$ as these correspond to parts of the $E_i$ of \cref{eq:energy_ind}, depend on the microstate labelled by $S$ and on which monomer is being affected denoted by $i$ throughout this section.
+Specifically we consider only the individual monomer energies given by $E_M$ for processes 1 and 2, and we consider that and the monomer nearest neighbor interaction energies given by $E_I$ for process 3.
 
 The second change to the transition rates in this model is that we allow the scaling parameters $r_?$ associated with processes 1 and 2 to depend on the affected monomers conformation.
 This is physically reasonable as the rates at which (de)binding happens very likely does depend on the conformation of the monomer besides just the energetic dependence already in model 2.
@@ -145,18 +146,18 @@ We label these as $r_1(c_i)$ and $r_2(c_i)$ where again $i$ is the index of the 
 
 Taking all this into account we arrive at
 \begin{align}
-    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(E_i^S+\mu_P-E_i^{S'})) = c_P\exp(\beta(E_i^S+\epsilon_P-E_i^{S'})) \\
-    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(E_i^S+\mu_{ATP}-E_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(E_i^S+\epsilon_{ATP}-E_i^{S'}-\epsilon_{ADP})) \\
-    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(E_i^S-E_i^{S'}))
+    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_P-\epsilon_i^{S'})) = c_P\exp(\beta(\epsilon_i^S+\epsilon_P-\epsilon_i^{S'})) \\
+    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_{ATP}-\epsilon_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(\epsilon_i^S+\epsilon_{ATP}-\epsilon_i^{S'}-\epsilon_{ADP})) \\
+    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'}))
 \end{align}
 and so
 \begin{align}
-    &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(E_i^S+\epsilon_P)-(1-\theta_{1b})E_i^{S'})) \label{eq:rate1f} \\
-    &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}E_i^{S'}-(1-\theta_{1f})(E_i^S+\epsilon_P))) \label{eq:rate1b} \\
-    &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(E_i^S+\epsilon_{ATP})-(1-\theta_{2b})(E_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
-    &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(E_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(E_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
-    &r_{3f} = r_3\exp(\beta(\theta_{3f}E_i^S-(1-\theta_{3b})E_i^{S'})) \label{eq:rate3f} \\
-    &r_{3b} = r_3\exp(\beta(\theta_{3b}E_i^{S'}-(1-\theta_{3f})E_i^S)) \label{eq:rate3b}
+    &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) \label{eq:rate1f} \\
+    &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) \label{eq:rate1b} \\
+    &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
+    &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
+    &r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) \label{eq:rate3f} \\
+    &r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
 \end{align}
 where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
 
@@ -261,30 +262,5 @@ This does also seem to make some intuitive sense as no matter what the energy ga
 Further, for a more vague and abstract argument for why we cannot make such a futile cycle in this system is because at the end of the day each of these reactions try to minimize the same thing (somewhat).
 In some way the red and blue arrows come from different processes, however they still all minimize the system energy plus some vague chemical potential contributions with the dominant direction of each arrow being decided by which state has a lower value of this total potential.
 If all of this is true then of course we cannot get a futile cycle as this would require having $E_1 < E_2 < E_3 < E_4 < E_1$ where these label the values of this abstract potential for each state of the monomer.
-
-\section{Breaking Locality}
-Another questionable feature of Model 2 as presented is that it seems to break locality where it does not seem physically reasonable.
-Given that all the rates $r_?$ depend on the energy of the microstate as a whole (I think it is very likely this point that should be changed!) we get that the rate of the 1st monomer binding a ligand would depend on both the conformational states and binding numbers of each of the other monomers as they each contribute to the energy.
-This just seems plain wrong and I think I ought to change the model to account for this, however the points from \cref{sec:noFC} would still hold.
-
-For example considering the $N=2,C=2,B=1$ system, the following table shows the rates of the first monomer binding a ligand for a couple of microstates differing by the state of the other ligand
-\begin{table}[H]
-    \scriptsize
-    \centering
-    \setlength\tabcolsep{3pt}
-    \begin{tabular}{| c | c | c | c | c |}
-        \hline
-        \multicolumn{2}{|c|}{pre-binding} & $\rightleftharpoons$ & \multicolumn{2}{c|}{post-binding} \\
-        \set{c_i} & \set{b_i} & rate & \set{c_i} & \set{b_i} \\
-        \hline
-        \set{1, 1} & \set{0, 0} & $r_1c_P e^{\beta(\theta_{1f}\epsilon_{P} - (1-\theta_{1b})\epsilon_t)} + r_2c_{ATP} e^{\beta(\theta_{2f}\epsilon_{ATP} - (1-\theta_{2b})(\epsilon_{ADP}+\epsilon_t))}$ & \set{1, 1} & \set{1, 0} \\ % 1 -> 5
-        \set{1, 2} & \set{0, 0} & $r_1c_P e^{\beta(\theta_{1f}(\epsilon_P+\Delta\epsilon_r+\epsilon_b) - (1-\theta_{1b})(\epsilon_t+\Delta\epsilon_r+\epsilon_b))} + r_2c_{ATP} e^{\beta(\theta_{2f}(\epsilon_{ATP}+\Delta\epsilon_r+\epsilon_b) - (1-\theta_{2b})(\epsilon_{ADP}+\epsilon_t+\Delta\epsilon_r+\epsilon_b))}$ & \set{1, 2} & \set{1, 0} \\ % 3 -> 7
-        \set{1, 1} & \set{0, 1} & $r_1c_P e^{\beta(\theta_{1f}(\epsilon_P+\epsilon_t) - (1-\theta_{1b})2\epsilon_t)} + r_2c_{ATP} e^{\beta(\theta_{2f}(\epsilon_{ATP}+\epsilon_t) - (1-\theta_{2b})(\epsilon_{ADP}+2\epsilon_t))}$ & \set{1, 1} & \set{1, 1} \\ % 9 -> 13
-        \hline
-    \end{tabular}
-\end{table}
-clearly these are different (even with $e_b=0$) despite the process at hand being the same.
-
-That said there is a notable exception to this when all $\theta_?$ are $\frac{1}{2}$ as then all the energy contributions from the distant parts (those unaffected by the process at hand) cancel out in the equations \cref{eq:rate1f,eq:rate1b,eq:rate2f,eq:rate2b,eq:rate3f,eq:rate3b}.
 
 \end{document}
