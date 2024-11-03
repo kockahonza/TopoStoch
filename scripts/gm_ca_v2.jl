@@ -126,5 +126,5 @@ function fsimp(ca::ComplexAllosteryGM; which=:both)
     end
     terms
 
-    substitute_partial(ca, terms)
+    ssubstitute(ca, terms)
 end

@@ -4,7 +4,7 @@ using DrWatson
 using Graphs, SimpleWeightedGraphs
 using GLMakie
 using StatsBase
-using StaticArrays
+using StaticArrays, SparseArrays
 using PyFormattedStrings
 
 include("general.jl")
@@ -154,7 +154,7 @@ ij th element corresponds to a transition/rate from j to i.
 """
 function transmat(gm::AbstractGraphModel; mat=false)
     tm = transpose(adjacency_matrix(graph(gm)))
-    mat ? Matrix(tm) : tm
+    mat ? Matrix(tm) : sparse(tm)
 end
 
 # Plotting

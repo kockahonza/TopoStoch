@@ -12,6 +12,7 @@ using PrettyTables, Latexify
 using PyFormattedStrings
 using Base.Threads
 using MathLink, SymbolicsMathLink
+using JLD2
 
 import SymbolicUtils
 import SymbolicUtils.Rewriters
@@ -484,17 +485,18 @@ end
 ################################################################################
 # "Concretizing" - plugging values for symbolic terms and making everything Float
 ################################################################################
-function get_variables(arr::Array{Num})
+get_variables(term) = Set{Num}(Symbolics.get_variables(term))
+function get_variables(arr::AbstractArray)
     variables = Set{Num}()
     for term in arr
-        for var in Symbolics.get_variables(term)
-            push!(variables, var)
+        for var in get_variables(term)
+            push!(variables, Num(var))
         end
     end
     variables
 end
 get_variables(::Nothing) = Set{Num}()
-function get_variables(em::EnergyMatrices{Num})
+function get_variables(em::EnergyMatrices)
     union(get_variables(em.monomer), get_variables(em.interactions))
 end
 function get_variables(ca::ComplexAllosteryGM{S,Num}) where {S}
@@ -508,23 +510,25 @@ function get_variables(ca::ComplexAllosteryGM{S,Num}) where {S}
 end
 
 """
-Substitute some variables in a symbolic Array, EnergyMatrices or
-ComplexAllosteryGM keeping it as symbolic.
+(Simple)Substitute, works almost like Symbolics substitute but
+is defined on the custom types in this project and will always
+use Num, not any other funny types
 """
-function substitute_partial(arr::AbstractArray, terms)
+ssubstitute(num::Num, terms) = substitute(num, terms)
+function ssubstitute(arr::AbstractArray, terms)
     new_arr = similar(arr)
     for i in eachindex(arr, new_arr)
-        new_arr[i] = substitute(arr[i], terms)
+        new_arr[i] = ssubstitute(arr[i], terms)
     end
     new_arr
 end
-function substitute_partial(em::EnergyMatrices, terms)
-    EnergyMatrices(substitute_partial(em.monomer, terms), substitute_partial(em.interactions, terms))
+function ssubstitute(em::EnergyMatrices, terms)
+    EnergyMatrices(ssubstitute(em.monomer, terms), ssubstitute(em.interactions, terms))
 end
-function substitute_partial(ca::ComplexAllosteryGM{S,F}, terms::Dict) where {S,F}
-    new_energy_matrices = substitute_partial(ca.energy_matrices, terms)
+function ssubstitute(ca::ComplexAllosteryGM{S,F}, terms::Dict) where {S,F}
+    new_energy_matrices = ssubstitute(ca.energy_matrices, terms)
     new_graph = SimpleWeightedDiGraph(
-        substitute_partial(adjacency_matrix(ca.graph), terms)
+        ssubstitute(adjacency_matrix(ca.graph), terms)
     )
     new_metadata = Dict{Any,Any}(terms)
     new_metadata["old_metadata"] = ca.metadata
@@ -677,13 +681,36 @@ function substitute_safenames(obj)
         end
     end
     rev_terms = map(reverse, collect(terms))
-    substitute_partial(obj, terms), rev_terms
+    ssubstitute(obj, terms), rev_terms
+end
+
+function substitute_safenames2(matrix)
+    simple_matrix = similar(matrix)
+    rev_terms = Dict{Num,Num}()
+    letter = 'a'
+    for i in eachindex(matrix)
+        v = matrix[i]
+        if iszero(v)
+            simple_matrix[i] = v
+        else
+            var = Symbolics.variable(letter)
+            simple_matrix[i] = var
+            letter += 1
+            rev_terms[var] = v
+        end
+    end
+    simple_matrix, rev_terms
+end
+
+function prep_for_wolfram(obj)
+    sobj, rt = substitute_safenames(obj)
+    SymbolicsMathLink.expr_to_mathematica(sobj), rt
 end
 
 function make_safe(safe, obj)
     if safe
         sobj, rt = substitute_safenames(obj)
-        sobj, (srlst -> substitute_partial(srlst, rt))
+        sobj, (srlst -> ssubstitute(srlst, rt))
     else
         obj, identity
     end
@@ -700,6 +727,26 @@ function w_eigen(matrix; safe=true)
     matrix, desafe = make_safe(safe, matrix)
     rslt = wcall("Eigensystem", collect(transpose(matrix)))
     (evals=desafe(rslt[1]), evecs=desafe.(rslt[2]))
+end
+
+function w_test_eigen(matrix; eigen_func=w_eigen, safe=false)
+    (evals, evecs) = eigen_func(matrix; safe)
+    residues = []
+    for (eval, evec) in zip(evals, evecs)
+        coeffs = (matrix * evec) ./ evec
+        push!(residues, w_simplify(coeffs .- eval; safe))
+    end
+    residues
+end
+
+function w_eigen(ca::ComplexAllosteryGM; simplify=false)
+    tm = transmat(ca)
+    stm, rt = substitute_safenames2(tm)
+    esys = w_eigen(stm; safe=false)
+    if simplify
+        esys = map(w_simplify, esys)
+    end
+    map(x -> ssubstitute(x, rt), esys)
 end
 
 ################################################################################
@@ -769,7 +816,7 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
                 Point{3,Float64}(calc_numligands(st), calc_numofconf(st), calc_numboundaries(st, ca)) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"#relaxed({maxs[2]})", f"#boundaries({maxs[3]})")
+            axis_labels = (f"N({maxs[1]})", f"#tense({maxs[2]})", f"#boundaries({maxs[3]})")
             add_jitter = true
         elseif type == :NE2
             layout = [
@@ -792,7 +839,7 @@ function plotGM(ca::ComplexAllosteryGM{S,F}, args...;
                 (Float64(calc_numligands(st)), Float64(calc_numofconf(st))) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"Number of relaxed({maxs[2]})")
+            axis_labels = (f"N({maxs[1]})", f"Number of tense({maxs[2]})")
             dim = 2
             add_jitter = true
         elseif type == :N1
@@ -983,7 +1030,7 @@ transition_matrix(ca::ComplexAllosteryGM) = Matrix(transpose(adjacency_matrix(ca
 
 # Saving internal data
 function save_transmat(ca::ComplexAllosteryGM; name=savename("transmat", ca, "table"), short=false)
-    file = open(plotsdir(name), "w")
+    file = open(datadir(name), "w")
 
     row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
     am = transmat(ca; mat=true)
@@ -1003,8 +1050,23 @@ function save_transmat(ca::ComplexAllosteryGM; name=savename("transmat", ca, "ta
     close(file)
 end
 
+function save_ca_obj(ca::ComplexAllosteryGM; kwargs...)
+    for (name, value) in kwargs
+        save_object(datadir(savename(String(name), ca, "jld2")), value)
+    end
+end
+
+function save_evals(ca::ComplexAllosteryGM, evals; name=savename("evals", ca))
+    file = open(datadir(name), "w")
+    println(file, "evals:")
+    for eval in evals
+        println(file, eval)
+    end
+    close(file)
+end
+
 function save_gibbs_factors(ca::ComplexAllosteryGM; name=savename("adjmat", ca))
-    file = open(plotsdir(savename("gibbsfs", ca, "table")), "w")
+    file = open(datadir(savename("gibbsfs", ca, "table")), "w")
     data = [repr.(allstates(ca)) repr.(calc_gibbs_factor.(allstates(ca), ca))]
     pretty_table(file, data; header=["state", "gibbs factor"])
     close(file)
