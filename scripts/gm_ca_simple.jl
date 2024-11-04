@@ -52,7 +52,7 @@ function add_edges_simple_EL1!(ca::ComplexAllosteryGM)
                             exponent_term += Δε_r
                         end
                     end
-                    exponent_term += calc_interaction_energy(state, i, ca)
+                    exponent_term += 0.5 * calc_interaction_energy(state, i, ca)
                     rate = rate_conf_change / exp(-exponent_term / kT)
                     add_edge!(
                         ca.graph,

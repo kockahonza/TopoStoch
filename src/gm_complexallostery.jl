@@ -271,7 +271,7 @@ function calc_interaction_energy(st::CAState, i, em::EnergyMatrices, s::Symmetry
     if !isnothing(right)
         energy += em.interactions[st.conformations[i], right]
     end
-    0.5 * energy
+    energy
 end
 calc_interaction_energy(st::CAState, i, ca::ComplexAllosteryGM{S}) where {S} = calc_interaction_energy(st, i, ca.energy_matrices, S())
 
@@ -279,7 +279,7 @@ function calc_energy(st::CAState, em::EnergyMatrices, s::Symmetry)
     energy = 0
     for i in 1:length(st.conformations)
         energy += calc_monomer_energy(st, i, em)
-        energy += calc_interaction_energy(st, i, em, s)
+        energy += 0.5 * calc_interaction_energy(st, i, em, s)
     end
     energy
 end
