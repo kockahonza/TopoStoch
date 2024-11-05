@@ -1,14 +1,17 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-include(srcdir("gm_complexallostery.jl"))
+using Revise
+
+includet(srcdir("gm_complexallostery.jl"))
 
 ################################################################################
 # The simple case, C=2 and B mostly 1
 ################################################################################
 function make_v2_5(N, B; edge_t=:full)
     ca = ComplexAllosteryGM(N, 2, B;
-        energy_matrices=make_EM_sym_C2(B),
+        symmetry=Loop(),
+        energy_matrices=make_em_sym(B),
         version=2.5
     )
 
@@ -130,7 +133,45 @@ function fsimp(ca::ComplexAllosteryGM; which=:both)
             terms[chem_energy] = 0.0
         end
     end
-    terms
+
+    terms[get_kT()] = 1.0
 
     ssubstitute(ca, terms)
+end
+
+function frsimp(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
+    rs = get_rs()
+    terms = Dict{Num,Num}()
+
+    terms[rs[1][1]] = 1.0
+    terms[rs[1][2]] = 1.0
+
+    terms[rs[2][1]] = 1.0
+    terms[rs[2][2]] = 0.0
+
+    terms[rs[3]] = 1.0
+
+    if do_fsimp
+        ca = fsimp(ca; kwargs...)
+    end
+    ssubstitute(ca, terms)
+end
+
+prep_sliders_cE() = prep_sliders(vcat(get_em_vars(), get_concetrations());
+    ranges=[-1.0:0.1:10.0,
+        0.0:0.1:5.0,
+        0.0:0.1:10.0,
+        0.0:0.1:5.0,
+        0.0:0.1:5.0,
+        0.0:0.1:5.0
+    ]
+)
+
+function get_eq_subs1()
+    terms = Dict{Num,Num}()
+    es = get_chem_energies()
+    terms[es[1]] = es[2] - es[3]
+    cs = get_concetrations()
+    terms[cs[1]] = cs[2] / cs[3]
+    terms
 end

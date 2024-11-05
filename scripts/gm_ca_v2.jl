@@ -8,7 +8,7 @@ include(srcdir("gm_complexallostery.jl"))
 ################################################################################
 function make_v2(N, B; edge_t=:full)
     ca = ComplexAllosteryGM(N, 2, B;
-        energy_matrices=make_EM_sym_C2(B),
+        energy_matrices=make_em_sym(B),
         version=2
     )
 
