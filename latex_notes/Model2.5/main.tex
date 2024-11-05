@@ -146,9 +146,9 @@ We label these as $r_1(c_i)$ and $r_2(c_i)$ where again $i$ is the index of the 
 
 Taking all this into account we arrive at
 \begin{align}
-    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_P-\epsilon_i^{S'})) = c_P\exp(\beta(\epsilon_i^S+\epsilon_P-\epsilon_i^{S'})) \\
-    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_{ATP}-\epsilon_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(\epsilon_i^S+\epsilon_{ATP}-\epsilon_i^{S'}-\epsilon_{ADP})) \\
-    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'}))
+    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_P-\epsilon_i^{S'})) = c_P\exp(\beta(\epsilon_i^S+\epsilon_P-\epsilon_i^{S'})) \label{eq:rp1} \\
+    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_{ATP}-\epsilon_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(\epsilon_i^S+\epsilon_{ATP}-\epsilon_i^{S'}-\epsilon_{ADP})) \label{eq:rp2} \\
+    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'})) \label{eq:rp3}
 \end{align}
 and so
 \begin{align}
@@ -160,6 +160,84 @@ and so
     &r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
 \end{align}
 where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
+
+\section{Single Monomer Futile Cycles}
+Focusing on the $N=1$ system with also $C=2,B=1$ we get essentially the simple subsystem we considered before (especially as now we don't have the locality breaking as before).
+This system has 4 microstates which along with the transition rates between them are shown in \cref{fig:4sTs} (with slightly differing notation).
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{../../plots/symgraph_B=1_C=2_N=1_version=2.5.png}
+    \caption{
+        Diagram of single monomer transitions for $C=2,B=1$.
+        Top row is the tense conformational states, bottom is the relaxed ones.
+        Left column are without a ligand and right column with one ligand bound.
+    }\label{fig:4sTs}
+\end{figure}
+
+As before the up and down transition (that change conformation) are naturally "driven" clockwise just due to the nature of the energies $\epsilon_t,\Delta\epsilon_r$.
+\subsection{Systematic approach}\label{sec:fcsys}
+Before we look at the exact rates for the $N=1$ system it is worth looking at the general picture of ligand binding by processes 1 and 2.
+From \cref{eq:rp1} we can see that binding a ligand in process 1 is favoured as long as the energy is not raised by more than $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$
+The same logic can be applied to process 2 and the results are summarized as
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+        Process & binding favoured if $\epsilon^{S'}_i-\epsilon^S_i<$ & overall rate scale \\
+        \hline
+        1 & $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$ & $r_1(c_i)$ \\
+        \hline
+        2 & $\mu_{ATP}-\mu_{ADP} = \epsilon_{ATP}-\epsilon_{ADP}+\frac{1}{\beta}\ln{\frac{c_{ATP}}{c_{ADP}}}$ & $r_2(c_i)$
+    \end{tabular}
+\end{table}
+Coming back to the $N=1$ system, to complete the clockwise cycles from \cref{fig:4sTs} we want ligand binding to be favoured on the top edge where the energy difference $\epsilon^{S'}_i-\epsilon^S_i$ is $\epsilon_t$.
+But we want it not to be favoured by the bottom edge where the energy difference is $\epsilon_t-2\Delta\epsilon_r$ which is always lower.
+Thus it is impossible to have either of the processes favour binding in the top transition and favour debinding in the bottom one and so in order to complete the cycle we must use the dependence of the overall scales of the processes on the conformation.
+
+So to complete the cycle, one of the processes must have its $\Delta\mu$ be $<\epsilon_t-2\Delta\epsilon_r<\epsilon_t$ and so favour debinding in both of the transtions.
+And the other must have its $\Delta\mu > \epsilon_t > \epsilon_t-2\Delta\epsilon_r$ and so favour binding in both transitions.
+Then we need to tune the overall scales of the rates $r_1, r_2$ as functions of the conformation so that we get the desired behaviour.
+
+It seems plausible to choose process 1 as the one that favours debinding and process 2 as the energetically driven process that drives binding in the top process.
+This gives as a bound on setting the $\Delta\mu$ which has two underlying degrees of freedom, we can either tune it using the chemical energies $\epsilon$ which may enter into both of the rates, or using the chemical concentrations which only affect the rate which has them used, these become the same when relevant $\theta_?$ are 1.
+Next we still have to set the overall rate scales $r_{1/2}(c)$ for both monomer conformations.
+It seems reasonable to have process 1 couple equally to both conformations, but to have process 2 couple stronger to the tense ($c_i=1$) conformation.
+
+\subsection{Brute force approach}
+To complete this cycle fully we get the conditions of
+\begin{multline}
+    c_P r_{1}(1) e^{\frac{\epsilon_P \theta_{1f} - \varepsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} + c_{ATP} r_{2}(1) e^{\frac{ - \left( \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f}}{kT}} > \\
+    r_{1}(1) e^{\frac{ - \epsilon_P \left( 1 - \theta_{1f} \right) + \varepsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b} - \epsilon_P \left( 1 - \theta_{2f} \right)}{kT}} \\
+\end{multline}
+\begin{align}
+    c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_{ATP} \right) \theta_{2f} - \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_P \right) \theta_{1f} - \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} &< r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
+\end{align}
+
+\subsection{Looking at the transition matrix}
+We can also construct the transition rate matrix $R$ where $R_{ij}$ corresponds to the transition from $j$ to $i$.
+This takes the form
+\begin{align}
+R \sim \begin{pmatrix}
+0 & c & e & 0 \\
+a & 0 & 0 & g \\
+b & 0 & 0 & h \\
+0 & d & f & 0 \\
+\end{pmatrix} \qq{where states go as} \begin{pmatrix}
+    (\set{1}, \set{0}) \\
+    (\set{2}, \set{0}) \\
+    (\set{1}, \set{1}) \\
+    (\set{2}, \set{1})
+\end{pmatrix}
+\end{align}
+where the variables are shorthands for the rates in \cref{fig:4sTs}.
+We can symbolically solve for the eigenvalues of this matrix and have done so using wolfram, the results being
+\begin{equation}
+    \begin{pmatrix}
+        -\frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+        \frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+        -\frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+        \frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}}
+    \end{pmatrix}
+\end{equation}
 
 \section{Parameters}
 The model has the following parameters
@@ -180,87 +258,14 @@ The model has the following parameters
 \subsection{Reducing parameters}
 Firstly, assuming constant $T$ we may choose $\si{k_B}T = 1\si{E}$ to be our energy unit.
 We can also reasonably take all the $\theta_?$ to be equal.
-Beyond this it gets more controversial.
+Beyond this it gets more questionable.
 
-Perhaps we can start with the intrinsic chemical energies to be 0, the $\theta_?$ to be 1 and all the dimensionless concentrations to be 1?
-This seems like a first step of simplifying choices.
-This leaves us at having the energy parameters and the rate scales as parameters.
-It further seems reasonable for the rate scales to be ${\sim}1$, however we do have to implement a difference between the $c_i$ to have a chance at futile cycles.
+\paragraph{Unit $\theta_?$}
+We can start off with setting all the $\theta_?$ to one which is very convenient as that then makes the somewhat redundant degrees of freedom of the concentrations and intrinsic chemical energies have the same effect.
+As such, with this simplification we can also withouth loss of complexity set all the intrinsic chemical energies to 0.
 
+\paragraph{Rate scales $r_?$}
+The absolute simplest scenario imaginable that can give the single monomer futile cycles as described in \cref{sec:fcsys} is where we have $r_1(?)=r_3=1$, $r_2(1)=1$ and $r_2(2)=0$.
 
-\section{Finding Futile Cycles}
-So on the last meeting with both Kabir and Jaime we talked about considering a single monomer in the polymer with $B=1$ and how that essentially gets 4 states to live in visualized in \cref{fig:4states}.
-(This essentially captures all the physics except the boundary interactions, so $E_I$ and $\epsilon_b$.)
-Now in the old Model 1 the situation was that two of these transitions are always "driven" just by the nature of the $R$ and $T$ states (this is still true in Model 2).
-And the other two arrows could either both point in the same direction or opposite each other, but only in the contraflow direction to the cycle direction given by the energetic transitions.
-Meaning we could not have a futile cycle on this level in that model, a major part of switching to Model 2 was to be able to drive it out of equilibrium due to having two different reactions and perhaps being able to complete this cycle.
-
-\begin{figure}[H]
-    \tikzmath{
-        \Dx = 5;
-        \Dy = 7;
-        \R = 0.4;
-        \LR = 0.1;
-        \Tb = 0.1;
-        \Tx = \Dx-2*(\R+\Tb);
-        \Ty = \Dy-2*(\R+\Tb);
-    }
-    \centering
-    \begin{tikzpicture}
-        \draw[black] (0,0) circle (\R);
-        \draw[black] (0-\R,\Dx-\R) rectangle (0+\R, \Dx+\R);
-        \draw[black] (\Dy,0) circle (\R);
-        \draw[black] (\Dy+\R+\LR,0) circle (\LR);
-        \draw[black] (\Dy-\R,\Dx-\R) rectangle (\Dy+\R, \Dx+\R);
-        \draw[black] (\Dy+\R+\LR,\Dx) circle (\LR);
-
-        \draw[->,blue] (0,\R+\Tb) -- node[sloped,above,text width=\Tx cm,align=center] {Energetically driven as $\Delta\epsilon_r > 0$} (0,\Dx-\R-\Tb);
-        \draw[->,blue] (\Dy,\Dx-\R-\Tb) -- node[sloped,above,text width=\Tx cm,align=center] {Energitically driven as $\epsilon_t>0$} (\Dy,\R+\Tb);
-
-        \draw[<->,red] (\R+\Tb,\Dx) -- node[sloped,above,text width=\Ty cm,align=center] {Energetically wants to go left, but can be driven right by chemical potentials} (\Dy-\R-\Tb,\Dx);
-        \draw[<->,red] (\R+\Tb,0) -- node[sloped,above,text width=\Ty cm,align=center] {Energetically wants to go left, but can be driven right by chemical potentials} (\Dy-\R-\Tb,0);
-    \end{tikzpicture}
-    \caption{
-        Diagram of single monomer transitions for $C=2,B=1$.
-        Top row is the tense conformational states, bottom is the relaxed ones.
-        Left column are without a ligand and right column with one ligand bound.
-    }\label{fig:4states}
-\end{figure}
-
-\subsection{Cannot complete the cycle in Model 2}\label{sec:noFC}
-In Model 2 the conditions to drive each of the red arrows in \cref{fig:4states} is that $\frac{r_{1f}+r_{2f}}{r_{1b}+r_{2b}} > 1$, however the energies $\epsilon_S$ and $\epsilon_{S'}$ will differ in either case.
-The question now is how do we set the various parameters to achieve different directions of the red arrows (and whether all are even attainable).
-
-However, it seems that even in this model we are still unable to complete the cycle and have the top red arrow point right and the bottom left.
-To show this we need to expand the condition of each transition being driven to the right
-\begin{align}
-    &\frac{r_{1f}+r_{2f}}{r_{1b}+r_{2b}} > 1 \\
-    &\frac{r_1c_P\exp(\beta(\theta_{1f}(\epsilon_S+\epsilon_P)-(1-\theta_{1b})\epsilon_{S'})) + r_2c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_{S'}+\epsilon_{ADP})))}{r_1\exp(\beta(\theta_{1b}\epsilon_{S'}-(1-\theta_{1f})(\epsilon_S+\epsilon_P))) + r_2c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_S+\epsilon_{ATP})))} > 1
-\end{align}
-the form of which with respect to the microstate energies is
-\begin{align}
-    &\frac{?\exp(\beta(?\epsilon_S-?\epsilon_{S'})) + ?\exp(\beta(?\epsilon_S-?\epsilon_{S'}))}{?\exp(\beta(?\epsilon_{S'}-?\epsilon_S)) + ?\exp(\beta(?\epsilon_{S'}-?\epsilon_S))} > 1
-\end{align}
-with all the $?$ being different expressions which are crucially all positive.
-
-Now if we focus on a particular monomer within the polymer undergoing a (de)binding process (with the rest of the polymer not changing), then there's only two cases depending on the monomer's conformation each of which correspond to one of the two arrows.
-If we consider $\epsilon_S$ and $\epsilon_{S'}$ to be the energies before and after a (de)binding process (or vice versa) for when the monomer is in the $T$ conformation (corresponds to top arrow).
-Then in the $R$ conformation (bottom arrow) those would change exactly by $+\Delta\epsilon_r$ and $-\Delta\epsilon_r$ respectively.
-Coming back to trying to complete the cycle in \cref{fig:4states} that would require us silmutaneously having
-\begin{equation}
-    &\frac{?\exp(\beta(?\epsilon_S-?\epsilon_{S'})) + ?\exp(\beta(?\epsilon_S-?\epsilon_{S'}))}{?\exp(\beta(?\epsilon_{S'}-?\epsilon_S)) + ?\exp(\beta(?\epsilon_{S'}-?\epsilon_S))} > 1 \\
-\end{equation}
-and
-\begin{equation}
-    &\frac{?\exp(\beta(?(\epsilon_S+\Delta\epsilon_r)-?(\epsilon_{S'}-\Delta\epsilon_r))) + ?\exp(\beta(?(\epsilon_S+\Delta\epsilon_r)-?(\epsilon_{S'}-\Delta\epsilon_r)))}{?\exp(\beta(?(\epsilon_{S'}-\Delta\epsilon_r)-?(\epsilon_S+\Delta\epsilon_r))) + ?\exp(\beta(?(\epsilon_{S'}-\Delta\epsilon_r)-?(\epsilon_S+\Delta\epsilon_r)))} < 1
-\end{equation}
-However, as all the different $?$ are positive then clearly the term in the second inequality is larger than the one in the first.
-Thus we cannot have both at the same time, in other words no matter how we tune the parameters we cannot achieve a simple futile cycle where a single monomer continuously undergoes binding, $T \rightarrow R$, debinding and $R \rightarrow T$ in this model.
-
-This does also seem to make some intuitive sense as no matter what the energy gap for (de)binding is always smaller when the monomer is in the the $R$ conformation, meaning it is logical that as one tunes the concentrations binding would always first occur in the $R$ conformation before taking place in $T$.
-
-Further, for a more vague and abstract argument for why we cannot make such a futile cycle in this system is because at the end of the day each of these reactions try to minimize the same thing (somewhat).
-In some way the red and blue arrows come from different processes, however they still all minimize the system energy plus some vague chemical potential contributions with the dominant direction of each arrow being decided by which state has a lower value of this total potential.
-If all of this is true then of course we cannot get a futile cycle as this would require having $E_1 < E_2 < E_3 < E_4 < E_1$ where these label the values of this abstract potential for each state of the monomer.
 
 \end{document}
