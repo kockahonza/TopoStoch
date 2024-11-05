@@ -121,7 +121,9 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
     axparent=nothing,
     # these apply to all
     fancy_labels=:auto,
-    node_size_scale=10.0,
+    fnlabels=nothing,
+    felabels=nothing,
+    node_size_scale=20.0,
     interactive=:auto,
     symbolic=:auto,
     # these only to concrete (non symbolic) cas
@@ -138,11 +140,12 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
 
     auto_kwargs = Dict{Symbol,Any}()
 
+    # This is for possible later elementwise updates
     auto_kwargs[:node_color] = [:snow3 for _ in 1:numstates(ca)]
     auto_kwargs[:node_size] = [node_size_scale for _ in 1:numstates(ca)]
 
+    # Do colored transitions
     if !symbolic
-        # color transitions smartly
         auto_kwargs[:edge_color] = weight.(edges(ca.graph))
         if c_colorrange == :auto
             max_weight = maximum(weight.(edges(ca.graph)))
@@ -162,13 +165,26 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
         auto_kwargs[:arrow_attr] = auto_kwargs[:edge_attr] = edge_colormap_attrs
     end
 
+    # Label nodes and or edges
     if fancy_labels == :auto
-        fancy_labels = symbolic && (nv(ca.graph) < 50)
+        fancy_labels = nv(ca.graph) < 100
+        if isnothing(fnlabels)
+            fnlabels = :repr
+        end
+        if isnothing(felabels)
+            felabels = :repr
+        end
     end
     if fancy_labels
-        auto_kwargs[:nlabels] = repr.(allstates(ca))
-        auto_kwargs[:elabels] = repr.(weight.(edges(ca.graph)))
-        auto_kwargs[:elabels_shift] = 0.4
+        if fnlabels == :repr
+            auto_kwargs[:nlabels] = repr.(allstates(ca))
+        elseif fnlabels == :E
+            auto_kwargs[:nlabels] = repr.(calc_energy.(allstates(ca), ca))
+        end
+        if felabels == :repr
+            auto_kwargs[:elabels] = repr.(weight.(edges(ca.graph)))
+            auto_kwargs[:elabels_shift] = 0.4
+        end
     end
 
     plot = graphplot!(ax, ca.graph, args...;
@@ -271,11 +287,16 @@ end
 ################################################################################
 # More interactivity
 ################################################################################
-function prep_sliders(variables; ranges=nothing)
+function prep_sliders(variables; ranges=nothing, startvalues=nothing)
     slider_specs = []
     for i in eachindex(variables)
         range_ = isnothing(ranges) ? (0.0:0.1:10.0) : ranges[i]
-        push!(slider_specs, (; label=string(variables[i]), range=range_))
+        startvalue_ = isnothing(startvalues) ? 1.0 : startvalues[i]
+        push!(slider_specs, (;
+            label=string(variables[i]),
+            range=range_,
+            startvalue=startvalue_
+        ))
     end
 
     fig = Figure()
@@ -285,10 +306,11 @@ function prep_sliders(variables; ranges=nothing)
 end
 
 function int_plot_ca(ca::ComplexAllosteryGM, args...;
-    variables=Num.(get_variables(ca)), ranges=nothing, kwargs...
+    variables=Num.(get_variables(ca)),
+    ranges=nothing, startvalues=nothing, kwargs...
 )
     # Setup sliders and the graph observable
-    fig, sobs, _ = prep_sliders(variables; ranges)
+    fig, sobs, _ = prep_sliders(variables; ranges, startvalues)
     ca_factory = make_factory(ca, variables)
 
     ca_obs = lift(sobs...) do (svals...)

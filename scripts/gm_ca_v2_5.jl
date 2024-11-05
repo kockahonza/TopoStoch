@@ -177,15 +177,27 @@ function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     ssubstitute(ca, terms)
 end
 
-cE_sliders_vars() = vcat(get_em_vars(), get_concetrations())
-cE_sliders_ranges() = [
+function int_plot_1(ca::ComplexAllosteryGM, args...; kwargs...)
+    if ca.version != 2.5
+        throw(ArgumentError("this method only works for version 2.5"))
+    end
+    sca = frsimp2(ca)
+    variables = vcat(get_em_vars(), get_concetrations(), Symbolics.variables(:r, 1:3))
+    ranges = [
         -1.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0,
+        0.0:0.1:5.0,
+        0.0:0.1:5.0,
+        0.0:0.1:5.0,
         0.0:0.1:5.0
-]
+    ]
+    startvalues = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+    int_plot_ca(sca, args...; variables, ranges, startvalues, kwargs...)
+end
+
 
 function get_eq_subs1()
     terms = Dict{Num,Num}()

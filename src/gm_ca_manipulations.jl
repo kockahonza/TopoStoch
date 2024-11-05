@@ -33,6 +33,12 @@ function keep_best_only!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
     keep_best_only!(ca.graph, args...)
 end
 
+function copyand(f!, obj)
+    cobj = copy(obj)
+    f!(obj)
+    cobj
+end
+
 ################################################################################
 # ca/graph/matrix symbolics manipulation using Wolfram
 ################################################################################
