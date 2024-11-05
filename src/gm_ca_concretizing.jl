@@ -48,7 +48,7 @@ function ssubstitute(ca::ComplexAllosteryGM{S,F}, terms::Dict) where {S,F}
         ssubstitute(adjacency_matrix(ca.graph), terms)
     )
     new_metadata = Dict{Any,Any}(terms)
-    new_metadata["old_metadata"] = ca.metadata
+    new_metadata["old"] = ca.metadata
     ComplexAllosteryGM(ca.N, ca.C, ca.B;
         symmetry=S(),
         numtype=Val(F),
@@ -86,7 +86,7 @@ function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}
         substitute_to_float(adjacency_matrix(ca.graph), terms)
     )
     new_metadata = Dict{Any,Any}(terms)
-    new_metadata["old_metadata"] = ca.metadata
+    new_metadata["old"] = ca.metadata
     ComplexAllosteryGM(ca.N, ca.C, ca.B;
         symmetry=S(),
         numtype=Val(Float64),

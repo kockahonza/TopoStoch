@@ -165,7 +165,13 @@ end
 edgecolorbar((fig, ax, plot)) = edgecolorbar(fig, plot)
 
 function make_interactive(ax, plot)
-    deregister_interaction!(ax, :rectanglezoom)
+    interactions_ = keys(interactions(ax))
+    if :rectanglezoom in interactions_
+        deregister_interaction!(ax, :rectanglezoom)
+    end
+    if :ndrag in interactions_
+        deregister_interaction!(ax, :ndrag)
+    end
     function node_drag_action(state, idx, event, axis)
         plot[:node_pos][][idx] = event.data
         plot[:node_pos][] = plot[:node_pos][]

@@ -105,18 +105,30 @@ function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
     (; layout, dim, axis_labels)
 end
 
+function p_make_ca_ax(dim, place)
+    if dim == 2
+        Axis(place)
+    elseif dim == 3
+        LScene(place)
+    else
+        throw(ErrorException("the layout dimension was not 2 or 3"))
+    end
+end
+
 # This is the main logic function
 function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
     do_layout_rslt, args...;
-    fig=nothing,
+    axparent=nothing,
     # these apply to all
     fancy_labels=:auto,
     node_size_scale=10.0,
     interactive=:auto,
     symbolic=:auto,
     # these only to concrete (non symbolic) cas
-    c_colorbar=:auto,
     c_colormap=:dense,
+    c_colorscale=:auto,
+    c_colorrange=:auto,
+    c_colorbar=:auto,
     kwargs...
 ) where {S,F}
     layout, dim, axis_labels = do_layout_rslt
@@ -127,14 +139,27 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
     auto_kwargs = Dict{Symbol,Any}()
 
     auto_kwargs[:node_color] = [:snow3 for _ in 1:numstates(ca)]
+    auto_kwargs[:node_size] = [node_size_scale for _ in 1:numstates(ca)]
 
-    if symbolic
-        auto_kwargs[:node_size] = [node_size_scale for _ in 1:numstates(ca)]
-    else
-        auto_kwargs[:node_size] = node_size_scale * sqrt(nv(ca.graph)) * calc_gibbs_factor.(allstates(ca), ca) / calc_partition_function(ca)
+    if !symbolic
+        # color transitions smartly
         auto_kwargs[:edge_color] = weight.(edges(ca.graph))
-        auto_kwargs[:edge_attr] = (; colormap=c_colormap, colorrange=(0.0, maximum(weight.(edges(ca.graph)))))
-        auto_kwargs[:arrow_attr] = auto_kwargs[:edge_attr]
+        if c_colorrange == :auto
+            max_weight = maximum(weight.(edges(ca.graph)))
+            if iszero(max_weight)
+                max_weight = 1.0
+            end
+            c_colorrange = (0.0, max_weight)
+        end
+        if c_colorscale == :auto
+            c_colorscale = x -> Makie.pseudolog10(x) * log(10)
+        end
+        edge_colormap_attrs = (;
+            colormap=c_colormap,
+            colorrange=c_colorrange,
+            colorscale=c_colorscale
+        )
+        auto_kwargs[:arrow_attr] = auto_kwargs[:edge_attr] = edge_colormap_attrs
     end
 
     if fancy_labels == :auto
@@ -170,22 +195,38 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
         end
     end
 
-    if c_colorbar == :auto
-        c_colorbar = !symbolic && (dim == 3)
-    end
-    if (c_colorbar && !isnothing(fig))
-        edgecolorbar(fig, plot)
+    if !symbolic && !isnothing(axparent)
+        if (c_colorbar == :auto) || c_colorbar
+            Colorbar(axparent[1, 2]; colormap=c_colormap, colorrange=c_colorrange, scale=c_colorscale)
+        end
     end
 
     plot
 end
 
 # Simple callers
-function plot_ca!(ax, ca::ComplexAllosteryGM, args...;
-    layout=nothing, roffset_devs=nothing, kwargs...
+function plot_ca!(maybeax, ca::ComplexAllosteryGM, args...;
+    layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
     do_layout_rslt = p_do_layout(ca, layout, roffset_devs)
-    plot_ca_!(ax, ca, do_layout_rslt, args...; kwargs...)
+
+    if isa(maybeax, Makie.AbstractAxis)
+        ax = maybeax
+    elseif isa(maybeax, GridPosition)
+        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax)
+    elseif isa(maybeax, GridLayout)
+        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax[1, 1])
+    else
+        throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be either Makie.AbstractAxis or GridPosition"))
+    end
+
+    plot = plot_ca_!(ax, ca, do_layout_rslt, args...; kwargs...)
+
+    if returnax
+        ax, plot
+    else
+        plot
+    end
 end
 function plot_ca(ca::ComplexAllosteryGM, args...;
     layout=nothing, roffset_devs=nothing, kwargs...
@@ -193,13 +234,9 @@ function plot_ca(ca::ComplexAllosteryGM, args...;
     do_layout_rslt = p_do_layout(ca, layout, roffset_devs)
 
     fig = Figure()
-    if do_layout_rslt.dim == 2
-        ax = Axis(fig[1, 1])
-    else
-        ax = LScene(fig[1, 1])
-    end
+    ax = p_make_ca_ax(do_layout_rslt.dim, fig[1, 1])
 
-    plot = plot_ca_!(ax, ca, do_layout_rslt, args...; fig, kwargs...)
+    plot = plot_ca_!(ax, ca, do_layout_rslt, args...; axparent=fig, kwargs...)
 
     Makie.FigureAxisPlot(fig, ax, plot)
 end
@@ -208,13 +245,27 @@ function plotGM(ca::ComplexAllosteryGM, args...; kwargs...)
     plot_ca(ca, args...; kwargs...)
 end
 
-# Callers that can use observables
-function plot_ca!(ax, cao::Observable{ComplexAllosteryGM}, args...; kwargs...)
-    plot = plot_ca!(ax, cao.val, args...; kwargs...)
-    on(cao) do
-        println(cao)
+"""
+Very simple and not so efficient caller that can use a graph observable
+"""
+function plot_ca!(maybeax, cao::Observable, args...;
+    returnax=false, remove_colorbars=true, kwargs...
+)
+    ax, plot = plot_ca!(maybeax, cao.val, args...; returnax=true, kwargs...)
+
+    on(cao) do ca
+        empty!(ax)
+        if remove_colorbars
+            delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
+        end
+        plot_ca!(ax, ca, args...; kwargs...)
     end
-    plot
+
+    if returnax
+        ax, plot
+    else
+        plot
+    end
 end
 
 ################################################################################
@@ -233,15 +284,23 @@ function prep_sliders(variables; ranges=nothing)
     fig, [x.value for x in sg.sliders], sg
 end
 
-function int_plot_ca(ca::ComplexAllosteryGM; variables=Num.(get_variables(ca)), ranges=nothing)
+function int_plot_ca(ca::ComplexAllosteryGM, args...;
+    variables=Num.(get_variables(ca)), ranges=nothing, kwargs...
+)
+    # Setup sliders and the graph observable
     fig, sobs, _ = prep_sliders(variables; ranges)
-    ca_factory = make_factory(ca; variables)
+    ca_factory = make_factory(ca, variables)
 
     ca_obs = lift(sobs...) do (svals...)
         ca_factory(svals...)
     end
 
-    fig, ca_obs
+    plotspace = fig[2, 1] = GridLayout()
+
+    # Make a suitable ax the the graph plotting
+    ax, plot = plot_ca!(plotspace, ca_obs, args...; returnax=true, axparent=plotspace, kwargs...)
+
+    Makie.FigureAxisPlot(fig, ax, plot)
 end
 
 # other interactive plots

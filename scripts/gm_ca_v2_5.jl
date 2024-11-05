@@ -157,15 +157,35 @@ function frsimp(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     ssubstitute(ca, terms)
 end
 
-prep_sliders_cE() = prep_sliders(vcat(get_em_vars(), get_concetrations());
-    ranges=[-1.0:0.1:10.0,
+function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
+    rs = get_rs()
+    newrs = Symbolics.variables(:r, 1:3)
+
+    terms = Dict{Num,Num}()
+
+    terms[rs[1][1]] = newrs[1]
+    terms[rs[1][2]] = newrs[1]
+
+    terms[rs[2][1]] = newrs[2]
+    terms[rs[2][2]] = 0.0
+
+    terms[rs[3]] = newrs[3]
+
+    if do_fsimp
+        ca = fsimp(ca; kwargs...)
+    end
+    ssubstitute(ca, terms)
+end
+
+cE_sliders_vars() = vcat(get_em_vars(), get_concetrations())
+cE_sliders_ranges() = [
+        -1.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0
-    ]
-)
+]
 
 function get_eq_subs1()
     terms = Dict{Num,Num}()
