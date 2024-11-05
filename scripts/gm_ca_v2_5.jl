@@ -177,7 +177,7 @@ function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     ssubstitute(ca, terms)
 end
 
-function int_plot_1(ca::ComplexAllosteryGM, args...; kwargs...)
+function int_plot_1(ca::ComplexAllosteryGM, args...; init_scen=:eonly, kwargs...)
     if ca.version != 2.5
         throw(ArgumentError("this method only works for version 2.5"))
     end
@@ -189,12 +189,16 @@ function int_plot_1(ca::ComplexAllosteryGM, args...; kwargs...)
         0.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0,
-        0.0:0.1:5.0,
+        0.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0
     ]
-    startvalues = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+    if init_scen == :eonly
+        startvalues = [3.0, 0.5, 0.2, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    elseif init_scen == :int1
+        startvalues = [3.0, 0.5, 0.2, 1.0, 5.0, 0.1, 0.1, 1.0, 1.0]
+    end
     int_plot_ca(sca, args...; variables, ranges, startvalues, kwargs...)
 end
 

@@ -27,6 +27,8 @@ function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
     if isa(layout, NetworkLayout.AbstractLayout)
         layout = layout(p_get_adjmat_symsafe(ca))
         dim = length(layout[1])
+    elseif isa(layout, AbstractArray) && (length(layout) == numstates(ca))
+        dim = length(layout[1])
     else
         if isa(layout, Symbol)
             layout = (layout,)
@@ -222,8 +224,12 @@ end
 
 # Simple callers
 function plot_ca!(maybeax, ca::ComplexAllosteryGM, args...;
-    layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
+    map=nothing, layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
+    if !isnothing(map)
+        ca = map(ca)
+    end
+
     do_layout_rslt = p_do_layout(ca, layout, roffset_devs)
 
     if isa(maybeax, Makie.AbstractAxis)
@@ -245,8 +251,12 @@ function plot_ca!(maybeax, ca::ComplexAllosteryGM, args...;
     end
 end
 function plot_ca(ca::ComplexAllosteryGM, args...;
-    layout=nothing, roffset_devs=nothing, kwargs...
+    map=nothing, layout=nothing, roffset_devs=nothing, kwargs...
 )
+    if !isnothing(map)
+        ca = map(ca)
+    end
+
     do_layout_rslt = p_do_layout(ca, layout, roffset_devs)
 
     fig = Figure()
@@ -265,16 +275,27 @@ end
 Very simple and not so efficient caller that can use a graph observable
 """
 function plot_ca!(maybeax, cao::Observable, args...;
-    returnax=false, remove_colorbars=true, kwargs...
+    returnax=false, remove_colorbars=true, refresh_layout_obs=nothing, kwargs...
 )
     ax, plot = plot_ca!(maybeax, cao.val, args...; returnax=true, kwargs...)
 
     on(cao) do ca
+        layout = plot.node_pos[]
         empty!(ax)
         if remove_colorbars
             delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
         end
-        plot_ca!(ax, ca, args...; kwargs...)
+        plot = plot_ca!(ax, ca, args...; kwargs..., layout)
+    end
+
+    if !isnothing(refresh_layout_obs)
+        on(refresh_layout_obs) do _
+            empty!(ax)
+            if remove_colorbars
+                delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
+            end
+            plot = plot_ca!(ax, cao.val, args...; kwargs...)
+        end
     end
 
     if returnax
@@ -317,10 +338,14 @@ function int_plot_ca(ca::ComplexAllosteryGM, args...;
         ca_factory(svals...)
     end
 
-    plotspace = fig[2, 1] = GridLayout()
+    buttons = fig[1, 2] = GridLayout()
+    colsize!(fig.layout, 2, Fixed(60))
+    refresh_layout_btn = Button(buttons[1, 1], label="layout")
+
+    plotspace = fig[2, :] = GridLayout()
 
     # Make a suitable ax the the graph plotting
-    ax, plot = plot_ca!(plotspace, ca_obs, args...; returnax=true, axparent=plotspace, kwargs...)
+    ax, plot = plot_ca!(plotspace, ca_obs, args...; returnax=true, axparent=plotspace, refresh_layout_obs=refresh_layout_btn.clicks, kwargs...)
 
     Makie.FigureAxisPlot(fig, ax, plot)
 end

@@ -7,6 +7,7 @@ includet(srcdir("graphmodels.jl"))
 
 using Base.Threads
 using PyFormattedStrings
+using Infiltrator
 
 using StatsBase, StaticArrays, SparseArrays, DataFrames, PrettyTables
 using Graphs, SimpleWeightedGraphs
@@ -18,6 +19,7 @@ import SymbolicUtils
 import SymbolicUtils.Rewriters
 
 import Base: copy, broadcastable, show
+copy(::Nothing) = nothing
 
 ################################################################################
 # Needed combinatoric utilities
@@ -132,7 +134,7 @@ function copy(ca::ComplexAllosteryGM{S,F}) where {S,F}
     ComplexAllosteryGM(ca.N, ca.C, ca.B;
         symmetry=S(),
         numtype=Val(F),
-        energy_matrices=isnothing(ca.energy_matrices) ? nothing : copy(ca.energy_matrices),
+        energy_matrices=copy(ca.energy_matrices),
         graph=copy(ca.graph),
         environment=ca.environment,
         metadata=copy(ca.metadata)

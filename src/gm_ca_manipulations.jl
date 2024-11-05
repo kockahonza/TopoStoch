@@ -15,14 +15,27 @@ function filter_edges!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
     filter_edges!(ca.graph, args...)
 end
 
-function keep_best_only!(graph, next_vertex_func=next_vertex_choose_max)
+function keep_best_only!(graph, threshold=1e-10)
     for vertex in 1:nv(graph)
-        best = next_vertex_func(graph, vertex)
-        kaka = copy(neighbors(graph, vertex))
-        for neighbor in kaka
-            if neighbor != best
-                rem_edge!(graph, vertex, neighbor)
+        neightbors_ = copy(neighbors(graph, vertex))
+
+        max_rate = 0.0
+        for n in neightbors_
+            nrate = get_weight(graph, vertex, n)
+            if nrate > max_rate
+                max_rate = nrate
             end
+        end
+
+        to_remove = []
+        for n in neightbors_
+            nrate = get_weight(graph, vertex, n)
+            if (max_rate - nrate) > threshold
+                push!(to_remove, n)
+            end
+        end
+        for n in to_remove
+            rem_edge!(graph, vertex, n)
         end
     end
 end
@@ -33,10 +46,12 @@ function keep_best_only!(ca::ComplexAllosteryGM{S,F}, args...) where {S,F}
     keep_best_only!(ca.graph, args...)
 end
 
-function copyand(f!, obj)
-    cobj = copy(obj)
-    f!(obj)
-    cobj
+function copyand(f!, args...; kwargs...)
+    function (obj)
+        cobj = copy(obj)
+        f!(cobj, args...; kwargs...)
+        cobj
+    end
 end
 
 ################################################################################
