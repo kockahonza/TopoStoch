@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm_complexallostery.jl"))
+includet(srcdir("gm_ca.jl"))
 
 ################################################################################
 # The simple case, C=2 and B mostly 1

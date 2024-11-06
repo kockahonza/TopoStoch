@@ -2,11 +2,13 @@ using DrWatson
 @quickactivate "TopoStochSim"
 
 using Revise
-using Graphs, SimpleWeightedGraphs
-using GLMakie
-using StatsBase
-using StaticArrays, SparseArrays
+
 using PyFormattedStrings
+
+using LinearAlgebra
+using StatsBase, StaticArrays, SparseArrays
+using Graphs, SimpleWeightedGraphs
+using Makie
 
 includet(srcdir("general.jl"))
 
@@ -35,6 +37,8 @@ end
 function itostate(gm::AbstractStatefulGraphModel, i)
     states(gm)[i]
 end
+
+AbstractFloatGraph = AbstractSimpleWeightedGraph{T,<:AbstractFloat} where {T}
 
 ################################################################################
 # Running a graph model
@@ -120,66 +124,8 @@ function simGM(gm::AbstractGraphModel, steps;
 end
 
 ################################################################################
-# Custom graph analysis
-################################################################################
-# TODO: FIX: This is not finished!!
-function find_cycles(graph, next_vertex_func=next_vertex_choose_max)
-    cycles = []
-    cycle_map = Vector{Union{Nothing,Int}}(nothing, nv(graph))
-    for vertex in 1:nv(graph)
-        if isnothing(cycle_map[vertex])
-            cycle = []
-            true_cycle_start_i = findfirst(x -> x == vertex, cycle)
-            while isnothing(true_cycle_start_i)
-                push!(cycle, vertex)
-                vertex = next_vertex_func(graph, vertex)
-                true_cycle_start_i = findfirst(x -> x == vertex, cycle)
-            end
-            for v in cycle
-                cycle_map[v] = length(cycles) + 1
-            end
-            cycle = cycle[true_cycle_start_i:end]
-            push!(cycles, cycle)
-        end
-    end
-    (cycles, cycle_map)
-end
-
-################################################################################
-# Utility functions
-################################################################################
-"""
-The standard Markov chain/Master equation transition matrix where the
-ij th element corresponds to a transition/rate from j to i.
-"""
-function transmat(gm::AbstractGraphModel; mat=false)
-    tm = transpose(adjacency_matrix(graph(gm)))
-    mat ? Matrix(tm) : sparse(tm)
-end
-
-"""
-Returns the modified transition matrix that can be used to get the time
-derivative as matrix multiplication only. See latex_notes/MasterEq this
-is W. Follows the same convention as `transmat`.
-"""
-function etransmat!(tm::AbstractMatrix)
-    n = size(tm)[1]
-    for i in 1:n
-        tm[i, i] -= sum(tm[k, i] for k in 1:n)
-    end
-end
-function etransmat(tm::AbstractMatrix)
-    ctm = copy(tm)
-    etransmat!(ctm)
-    ctm
-end
-function etransmat(gm::AbstractGraphModel, args...; kwargs...)
-    tm = transmat(gm, args...; kwargs...)
-    etransmat!(tm)
-    tm
-end
-
 # Plotting
+################################################################################
 function edgecolorbar(fig, plot)
     edgeploti = findfirst(typeof(plot_) <: Plot{GraphMakie.edgeplot} for plot_ in plot.plots)
     Colorbar(fig[1, 2], plot.plots[edgeploti])
@@ -202,3 +148,5 @@ function make_interactive(ax, plot)
     register_interaction!(ax, :ndrag, ndrag)
 end
 make_interactive((_, ax, plot)) = make_interactive(ax, plot)
+
+includet(srcdir("gm_manipulations.jl"))

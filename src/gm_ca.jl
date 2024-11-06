@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("graphmodels.jl"))
+includet(srcdir("gm.jl"))
 
 using Base.Threads
 using PyFormattedStrings
