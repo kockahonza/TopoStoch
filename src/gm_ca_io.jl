@@ -1,3 +1,11 @@
+# Util
+struct FigureAxisAnything
+    figure::Figure
+    axis::Any
+    obj::Any
+end
+display(faa::FigureAxisAnything) = display(faa.figure)
+
 ################################################################################
 # Complex plotting ComplexAllosteryGM objects
 ################################################################################
@@ -345,9 +353,9 @@ function int_plot_ca(ca::ComplexAllosteryGM, args...;
     plotspace = fig[2, :] = GridLayout()
 
     # Make a suitable ax the the graph plotting
-    ax, plot = plot_ca!(plotspace, ca_obs, args...; returnax=true, axparent=plotspace, refresh_layout_obs=refresh_layout_btn.clicks, kwargs...)
+    ax, plot = plot_ca!(plotspace, ca_obs, args...; returnax=true, axparent=plotspace, refresh_layout_obs=refresh_layout_btn.clicks, roffset_devs=false, kwargs...)
 
-    Makie.FigureAxisPlot(fig, ax, plot)
+    FigureAxisAnything(fig, ax, ca_obs)
 end
 
 # other interactive plots

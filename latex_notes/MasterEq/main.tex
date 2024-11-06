@@ -1,0 +1,69 @@
+\documentclass[11pt]{article}
+\usepackage[top=20mm,bottom=40mm,left=20mm,right=20mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage[version=4]{mhchem}
+\usepackage{graphics}
+\usepackage{tikz}
+\usetikzlibrary{math}
+
+\usepackage{stackengine}
+\usepackage{float}
+\usepackage{cleveref}
+\usepackage{lipsum}
+
+\allowdisplaybreaks
+
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0em}
+
+\newcommand\set[1]{\ensuremath{\{#1\}}}
+\newcommand\textbff[1]{\textbf{\boldmath #1}}
+\newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
+
+\stackMath
+\newcommand{\suf}[2]{\stackunder[0.5pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\duf}[2]{\stackunder[0.5pt]{\stackunder[0.8pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\su}[1]{\suf{#1}{#1}}
+\newcommand{\du}[1]{\duf{#1}{#1}}
+\newcommand{\ssu}[1]{\scriptsize\su{#1}\normalsize}
+\newcommand{\sdu}[1]{\scriptsize\du{#1}\normalsize}
+
+\newcommand{\pp}{\ensuremath{\partial}}
+
+\begin{document}
+\begin{center}
+    \LARGE
+    \textbf{Notes on Master Equation Methods}
+    \vspace{1em}
+\end{center}
+
+\section{Transition and Other Matrices}
+Standard master equation has the form of
+\begin{equation}\label{eq:me}
+    \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i)
+\end{equation}
+where $R_{ij}$ corresponds to the $j \rightarrow i$ transition.
+For a steady state we must have $\partial_t p_i=0$ and if each term in the sum of \cref{eq:me} is independently 0 we have detailed balance.
+In general however to solve for 0 it is convenient to put the equation in a eigenvalue like form such as
+\begin{equation}
+    \partial_t p_i = \sum_j W_{ij}p_j
+\end{equation}
+for some matrix $\du{W}$.
+This matrix can be expressed in terms of $\du{R}$ as
+\begin{equation}
+    W_{ij} = R_{ij}-\delta_{ij}\sum_k R_{ki}
+\end{equation}
+as this leads to
+\begin{align}
+    \partial_t p_i &= \sum_j W_{ij}p_j = \sum_j \qty(R_{ij}-\delta_{ij}\sum_k R_{ki}) p_j = \\
+    &= \sum_j R_{ij}p_j - \sum_{j,k}\delta_{ij} R_{ki} p_j = \\
+    &= \sum_j R_{ij}p_j - \sum_{k} R_{ki} p_i = \\
+    &= \sum_j \qty(R_{ij}p_j - R_{ji} p_i) \qq{as required}
+\end{align}
+
+\end{document}

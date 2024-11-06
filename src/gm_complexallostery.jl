@@ -18,7 +18,7 @@ using JLD2
 import SymbolicUtils
 import SymbolicUtils.Rewriters
 
-import Base: copy, broadcastable, show
+import Base: copy, broadcastable, show, display
 copy(::Nothing) = nothing
 
 ################################################################################

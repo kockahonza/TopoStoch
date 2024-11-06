@@ -160,6 +160,7 @@ end
 function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     rs = get_rs()
     newrs = Symbolics.variables(:r, 1:3)
+    alpha = Symbolics.variable(:α)
 
     terms = Dict{Num,Num}()
 
@@ -167,37 +168,38 @@ function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     terms[rs[1][2]] = newrs[1]
 
     terms[rs[2][1]] = newrs[2]
-    terms[rs[2][2]] = 0.0
+    terms[rs[2][2]] = newrs[2] * alpha
 
     terms[rs[3]] = newrs[3]
 
     if do_fsimp
         ca = fsimp(ca; kwargs...)
     end
-    ssubstitute(ca, terms)
+    ssubstitute(ca, terms), vcat(newrs, alpha)
 end
 
 function int_plot_1(ca::ComplexAllosteryGM, args...; init_scen=:eonly, kwargs...)
     if ca.version != 2.5
         throw(ArgumentError("this method only works for version 2.5"))
     end
-    sca = frsimp2(ca)
-    variables = vcat(get_em_vars(), get_concetrations(), Symbolics.variables(:r, 1:3))
+    sca, frterms = frsimp2(ca)
+    variables = vcat(get_em_vars(), get_concetrations(), frterms)
     ranges = [
         -1.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:10.0,
         0.0:0.1:5.0,
         0.0:0.1:5.0,
-        0.0:0.1:10.0,
+        0.0:0.01:2.0,
+        0.0:0.01:1.0,
         0.0:0.1:5.0,
-        0.0:0.1:5.0,
-        0.0:0.1:5.0
+        0.0:0.05:5.0,
+        0.0:0.01:1.5
     ]
     if init_scen == :eonly
-        startvalues = [3.0, 0.5, 0.2, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        startvalues = [3.0, 0.5, 0.2, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]
     elseif init_scen == :int1
-        startvalues = [3.0, 0.5, 0.2, 1.0, 5.0, 0.1, 0.1, 1.0, 1.0]
+        startvalues = [3.0, 0.5, 0.2, 1.0, 5.0, 0.05, 0.25, 2.0, 0.25, 0.0]
     end
     int_plot_ca(sca, args...; variables, ranges, startvalues, kwargs...)
 end
