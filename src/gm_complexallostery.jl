@@ -191,7 +191,7 @@ allstates(ca::ComplexAllosteryGM) = allstates(ca.N, ca.C, ca.B)
 ################################################################################
 # Include all the other bits
 ################################################################################
-includet("gm_ca_physics.jl")
-includet("gm_ca_concretizing.jl")
-includet("gm_ca_manipulations.jl")
-includet("gm_ca_io.jl")
+includet(srcdir("gm_ca_physics.jl"))
+includet(srcdir("gm_ca_concretizing.jl"))
+includet(srcdir("gm_ca_manipulations.jl"))
+includet(srcdir("gm_ca_io.jl"))

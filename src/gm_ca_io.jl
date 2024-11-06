@@ -444,18 +444,18 @@ function save_transmat(ca::ComplexAllosteryGM; name=savename("transmat", ca, "ta
     file = open(datadir(name), "w")
 
     row_names = repr.(1:numstates(ca)) .* " / " .* repr.(allstates(ca))
-    am = transmat(ca; mat=true)
+    tm = transmat(ca; mat=true)
     if short
         header = [""; repr.(1:numstates(ca))]
-        am = map(x -> if iszero(x)
+        tm = map(x -> if iszero(x)
                 0
             else
                 1
-            end, am)
+            end, tm)
     else
         header = [""; row_names]
     end
-    modified_matrix = [row_names am]
+    modified_matrix = [row_names tm]
 
     pretty_table(file, modified_matrix; header)
     close(file)

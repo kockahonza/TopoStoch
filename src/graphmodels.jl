@@ -1,14 +1,14 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
+using Revise
 using Graphs, SimpleWeightedGraphs
 using GLMakie
 using StatsBase
 using StaticArrays, SparseArrays
 using PyFormattedStrings
 
-include("general.jl")
-
+includet(srcdir("general.jl"))
 
 ################################################################################
 # Abstract type and API definitions
@@ -155,6 +155,28 @@ ij th element corresponds to a transition/rate from j to i.
 function transmat(gm::AbstractGraphModel; mat=false)
     tm = transpose(adjacency_matrix(graph(gm)))
     mat ? Matrix(tm) : sparse(tm)
+end
+
+"""
+Returns the modified transition matrix that can be used to get the time
+derivative as matrix multiplication only. See latex_notes/MasterEq this
+is W. Follows the same convention as `transmat`.
+"""
+function etransmat!(tm::AbstractMatrix)
+    n = size(tm)[1]
+    for i in 1:n
+        tm[i, i] -= sum(tm[k, i] for k in 1:n)
+    end
+end
+function etransmat(tm::AbstractMatrix)
+    ctm = copy(tm)
+    etransmat!(ctm)
+    ctm
+end
+function etransmat(gm::AbstractGraphModel, args...; kwargs...)
+    tm = transmat(gm, args...; kwargs...)
+    etransmat!(tm)
+    tm
 end
 
 # Plotting
