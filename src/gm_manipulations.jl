@@ -35,15 +35,20 @@ end
 ################################################################################
 # Doing stuff with the etransmat
 ################################################################################
-function fixevec(evec::AbstractVector)
-    if all(evec .<= 0)
+function fixevec(evec::AbstractVector{<:AbstractFloat})
+    if all(real.(evec) .<= 0)
         true, -evec
-    elseif all(evec .>= 0)
+    elseif all(real.(evec) .>= 0)
         true, evec
     else
         false, evec
     end
 end
+# FIX: This needs to be implemented to work with larger graphs!
+function fixevec(evec::AbstractVector{<:Complex{<:AbstractFloat}})
+    throw(ErrorException("KAKA"))
+end
+
 function smarteigen(gm::AbstractGraphModel; norm=true, normthreshold=1e-8)
     esys = eigen(etransmat(gm; mat=true); sortby=abs)
     n = length(esys.values)
@@ -53,16 +58,58 @@ function smarteigen(gm::AbstractGraphModel; norm=true, normthreshold=1e-8)
     for i in 1:n
         valid[i], evecs[i] = fixevec(esys.vectors[:, i])
         evecsum = sum(evecs[i])
-        if evecsum < 0.0
+        if real(evecsum) < 0.0
             evecs[i] .*= -1.0
             evecsum *= -1.0
         end
-        if norm && (evecsum > normthreshold)
+        if norm && (real(evecsum) > normthreshold)
             evecs[i] ./= evecsum
         end
     end
 
     (; evals=esys.values, evecs, valid)
+end
+
+function steadystates((; evals, evecs, valid); zerothreshold=1e-8)
+    n = 0
+    while abs(evals[n+1]) < zerothreshold
+        n += 1
+    end
+
+    steadystates = []
+    for i in 1:n
+        if valid[i]
+            push!(steadystates, evecs[i])
+        end
+    end
+    steadystates
+end
+function steadystates(gm::AbstractGraphModel; zerothreshold=1e-8, kwargs...)
+    steadystates(smarteigen(gm; kwargs...); zerothreshold)
+end
+
+function onlyss(args...; kwargs...)
+    sss = steadystates(args...; kwargs...)
+    if length(sss) == 1
+        sss[1]
+    else
+        nothing
+    end
+end
+
+function eigsummary(gm::AbstractGraphModel; pevecs=true, zerothreshold=1e-8)
+    esys = smarteigen(gm)
+    n = 0
+    while abs(esys.evals[n+1]) < zerothreshold
+        n += 1
+    end
+    valids = count(i -> esys.valid[i], 1:n)
+    println(f"There are {n} steady states of which {valids} are physical")
+    if pevecs
+        for i in 1:n
+            println(esys.evecs[i])
+        end
+    end
 end
 
 ################################################################################

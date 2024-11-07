@@ -21,6 +21,13 @@ function p_get_adjmat_symsafe(ca::ComplexAllosteryGM{S,F}) where {S,F}
     end
 end
 
+function makeprefunclayout(base_layout::NetworkLayout.AbstractLayout, f, args...; kwargs...)
+    copyf = copyand(f, args...; kwargs...)
+    function (ca)
+        base_layout(p_get_adjmat_symsafe(copyf(ca)))
+    end
+end
+
 function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
     if isnothing(layout)
         layout = :NR
@@ -34,6 +41,9 @@ function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
 
     if isa(layout, NetworkLayout.AbstractLayout)
         layout = layout(p_get_adjmat_symsafe(ca))
+        dim = length(layout[1])
+    elseif isa(layout, Function)
+        layout = layout(ca)
         dim = length(layout[1])
     elseif isa(layout, AbstractArray) && (length(layout) == numstates(ca))
         dim = length(layout[1])
@@ -130,7 +140,7 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
     do_layout_rslt, args...;
     axparent=nothing,
     # these apply to all
-    fancy_labels=:auto,
+    flabels=:auto,
     fnlabels=nothing,
     felabels=nothing,
     node_size_scale=20.0,
@@ -176,8 +186,8 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
     end
 
     # Label nodes and or edges
-    if fancy_labels == :auto
-        fancy_labels = nv(ca.graph) < 100
+    if flabels == :auto
+        flabels = nv(ca.graph) < 100
         if isnothing(fnlabels)
             fnlabels = :repr
         end
@@ -185,7 +195,7 @@ function plot_ca_!(ax, ca::ComplexAllosteryGM{S,F},
             felabels = :repr
         end
     end
-    if fancy_labels
+    if flabels
         if fnlabels == :repr
             auto_kwargs[:nlabels] = repr.(allstates(ca))
         elseif fnlabels == :E
@@ -289,7 +299,7 @@ function plot_ca!(maybeax, cao::Observable, args...;
 
     on(cao) do ca
         layout = plot.node_pos[]
-        empty!(ax)
+        delete!(ax, plot)
         if remove_colorbars
             delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
         end
@@ -298,7 +308,7 @@ function plot_ca!(maybeax, cao::Observable, args...;
 
     if !isnothing(refresh_layout_obs)
         on(refresh_layout_obs) do _
-            empty!(ax)
+            delete!(ax, plot)
             if remove_colorbars
                 delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
             end
@@ -335,6 +345,54 @@ function prep_sliders(variables; ranges=nothing, startvalues=nothing)
 end
 
 function int_plot_ca(ca::ComplexAllosteryGM, args...;
+    variables=Num.(get_variables(ca)),
+    doeig=true, noplot=false,
+    ranges=nothing, startvalues=nothing, kwargs...
+)
+    # Setup sliders and the graph observable
+    fig, sobs, sg = prep_sliders(variables; ranges, startvalues)
+    ca_factory = make_factory(ca, variables)
+
+    ca_obs = lift(sobs...) do (svals...)
+        ca_factory(svals...)
+    end
+
+    if noplot
+        return FigureAxisAnything(fig, nothing, ca_obs)
+    end
+
+    buttons = fig[1, 2] = GridLayout()
+    colsize!(fig.layout, 2, Fixed(60))
+    refresh_layout_btn = Button(buttons[1, 1], label="layout")
+
+    plotspace = fig[2, :] = GridLayout()
+
+    extra_kwargs = Dict{Symbol,Any}()
+    if doeig
+        extra_kwargs[:node_size] = lift(ca_obs) do ca
+            maybesizes = onlyss(ca)
+            if !isnothing(maybesizes)
+                50 .* sqrt.(maybesizes)
+            else
+                [20 for _ in 1:numstates(ca)]
+            end
+        end
+    end
+
+    # Make a suitable ax the the graph plotting
+    ax, plot = plot_ca!(plotspace, ca_obs, args...;
+        returnax=true,
+        axparent=plotspace,
+        refresh_layout_obs=refresh_layout_btn.clicks,
+        roffset_devs=false,
+        extra_kwargs...,
+        kwargs...
+    )
+
+    FigureAxisAnything(fig, ax, ca_obs)
+end
+
+function int_eigen(ca::ComplexAllosteryGM, args...;
     variables=Num.(get_variables(ca)),
     ranges=nothing, startvalues=nothing, kwargs...
 )
