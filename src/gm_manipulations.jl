@@ -36,9 +36,9 @@ end
 # Doing stuff with the etransmat
 ################################################################################
 function fixevec(evec::AbstractVector{<:AbstractFloat})
-    if all(real.(evec) .<= 0)
+    if all(evec .<= 0)
         true, -evec
-    elseif all(real.(evec) .>= 0)
+    elseif all(evec .>= 0)
         true, evec
     else
         false, evec
