@@ -168,7 +168,7 @@ function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     terms[rs[1][2]] = newrs[1]
 
     terms[rs[2][1]] = newrs[2]
-    terms[rs[2][2]] = newrs[2] * alpha
+    terms[rs[2][2]] = alpha * newrs[2]
 
     terms[rs[3]] = newrs[3]
 

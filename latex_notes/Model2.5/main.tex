@@ -3,16 +3,21 @@
 \usepackage[utf8]{inputenc}
 \usepackage{parskip}
 
+% Mathy stuff
 \usepackage{physics}
 \usepackage{siunitx}
 \usepackage{amsmath}
 \usepackage[version=4]{mhchem}
+
+% Visual stuff
 \usepackage{graphics}
 \usepackage{tikz}
 \usetikzlibrary{math}
-
 \usepackage{stackengine}
 \usepackage{float}
+\usepackage{tcolorbox}
+
+% Misc
 \usepackage{cleveref}
 \usepackage{lipsum}
 
@@ -25,6 +30,16 @@
 \newcommand\textbff[1]{\textbf{\boldmath #1}}
 \newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
 
+\stackMath
+\newcommand{\suf}[2]{\stackunder[0.5pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\duf}[2]{\stackunder[0.5pt]{\stackunder[0.8pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\su}[1]{\suf{#1}{#1}}
+\newcommand{\du}[1]{\duf{#1}{#1}}
+\newcommand{\ssu}[1]{\scriptsize\su{#1}\normalsize}
+\newcommand{\sdu}[1]{\scriptsize\du{#1}\normalsize}
+
+\newcommand{\pp}{\ensuremath{\partial}}
+
 \begin{document}
 \begin{center}
     \LARGE
@@ -36,9 +51,11 @@ Same as Model 2 but with the locality problem fixed and different $r_?$ paramete
 
 \section{Energies}\label{sec:energies}
 As before, to summarize:
-\begin{equation}\label{eq:energy}
-    E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{1}{2} \sum_i E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})
-\end{equation}
+\begin{tcolorbox}
+    \begin{equation}\label{eq:energy}
+        E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{1}{2} \sum_i E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})
+    \end{equation}
+\end{tcolorbox}
 where $E_M$ is a $C{\times}(B+1)$ matrix defining the energies of each individual monomer according to its conformation and number of bound ligands.
 And $E_I$ is a $C{\times}C$ matrix defining the monomer interaction energies, specifically $E_I(c_1, c_2)$ is the energy cost of having a monomer of conformation $c_1$ to the left of one in conformation $c_2$, hence the particular ordering in \cref{eq:energy}.
 The model is achiral if $E_I$ is symmetric.
@@ -84,17 +101,19 @@ Restricting ourselves to the $C=2$, achiral case we can immediately simplify to
 borrowing the tense ($T$) and relaxed ($R$) conformation labels from haemoglobin models where presumably $\epsilon_{R,0} \geq 0$ and $\epsilon_{T,i} \geq \epsilon_{R,i}$ for most of $i \neq 0$.
 \subsection{Simplest case}
 However, to further reduce the number of parameters we use
-\begin{align}
-    E_M \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_t & 2\epsilon_t & \cdots \\
-        \Delta\epsilon_r & \epsilon_t - \Delta\epsilon_r & 2\epsilon_t - \Delta\epsilon_r & \cdots \\
-    \end{pmatrix}
-    &&
-    E_I \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_b \\
-        \epsilon_b & 0 \\
-    \end{pmatrix}
-\end{align}
+\begin{tcolorbox}
+    \begin{align}
+        E_M \leftrightarrow \begin{pmatrix}
+            0 & \epsilon_t & 2\epsilon_t & \cdots \\
+            \Delta\epsilon_r & \epsilon_t - \Delta\epsilon_r & 2\epsilon_t - \Delta\epsilon_r & \cdots \\
+        \end{pmatrix}
+        &&
+        E_I \leftrightarrow \begin{pmatrix}
+            0 & \epsilon_b \\
+            \epsilon_b & 0 \\
+        \end{pmatrix}
+    \end{align}
+\end{tcolorbox}
 where $\epsilon_t$ sets the overall energy of binding additional ligands and $\Delta\epsilon_r$ is a measure of how different the $R$ state is.
 
 \section{Equilibrium/Boltzmann Statistics}
@@ -151,21 +170,48 @@ Taking all this into account we arrive at
     &\frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'})) \label{eq:rp3}
 \end{align}
 and so
-\begin{align}
-    &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) \label{eq:rate1f} \\
-    &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) \label{eq:rate1b} \\
-    &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
-    &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
-    &r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) \label{eq:rate3f} \\
-    &r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
-\end{align}
+\begin{tcolorbox}
+    \begin{align}
+        &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) \label{eq:rate1f} \\
+        &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) \label{eq:rate1b} \\
+        &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
+        &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
+        &r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) \label{eq:rate3f} \\
+        &r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
+    \end{align}
+\end{tcolorbox}
 where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
+
+\section{Parameters}
+The model has the following parameters
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+        Where they come from & parameters & units \\
+        \hline
+        Energy parameters & $\epsilon_t, \Delta\epsilon_r, \epsilon_b$ & \si{E} \\
+        Equilibrium statistics & $\mu, \si{k_b}T$ & \si{E} \\
+        Rates: overall scaling & $r_{1/2}(c_i),r_3$ -- $2C+1$ of these & rates -- \si{T^{-1}} \\
+        Rates: dimensionless concentrations & $c_P,c_{ATP},c_{ADP}$ & \si{1} \\
+        Rates: intrinsic chemical energies & $\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ & \si{E} \\
+        Rates: thetas/balancing & $\theta_{1/2/3,f/b}$ -- 6 of these & \si{1} \\
+    \end{tabular}
+\end{table}
+
+\subsection{Reducing parameters}\label{sec:redpar}
+Firstly, assuming constant $T$ we may choose $\si{k_B}T = 1\si{E}$ to be our energy unit.
+We can also reasonably take all the $\theta_?$ to be equal.
+Beyond this it gets more questionable.
+
+\begin{tcolorbox}
+    We can start off with setting all the $\theta_?$ to one which is very convenient as that then makes the somewhat redundant degrees of freedom of the concentrations and intrinsic chemical energies have the same effect.
+    As such, with this simplification we can also withouth loss of complexity set all the intrinsic chemical energies to 0.
+\end{tcolorbox}
 
 \section{Single Monomer Futile Cycles}
 Focusing on the $N=1$ system with also $C=2,B=1$ we get essentially the simple subsystem we considered before (especially as now we don't have the locality breaking as before).
-This system has 4 microstates which along with the transition rates between them are shown in \cref{fig:4sTs} (with slightly differing notation).
-
-\begin{figure}[H]
+This system has 4 microstates which along with the full symbolic transition rates between them are shown in \cref{fig:4sTs} (with slightly differing notation).
+\begin{figure}[h]
     \includegraphics[width=\textwidth]{../../plots/symgraph_B=1_C=2_N=1_version=2.5.png}
     \caption{
         Diagram of single monomer transitions for $C=2,B=1$.
@@ -173,8 +219,9 @@ This system has 4 microstates which along with the transition rates between them
         Left column are without a ligand and right column with one ligand bound.
     }\label{fig:4sTs}
 \end{figure}
-
 As before the up and down transition (that change conformation) are naturally "driven" clockwise just due to the nature of the energies $\epsilon_t,\Delta\epsilon_r$.
+But how do we complete the cycle?
+
 \subsection{Systematic approach}\label{sec:fcsys}
 Before we look at the exact rates for the $N=1$ system it is worth looking at the general picture of ligand binding by processes 1 and 2.
 From \cref{eq:rp1} we can see that binding a ligand in process 1 is favoured as long as the energy is not raised by more than $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$
@@ -203,69 +250,109 @@ Next we still have to set the overall rate scales $r_{1/2}(c)$ for both monomer 
 It seems reasonable to have process 1 couple equally to both conformations, but to have process 2 couple stronger to the tense ($c_i=1$) conformation.
 
 \subsection{Brute force approach}
-To complete this cycle fully we get the conditions of
+But in case it is useful, these are the conditions in full to get the single monomer cycles described above
 \begin{multline}
     c_P r_{1}(1) e^{\frac{\epsilon_P \theta_{1f} - \varepsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} + c_{ATP} r_{2}(1) e^{\frac{ - \left( \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f}}{kT}} > \\
     r_{1}(1) e^{\frac{ - \epsilon_P \left( 1 - \theta_{1f} \right) + \varepsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b} - \epsilon_P \left( 1 - \theta_{2f} \right)}{kT}} \\
 \end{multline}
+\begin{multline}
+    c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_{ATP} \right) \theta_{2f} - \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_P \right) \theta_{1f} - \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} < \\
+    r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
+\end{multline}
+
+\subsection{Choosing parameters}
+In order to move forward, we use the parameter reductions from \cref{sec:redpar} and make some additional choices.
+Inspired from \cref{sec:fcsys}, we let the rates $r_1(?)$ all be the same, call it $r_1$, and we let $r_2=r_2(1)$ and $r_2(2)=\alpha r_2$, with presumably $\alpha < 1$.
+This makes the rates become
+\begin{tcolorbox}
+    \begin{align}
+        &r_{1f}(c_i) = r_1c_P\exp(\beta\epsilon_i^S) \label{eq:rate1f} \\
+        &r_{1b}(c_i) = r_1\exp(\beta\epsilon_i^{S'}) \label{eq:rate1b} \\
+        &r_{2f}(c_i) = r_2c_{ATP}\exp(\beta\epsilon_i^S) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2f} \\
+        &r_{2b}(c_i) = r_2c_{ADP}\exp(\beta\epsilon_i^{S'}) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2b} \\
+        &r_{3f} = r_3\exp(\beta\epsilon_i^S) \label{eq:rate3f} \\
+        &r_{3b} = r_3\exp(\beta\epsilon_i^{S'}) \label{eq:rate3b}
+    \end{align}
+\end{tcolorbox}
+which from a slightly different perspective is
 \begin{align}
-    c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_{ATP} \right) \theta_{2f} - \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_P \right) \theta_{1f} - \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} &< r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
+    r_{b_i+1,c_i=1} &= (r_1c_P+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
+    r_{b_i+1,c_i=2} &= (r_1c_P+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
+    r_{b_i-1,c_i=1} &= (r_1+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
+    r_{b_i-1,c_i=2} &= (r_1+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
+    r_{c_i \rightarrow c_i',b_i} &= r_3\exp(\beta (E_M(c_i, b_i) + \text{NN interaction energy}))
 \end{align}
+where we have plugged in the corresponding terms for $\epsilon_i^S$ as well.
+The resulting transition graph for the $N=1$ system can be seen in \cref{fig:4sTss}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{../../plots/symgraphsimple_B=1_C=2_N=1_version=2.5.png}
+    \caption{
+        Diagram of single monomer transitions for $C=2,B=1$ using the simplifying parameter choices.
+        Top row is the tense conformational states, bottom is the relaxed ones.
+        Left column are without a ligand and right column with one ligand bound.
+    }\label{fig:4sTss}
+\end{figure}
 
 \subsection{Looking at the transition matrix}
-We can also construct the transition rate matrix $R$ where $R_{ij}$ corresponds to the transition from $j$ to $i$.
+It is worth looking directly at the transition matrix $\du{R}$ where $R_{ij}$ corresponds to the transition from $j$ to $i$.
 This takes the form
 \begin{align}
-R \sim \begin{pmatrix}
-0 & c & e & 0 \\
-a & 0 & 0 & g \\
-b & 0 & 0 & h \\
-0 & d & f & 0 \\
-\end{pmatrix} \qq{where states go as} \begin{pmatrix}
-    (\set{1}, \set{0}) \\
-    (\set{2}, \set{0}) \\
-    (\set{1}, \set{1}) \\
-    (\set{2}, \set{1})
-\end{pmatrix}
+    \du{R} \leftrightarrow \begin{pmatrix}
+    0 & c & e & 0 \\
+    a & 0 & 0 & g \\
+    b & 0 & 0 & h \\
+    0 & d & f & 0 \\
+    \end{pmatrix} \qq{with states ordered as} \begin{pmatrix}
+        (\set{1}, \set{0}) \\
+        (\set{2}, \set{0}) \\
+        (\set{1}, \set{1}) \\
+        (\set{2}, \set{1})
+    \end{pmatrix}
 \end{align}
-where the variables are shorthands for the rates in \cref{fig:4sTs}.
-We can symbolically solve for the eigenvalues of this matrix and have done so using wolfram, the results being
+where the variables are shorthands for the rates in \cref{fig:4sTs} or the simplified ones in \cref{fig:4sTss}.
+For the simplified rates these would be
+
+\begin{minipage}{0.45\textwidth}
+    \begin{align}
+        a &= r_3 \\
+        f &= r_3 e^{\epsilon_{t}} \\
+        d &= c_P r_1 e^{\Delta\epsilon_{r}} + c_{ATP} r_2 e^{\Delta\epsilon_{r}} \alpha \\
+        g &= r_1 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} + c_{ADP} r_2 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \alpha
+    \end{align}
+\end{minipage}
+\begin{minipage}{0.45\textwidth}
+    \begin{align}
+        h &= r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \\
+        b &= c_{ATP} r_2 + c_P r_1 \\
+        e &= r_1 e^{\epsilon_{t}} + c_{ADP} r_2 e^{\epsilon_{t}} \\
+        c &= r_3 e^{\Delta\epsilon_{r}}
+    \end{align}
+\end{minipage}
+
+However, more interesting to use is the matrix $\du{W}$ given by $W_{ij}=R_{ij}-\delta_{ij}\sum_k R_{ki}$ as puts the probability evolution equation
 \begin{equation}
-    \begin{pmatrix}
-        -\frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
-        \frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
-        -\frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
-        \frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}}
+    \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i) \qq{into the convenient form of} \partial_t p_i = \sum_j W_{ij}p_j
+\end{equation}
+using substitutions from before we get
+\begin{equation}
+    \du{W} \leftrightarrow \begin{pmatrix}
+    -a-b & c & e & 0 \\
+    a & -c-d & 0 & g \\
+    b & 0 & -e-f & h \\
+    0 & d & f & -g-h \\
     \end{pmatrix}
 \end{equation}
 
-\section{Parameters}
-The model has the following parameters
-\begin{table}[H]
-    \centering
-    \begin{tabular}{c|c|c}
-        Where they come from & parameters & units \\
-        \hline
-        Energy parameters & $\epsilon_t, \Delta\epsilon_r, \epsilon_b$ & \si{E} \\
-        Equilibrium statistics & $\mu, \si{k_b}T$ & \si{E} \\
-        Rates: overall scaling & $r_{1/2}(c_i),r_3$ -- $2C+1$ of these & rates -- \si{T^{-1}} \\
-        Rates: dimensionless concentrations & $c_P,c_{ATP},c_{ADP}$ & \si{1} \\
-        Rates: intrinsic chemical energies & $\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ & \si{E} \\
-        Rates: thetas/balancing & $\theta_{1/2/3,f/b}$ -- 6 of these & \si{1} \\
-    \end{tabular}
-\end{table}
 
-\subsection{Reducing parameters}
-Firstly, assuming constant $T$ we may choose $\si{k_B}T = 1\si{E}$ to be our energy unit.
-We can also reasonably take all the $\theta_?$ to be equal.
-Beyond this it gets more questionable.
-
-\paragraph{Unit $\theta_?$}
-We can start off with setting all the $\theta_?$ to one which is very convenient as that then makes the somewhat redundant degrees of freedom of the concentrations and intrinsic chemical energies have the same effect.
-As such, with this simplification we can also withouth loss of complexity set all the intrinsic chemical energies to 0.
-
-\paragraph{Rate scales $r_?$}
-The absolute simplest scenario imaginable that can give the single monomer futile cycles as described in \cref{sec:fcsys} is where we have $r_1(?)=r_3=1$, $r_2(1)=1$ and $r_2(2)=0$.
-
+% We can symbolically solve for the eigenvalues of this matrix and have done so using wolfram, the results being
+% \begin{equation}
+%     \begin{pmatrix}
+%         -\frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+%         \frac{\sqrt{-\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+%         -\frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}} \\
+%         \frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}}
+%     \end{pmatrix}
+% \end{equation}
 
 \end{document}
