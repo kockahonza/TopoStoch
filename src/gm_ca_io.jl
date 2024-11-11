@@ -1,33 +1,6 @@
-# Util
-struct FigureAxisAnything
-    figure::Figure
-    axis::Any
-    obj::Any
-end
-display(faa::FigureAxisAnything) = display(faa.figure)
-
 ################################################################################
 # Complex plotting ComplexAllosteryGM objects
 ################################################################################
-function p_get_adjmat_symsafe(ca::ComplexAllosteryGM{S,F}) where {S,F}
-    if F == Num
-        map(x -> if iszero(x)
-                0.0
-            else
-                1.0
-            end, adjacency_matrix(ca.graph))
-    else
-        adjacency_matrix(ca.graph)
-    end
-end
-
-function makeprefunclayout(base_layout::NetworkLayout.AbstractLayout, f, args...; kwargs...)
-    copyf = copyand(f, args...; kwargs...)
-    function (ca)
-        base_layout(p_get_adjmat_symsafe(copyf(ca)))
-    end
-end
-
 function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
     if isnothing(layout)
         layout = :NR
@@ -123,16 +96,6 @@ function p_do_layout(ca::ComplexAllosteryGM, layout, roffset_devs)
         end
     end
     (; layout, dim, axis_labels)
-end
-
-function p_make_ca_ax(dim, place)
-    if dim == 2
-        Axis(place)
-    elseif dim == 3
-        LScene(place)
-    else
-        throw(ErrorException("the layout dimension was not 2 or 3"))
-    end
 end
 
 # This is the main logic function

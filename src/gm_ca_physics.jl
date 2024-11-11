@@ -249,6 +249,109 @@ function add_edges_balanced_universtal_scale!(ca::ComplexAllosteryGM)
     end
 end
 
+function add_edges_fcs_energetics!(ca::ComplexAllosteryGM; weight=1)
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in (state.conformations[i]+1):ca.C
+                new_state = copy(state)
+                new_state.conformations[i] = new_c
+                new_vertex = statetoi(new_state, ca)
+
+                e_i_state = calc_monomer_energy(state, i, ca) + calc_interaction_energy(state, i, ca)
+                e_i_new_state = calc_monomer_energy(new_state, i, ca) + calc_interaction_energy(new_state, i, ca)
+
+                if e_i_new_state < e_i_state
+                    inc_edge!(ca.graph, vertex, new_vertex, weight)
+                else
+                    inc_edge!(ca.graph, new_vertex, vertex, weight)
+                end
+            end
+        end
+
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                new_vertex = statetoi(new_state, ca)
+
+                i_conf = state.conformations[i]
+
+                if i_conf == 1
+                    inc_edge!(ca.graph, vertex, new_vertex, weight)
+                else
+                    inc_edge!(ca.graph, new_vertex, vertex, weight)
+                end
+            end
+        end
+    end
+end
+
+function add_edges_fcs_simple!(ca::ComplexAllosteryGM; weight=1)
+    for vertex in 1:numstates(ca)
+        state = itostate(vertex, ca)
+
+        # Add conformational change transitions
+        for i in 1:ca.N
+            for new_c in (state.conformations[i]+1):ca.C
+                new_state = copy(state)
+                new_state.conformations[i] = new_c
+                new_vertex = statetoi(new_state, ca)
+
+                bi = state.occupations[i]
+
+                if bi == 0
+                    inc_edge!(ca.graph, new_vertex, vertex, weight)
+                else
+                    inc_edge!(ca.graph, vertex, new_vertex, weight)
+                end
+            end
+        end
+
+        # Add ligand (de)binding rates
+        for i in 1:ca.N
+            cur_occ = state.occupations[i]
+            if cur_occ < ca.B
+                new_state = copy(state)
+                new_state.occupations[i] += 1
+                new_vertex = statetoi(new_state, ca)
+
+                i_conf = state.conformations[i]
+
+                if i_conf == 1
+                    inc_edge!(ca.graph, vertex, new_vertex, weight)
+                else
+                    inc_edge!(ca.graph, new_vertex, vertex, weight)
+                end
+            end
+        end
+    end
+end
+
+function make_simple_fcs_only(N, B; edge_t=:simple, kwargs...)
+    ca = ComplexAllosteryGM(N, 2, B;
+        symmetry=Loop(),
+        energy_matrices=nothing,
+        version=42.0,
+        numtype=Val(Float64),
+        kwargs...
+    )
+
+    if edge_t == :simple
+        add_edges_fcs_simple!(ca)
+    elseif edge_t == :en
+        add_edges_fcs_energetics!(ca)
+    else
+        throw(ArgumentError(f"edge_t \"{edge_t}\" not recognised"))
+    end
+
+    ca
+end
+
 function check_detailed_balance(ca::ComplexAllosteryGM; sim=false, fil=true)
     gfs = calc_gibbs_factor.(allstates(ca), ca)
 
@@ -282,3 +385,4 @@ function check_detailed_balance(ca::ComplexAllosteryGM; sim=false, fil=true)
 
     conditions
 end
+

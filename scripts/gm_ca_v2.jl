@@ -21,7 +21,7 @@ function make_v2(N, B; edge_t=:full)
     ca
 end
 
-function add_edge_incweight!(g, u, v, w)
+function inc_edge!(g, u, v, w)
     cur_weight = get_weight(g, u, v)
     add_edge!(g, u, v, cur_weight + w)
 end
@@ -56,12 +56,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                 # forward rate
                 exp_term_f = thetas[3, 1] * E_state - (1 - thetas[3, 2]) * E_new_state
                 rf = rs[3] * exp(exp_term_f / kT)
-                add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                 # backward rate
                 exp_term_b = thetas[3, 2] * E_new_state - (1 - thetas[3, 1]) * E_state
                 rb = rs[3] * exp(exp_term_b / kT)
-                add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                inc_edge!(ca.graph, new_vertex, vertex, rb)
             end
         end
 
@@ -81,12 +81,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                     # forward rate
                     exp_term_f = thetas[1, 1] * (E_state + chem_energies[1]) - (1 - thetas[1, 2]) * E_new_state
                     rf = rs[1] * concetrations[1] * exp(exp_term_f / kT)
-                    add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                    inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
                     exp_term_b = thetas[1, 2] * E_new_state - (1 - thetas[1, 1]) * (E_state + chem_energies[1])
                     rb = rs[1] * exp(exp_term_b / kT)
-                    add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                    inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
 
                 # ATP + S <-> ADP + NS reaction
@@ -94,12 +94,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                     # forward rate
                     exp_term_f = thetas[2, 1] * (E_state + chem_energies[2]) - (1 - thetas[2, 2]) * (E_new_state + chem_energies[3])
                     rf = rs[2] * concetrations[2] * exp(exp_term_f / kT)
-                    add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                    inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
                     exp_term_b = thetas[2, 2] * (E_new_state + chem_energies[3]) - (1 - thetas[2, 1]) * (E_state + chem_energies[1])
                     rb = rs[2] * concetrations[3] * exp(exp_term_b / kT)
-                    add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                    inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
             end
         end

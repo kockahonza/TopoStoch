@@ -8,11 +8,11 @@ includet(srcdir("gm_ca.jl"))
 ################################################################################
 # The simple case, C=2 and B mostly 1
 ################################################################################
-function make_v2_5(N, B; edge_t=:full)
+function make_v2_5(N, B; edge_t=:full, kwargs...)
     ca = ComplexAllosteryGM(N, 2, B;
         symmetry=Loop(),
         energy_matrices=make_em_sym(B),
-        version=2.5
+        version=2.5, kwargs...
     )
 
     if edge_t == :full
@@ -22,11 +22,6 @@ function make_v2_5(N, B; edge_t=:full)
     end
 
     ca
-end
-
-function add_edge_incweight!(g, u, v, w)
-    cur_weight = get_weight(g, u, v)
-    add_edge!(g, u, v, cur_weight + w)
 end
 
 # define a bunch of symbolic variables so I don't have to keep redoing this
@@ -63,12 +58,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                 # forward rate (where c_i increases)
                 exp_term_f = thetas[3, 1] * e_i_state - (1 - thetas[3, 2]) * e_i_new_state
                 rf = rs[3] * exp(exp_term_f / kT)
-                add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                 # backward rate (where c_i decreases)
                 exp_term_b = thetas[3, 2] * e_i_new_state - (1 - thetas[3, 1]) * e_i_state
                 rb = rs[3] * exp(exp_term_b / kT)
-                add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                inc_edge!(ca.graph, new_vertex, vertex, rb)
             end
         end
 
@@ -90,12 +85,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                     # forward rate
                     exp_term_f = thetas[1, 1] * (e_i_state + chem_energies[1]) - (1 - thetas[1, 2]) * e_i_new_state
                     rf = rs[1][i_conf] * concetrations[1] * exp(exp_term_f / kT)
-                    add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                    inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
                     exp_term_b = thetas[1, 2] * e_i_new_state - (1 - thetas[1, 1]) * (e_i_state + chem_energies[1])
                     rb = rs[1][i_conf] * exp(exp_term_b / kT)
-                    add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                    inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
 
                 # ATP + S <-> ADP + NS reaction
@@ -103,19 +98,19 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                     # forward rate
                     exp_term_f = thetas[2, 1] * (e_i_state + chem_energies[2]) - (1 - thetas[2, 2]) * (e_i_new_state + chem_energies[3])
                     rf = rs[2][i_conf] * concetrations[2] * exp(exp_term_f / kT)
-                    add_edge_incweight!(ca.graph, vertex, new_vertex, rf)
+                    inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
                     exp_term_b = thetas[2, 2] * (e_i_new_state + chem_energies[3]) - (1 - thetas[2, 1]) * (e_i_state + chem_energies[1])
                     rb = rs[2][i_conf] * concetrations[3] * exp(exp_term_b / kT)
-                    add_edge_incweight!(ca.graph, new_vertex, vertex, rb)
+                    inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
             end
         end
     end
 end
 
-function fsimp(ca::ComplexAllosteryGM; which=:both)
+function fsimp(obj; which=:both)
     if which == :both
         which = [:thetas, :chem_energies]
     elseif isa(which, Symbol)
@@ -136,10 +131,10 @@ function fsimp(ca::ComplexAllosteryGM; which=:both)
 
     terms[get_kT()] = 1.0
 
-    ssubstitute(ca, terms)
+    ssubstitute(obj, terms)
 end
 
-function frsimp(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
+function frsimp(obj; do_fsimp=true, kwargs...)
     rs = get_rs()
     terms = Dict{Num,Num}()
 
@@ -152,12 +147,12 @@ function frsimp(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     terms[rs[3]] = 1.0
 
     if do_fsimp
-        ca = fsimp(ca; kwargs...)
+        obj = fsimp(obj; kwargs...)
     end
-    ssubstitute(ca, terms)
+    ssubstitute(obj, terms)
 end
 
-function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
+function frsimp2(obj; do_fsimp=true, kwargs...)
     rs = get_rs()
     newrs = Symbolics.variables(:r, 1:3)
     alpha = Symbolics.variable(:α)
@@ -173,9 +168,9 @@ function frsimp2(ca::ComplexAllosteryGM; do_fsimp=true, kwargs...)
     terms[rs[3]] = newrs[3]
 
     if do_fsimp
-        ca = fsimp(ca; kwargs...)
+        obj = fsimp(obj; kwargs...)
     end
-    ssubstitute(ca, terms), vcat(newrs, alpha)
+    ssubstitute(obj, terms), vcat(newrs, alpha)
 end
 
 function int_plot_1(ca::ComplexAllosteryGM, args...; init_scen=:eonly, kwargs...)

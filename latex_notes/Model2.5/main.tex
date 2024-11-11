@@ -260,7 +260,7 @@ But in case it is useful, these are the conditions in full to get the single mon
     r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
 \end{multline}
 
-\subsection{Choosing parameters}
+\subsection{Choosing parameters}\label{sec:simpar}
 In order to move forward, we use the parameter reductions from \cref{sec:redpar} and make some additional choices.
 Inspired from \cref{sec:fcsys}, we let the rates $r_1(?)$ all be the same, call it $r_1$, and we let $r_2=r_2(1)$ and $r_2(2)=\alpha r_2$, with presumably $\alpha < 1$.
 This makes the rates become
@@ -276,17 +276,23 @@ This makes the rates become
 \end{tcolorbox}
 which from a slightly different perspective is
 \begin{align}
-    r_{b_i+1,c_i=1} &= (r_1c_P+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
-    r_{b_i+1,c_i=2} &= (r_1c_P+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
-    r_{b_i-1,c_i=1} &= (r_1+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
-    r_{b_i-1,c_i=2} &= (r_1+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
+    r_{\text{binding},b_i,c_i=1} &= (r_1c_P+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
+    r_{\text{debinding},b_i,c_i=1} &= (r_1+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
+    r_{\text{binding},b_i,c_i=2} &= (r_1c_P+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
+    r_{\text{debinding},b_i,c_i=2} &= (r_1+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
     r_{c_i \rightarrow c_i',b_i} &= r_3\exp(\beta (E_M(c_i, b_i) + \text{NN interaction energy}))
 \end{align}
 where we have plugged in the corresponding terms for $\epsilon_i^S$ as well.
 The resulting transition graph for the $N=1$ system can be seen in \cref{fig:4sTss}
 
-\begin{figure}[h]
-    \includegraphics[width=\textwidth]{../../plots/symgraphsimple_B=1_C=2_N=1_version=2.5.png}
+Finally, the exact conditions to have our single monomer futile cycles in this simplified model where we further assumer $B=1$ are
+\begin{align}
+    \frac{r_{\text{binding},b_i,1}}{r_{\text{debinding},b_i+1,1}} = \frac{(r_1c_P+r_2c_{ATP})}{(r_1+r_2c_{ADP})\exp(\beta \epsilon_t)} &> 1 \\
+    \frac{r_{\text{binding},b_i,2}}{r_{\text{debinding},b_i+1,2}} = \frac{(r_1c_P+\alpha r_2c_{ATP})\exp(\beta \Delta\epsilon_r)}{(r_1+\alpha r_2c_{ADP})\exp(\beta (\epsilon_t-\Delta\epsilon_r))} &< 1 \\
+\end{align}
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{../../plots/simple_sg_B=1_C=2_N=1_version=2.5.png}
     \caption{
         Diagram of single monomer transitions for $C=2,B=1$ using the simplifying parameter choices.
         Top row is the tense conformational states, bottom is the relaxed ones.
@@ -330,20 +336,52 @@ For the simplified rates these would be
     \end{align}
 \end{minipage}
 
-However, more interesting to use is the matrix $\du{W}$ given by $W_{ij}=R_{ij}-\delta_{ij}\sum_k R_{ki}$ as puts the probability evolution equation
+with the full version being in \cref{fig:fullrates}
+
+However, more interesting to use is the matrix $\du{W}$ given by $W_{ij}=R_{ij}-\delta_{ij}\sum_k R_{ki}$ as puts the probability evolution align
 \begin{equation}
     \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i) \qq{into the convenient form of} \partial_t p_i = \sum_j W_{ij}p_j
 \end{equation}
 using substitutions from before we get
+\begin{tcolorbox}
+    \begin{equation}\label{eq:W}
+        \du{W} \leftrightarrow \begin{pmatrix}
+        -a-b & c & e & 0 \\
+        a & -c-d & 0 & g \\
+        b & 0 & -e-f & h \\
+        0 & d & f & -g-h \\
+        \end{pmatrix}
+    \end{equation}
+\end{tcolorbox}
+any such matrix is guaranteed to have 0 as an eigenvalue, and all its other eigenvalues to be negative.
+Further, if the graph/matrix is strongly connected (should mostly be true for us) then there is only a single eigenvector associated to the eigenvalue of 0.
+Also, the components of all the other eigenvectors sum to 0.
+
+Symbolically solving for the eigensystem of \cref{eq:W} indeed returns one eigenvector which always has eigenvalue 0, the (not normallized) vector is
 \begin{equation}
-    \du{W} \leftrightarrow \begin{pmatrix}
-    -a-b & c & e & 0 \\
-    a & -c-d & 0 & g \\
-    b & 0 & -e-f & h \\
-    0 & d & f & -g-h \\
+    \su{p}_\text{steadystate} = \begin{pmatrix}
+        c e g + c e h + c f g + d e h \\
+        a e g + a e h + a f g + b f g \\
+        a d h + b c g + b c h + b d h \\
+        a d e + a d f + b c f + b d f
+    \end{pmatrix} = \begin{pmatrix}
+        c e \left( g + h \right) + c f g + d e h \\
+        a e \left( g + h \right) + \left( a + b \right) f g \\
+        \left( a + b \right) d h + b c \left( g + h \right) \\
+        a d \left( e + f \right) + b \left( c + d \right) f
     \end{pmatrix}
 \end{equation}
-
+after plugging in the simplified version of the variables this gives
+\footnotesize
+\begin{equation}
+    \su{p}_\text{steadystate} = \begin{pmatrix}
+        \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( r_1 + c_{ADP} r_2 \right) \left( \left( 1 + c_P \right) r_1 + \left( c_{ADP} + c_{ATP} \right) r_2 \alpha \right) \right) r_3 e^{2 \epsilon_{t}} \\
+        \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( \left( c_{ADP} + c_{ATP} \right) r_2 + \left( 1 + c_P \right) r_1 \right) \left( r_1 + c_{ADP} r_2 \alpha \right) \right) r_3 e^{ - \Delta\epsilon_{r} + 2 \epsilon_{t}} \\
+        \left( \left( r_1 + r_3 + c_P r_1 + r_3 \alpha + c_{ADP} r_2 \alpha + c_P r_1 \alpha \right) c_{ATP} r_2 + \left( r_1 + 2 r_3 + c_P r_1 + c_{ADP} r_2 \alpha \right) c_P r_1 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\epsilon_{t}} \\
+        \left( \left( r_1 + 2 r_3 + c_{ADP} r_2 + c_P r_1 \right) c_P r_1 + \left( r_3 \left( 1 + \alpha \right) + c_{ADP} r_2 \alpha + \left( c_P + \alpha + c_P \alpha \right) r_1 \right) c_{ATP} r_2 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\Delta\epsilon_{r} + \epsilon_{t}}
+    \end{pmatrix}
+\end{equation}
+\normalsize
 
 % We can symbolically solve for the eigenvalues of this matrix and have done so using wolfram, the results being
 % \begin{equation}
@@ -354,5 +392,46 @@ using substitutions from before we get
 %         \frac{\sqrt{\sqrt{(-a c-b e-d g-f h)^2-4 (a c f h-a d e h-b c f g+b d e g)}+a c+b e+d g+f h}}{\sqrt{2}}
 %     \end{pmatrix}
 % \end{equation}
+
+\section{Going beyond $N=1$}
+For an illustration on how the graphs scale see \cref{fig:N2trans} where the corresponding graph is shown for $N=2$ and 
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{../../plots/simple_sg_B=1_C=2_N=2_version=2.5.png}
+    \caption{
+        Transition diagram in the simplified form of \cref{sec:simpar}
+    }\label{fig:N2trans}
+\end{figure}
+
+\subsection{Single monomer futile cycles?}
+We want to make sure we get some notion of futile cycles in these system, the single monomer futile cycles seem like a reasonable target.
+To get thses, nothing changes in the binding/debinding transitions, but we do get a change in the conformation change transitions.
+Essentially, where before the transitions were always guaranteed to happen in the desired direction due to just energy balance, this is no longer guaranteed as we may get additional energy costs of up to $2\epsilon_b$.
+This means some of our single monomer futile cycles get disrupted, unless the energy matrices are such that $\Delta\epsilon_r > 2\epsilon_b$, which seems unreasonable.
+\Cref{fig:N2fcs} shows a sample diagram with all the futile cycles present, as in, with this condition true.
+
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{../../plots/fcs_B=1_C=2_N=2_version=2.5.png}
+    \caption{
+        Diagram for $N=2$ with only those transitions required for the single monomer futile cycles being shown.
+    }\label{fig:N2fcs}
+\end{figure}
+
+
+\newpage
+\section{Extras}
+\begin{figure}[H]
+    \begin{align}
+        a &= r_3 e^{\frac{ - \Delta\epsilon_{r} \left( 1 - \theta_{3b} \right)}{kT}} \\
+        b &= c_{ATP} r_{2}(1) e^{\frac{ - \left( {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right) + {\epsilon}_{ATP} \theta_{2f}}{kT}} + c_P r_{1}(1) e^{\frac{{\epsilon}_P \theta_{1f} - \epsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} \\
+        c &= r_3 e^{\frac{\Delta\epsilon_{r} \theta_{3b}}{kT}} \\
+        d &= c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_{ATP} \right) \theta_{2f} - \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_P \right) \theta_{1f} - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} \\
+        e &= r_{1}(1) e^{\frac{ - {\epsilon}_P \left( 1 - \theta_{1f} \right) + \epsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b} - {\epsilon}_P \left( 1 - \theta_{2f} \right)}{kT}} \\
+        f &= r_3 e^{\frac{ - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{3b} \right) + \epsilon_{t} \theta_{3f}}{kT}} \\
+        g &= r_{1}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{2f} \right) + \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b}}{kT}} \\
+        h &= r_3 e^{\frac{\left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{3b} - \epsilon_{t} \left( 1 - \theta_{3f} \right)}{kT}}
+    \end{align}
+    \caption{full rate version}\label{fig:fullrates}
+\end{figure}
 
 \end{document}

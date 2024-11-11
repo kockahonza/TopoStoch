@@ -7,8 +7,10 @@ using PyFormattedStrings
 
 using LinearAlgebra
 using StatsBase, StaticArrays, SparseArrays
-using Graphs, SimpleWeightedGraphs
+using Graphs, SimpleWeightedGraphs, NetworkLayout, Colors
 using Makie
+
+import Base: display, copy
 
 includet(srcdir("general.jl"))
 
@@ -39,6 +41,13 @@ function itostate(gm::AbstractStatefulGraphModel, i)
 end
 
 AbstractFloatGraph = AbstractSimpleWeightedGraph{T,<:AbstractFloat} where {T}
+
+################################################################################
+# General graph or AbstractGraphModel util functions
+################################################################################
+function inc_edge!(g, u, v, w)
+    add_edge!(g, u, v, get_weight(g, u, v) + w)
+end
 
 ################################################################################
 # Running a graph model
@@ -150,3 +159,4 @@ end
 make_interactive((_, ax, plot)) = make_interactive(ax, plot)
 
 includet(srcdir("gm_manipulations.jl"))
+includet(srcdir("gm_io.jl"))
