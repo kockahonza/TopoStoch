@@ -41,3 +41,10 @@ function p_make_ca_ax(dim, place)
     end
 end
 
+function savefig(subdir, prefix, gm::AbstractGraphModel, fig)
+    savefig(subdir,
+        savename(prefix, gm;
+            allowedtypes=[DrWatson.default_allowed(gm)...; Dict],
+            expand=["metadata"]),
+        fig)
+end

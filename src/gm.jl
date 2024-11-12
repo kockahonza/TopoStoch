@@ -10,7 +10,8 @@ using StatsBase, StaticArrays, SparseArrays
 using Graphs, SimpleWeightedGraphs, NetworkLayout, Colors
 using Makie
 
-import Base: display, copy
+import Base: copy, broadcastable, show, display
+copy(::Nothing) = nothing
 
 includet(srcdir("general.jl"))
 

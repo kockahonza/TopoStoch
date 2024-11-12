@@ -46,14 +46,23 @@ function fixevec(evec::AbstractVector{<:AbstractFloat})
 end
 # FIX: This needs to be implemented to work with larger graphs!
 function fixevec(evec::AbstractVector{<:Complex{<:AbstractFloat}})
-    throw(ErrorException("KAKA"))
+    # corrected_dirs = normalize(evec)
+    # for i in eachindex(corrected_dirs)
+    #     if real(corrected_dirs[i]) < 0
+    #         corrected_dirs[i] = -corrected_dirs[i]
+    #     end
+    # end
+    # m, std = mean_and_std(corrected_dirs)
+    # commonphase = m / abs(m)
+    # evec = evec / commonphase
+    true, evec
 end
 
 function smarteigen(gm::AbstractGraphModel; norm=true, normthreshold=1e-8)
     esys = eigen(etransmat(gm; mat=true); sortby=abs)
     n = length(esys.values)
 
-    evecs = Vector{Vector{Float64}}(undef, n)
+    evecs = Vector{Vector{Complex{Float64}}}(undef, n)
     valid = BitVector(undef, n)
     for i in 1:n
         valid[i], evecs[i] = fixevec(esys.vectors[:, i])
