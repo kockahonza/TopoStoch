@@ -5,10 +5,11 @@ using Revise
 
 using PyFormattedStrings
 
-using LinearAlgebra
-using StatsBase, StaticArrays, SparseArrays
-using Graphs, SimpleWeightedGraphs, NetworkLayout, Colors
-using Makie
+using LinearAlgebra, StatsBase, StaticArrays, SparseArrays
+using Graphs, SimpleWeightedGraphs, NetworkLayout
+using Makie, GraphMakie, Colors
+using Symbolics, MathLink, SymbolicsMathLink
+using JLD2
 
 import Base: copy, broadcastable, show, display
 copy(::Nothing) = nothing
@@ -18,30 +19,22 @@ includet(srcdir("general.jl"))
 ################################################################################
 # Abstract type and API definitions
 ################################################################################
-abstract type AbstractGraphModel end
+"""
+Pretty much synonymous to SimpleWeightedDiGraph but with a clear name.
+The API is: graph(gm), plotgm(gm) for all and for symbolic gms (F <: Num) also
+get_variables, ssubstitute, substitute_to_float and make_factory as defined in
+gm_symbolics.jl.
+"""
+abstract type AbstractGraphModel{F} end
 function graph(gm::AbstractGraphModel)
     throw(ErrorException(f"No method of \"graph\" was provided for type \"{typeof(gm)}\""))
 end
-function plotGM(gm::AbstractGraphModel, args...; kwargs...)
-    throw(ErrorException(f"No method of \"plotGM\" was provided for type \"{typeof(gm)}\""))
-end
-
-abstract type AbstractStatefulGraphModel{N,T<:Integer} <: AbstractGraphModel end
-struct State{N,T<:Integer}
-    extstate::Union{SVector{N,T},MVector{N,T}}
-    substate::T
-end
-function states(gm::AbstractStatefulGraphModel)
-    throw(ErrorException(f"No method of \"states\" was provided for type \"{typeof(gm)}\""))
-end
-function statetoi(gm::AbstractStatefulGraphModel{N,T}, state::State{N,T}) where {N,T}
-    findfirst(x -> x == state, states(gm))
-end
-function itostate(gm::AbstractStatefulGraphModel, i)
-    states(gm)[i]
+function plotgm(gm::AbstractGraphModel, args...; kwargs...)
+    throw(ErrorException(f"No method of \"plotgm\" was provided for type \"{typeof(gm)}\""))
 end
 
 AbstractFloatGraph = AbstractSimpleWeightedGraph{T,<:AbstractFloat} where {T}
+AbstractNumGraph = AbstractSimpleWeightedGraph{T,<:Num} where {T}
 
 ################################################################################
 # General graph or AbstractGraphModel util functions
@@ -64,7 +57,7 @@ function next_vertex_choose_max(graph, v)
     options[findmax(weights)[2]]
 end
 
-function simGM(gm::AbstractGraphModel, steps;
+function simgm(gm::AbstractGraphModel{<:AbstractFloat}, steps;
     initial_vertices=nothing,
     num_vertices=1, next_vertex_func=next_vertex_random_proportional, delay=0.5,
     plot=true,
@@ -78,7 +71,7 @@ function simGM(gm::AbstractGraphModel, steps;
     end
 
     if plot
-        f, a, p = plotGM(gm; kwargs...)
+        f, a, p = plotgm(gm; kwargs...)
         display(f)
         base_node_color = copy(p.node_color[])
         base_node_size = copy(p.node_size[])
@@ -133,31 +126,6 @@ function simGM(gm::AbstractGraphModel, steps;
     vertices
 end
 
-################################################################################
-# Plotting
-################################################################################
-function edgecolorbar(fig, plot)
-    edgeploti = findfirst(typeof(plot_) <: Plot{GraphMakie.edgeplot} for plot_ in plot.plots)
-    Colorbar(fig[1, 2], plot.plots[edgeploti])
-end
-edgecolorbar((fig, ax, plot)) = edgecolorbar(fig, plot)
-
-function make_interactive(ax, plot)
-    interactions_ = keys(interactions(ax))
-    if :rectanglezoom in interactions_
-        deregister_interaction!(ax, :rectanglezoom)
-    end
-    if :ndrag in interactions_
-        deregister_interaction!(ax, :ndrag)
-    end
-    function node_drag_action(state, idx, event, axis)
-        plot[:node_pos][][idx] = event.data
-        plot[:node_pos][] = plot[:node_pos][]
-    end
-    ndrag = NodeDragHandler(node_drag_action)
-    register_interaction!(ax, :ndrag, ndrag)
-end
-make_interactive((_, ax, plot)) = make_interactive(ax, plot)
-
+includet(srcdir("gm_symbolics.jl"))
 includet(srcdir("gm_manipulations.jl"))
 includet(srcdir("gm_io.jl"))

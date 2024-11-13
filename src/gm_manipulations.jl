@@ -32,97 +32,81 @@ function etransmat(gm::AbstractGraphModel, args...; kwargs...)
     tm
 end
 
+"""Makes a general symbolic version of the etransmat"""
+function etransmat_safe(gm::AbstractGraphModel, args...; kwargs...)
+    tm = transmat(gm, args...; kwargs...)
+    setm, rt = safemat_general(tm)
+    etransmat!(setm)
+    setm, rt
+end
+
 ################################################################################
 # Doing stuff with the etransmat
 ################################################################################
-function fixevec(evec::AbstractVector{<:AbstractFloat})
-    if all(evec .<= 0)
-        true, -evec
-    elseif all(evec .>= 0)
-        true, evec
-    else
-        false, evec
-    end
-end
-# FIX: This needs to be implemented to work with larger graphs!
-function fixevec(evec::AbstractVector{<:Complex{<:AbstractFloat}})
-    # corrected_dirs = normalize(evec)
-    # for i in eachindex(corrected_dirs)
-    #     if real(corrected_dirs[i]) < 0
-    #         corrected_dirs[i] = -corrected_dirs[i]
-    #     end
-    # end
-    # m, std = mean_and_std(corrected_dirs)
-    # commonphase = m / abs(m)
-    # evec = evec / commonphase
-    true, evec
+# TODO: Remove, it's kinda obsolete
+function realify_vec_linfit(vec)
+    x = reshape(real.(vec), (length(vec), 1))
+    y = imag.(vec)
+    fit = (x \ y)
+    fitstd = sqrt(sum((x * fit - y) .^ 2))
+
+    slope = fit[1]
+    dir = cis(atan(slope))
+
+    vec / dir, fitstd
 end
 
-function smarteigen(gm::AbstractGraphModel; norm=true, normthreshold=1e-8)
-    esys = eigen(etransmat(gm; mat=true); sortby=abs)
+function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
+    threshold=1e-8,
+    checkimag=true,
+    checkothers=true,
+    returnothers::Val{Returnothers}=Val(false)
+) where {Returnothers}
+    esys = eigen!(etransmat(gm; mat=true))
     n = length(esys.values)
 
-    evecs = Vector{Vector{Complex{Float64}}}(undef, n)
-    valid = BitVector(undef, n)
+    steadystates = Vector{Vector{Float64}}(undef, 0)
+    if Returnothers
+        otherevals = Vector{ComplexF64}(undef, 0)
+        otherevecs = Vector{Vector{ComplexF64}}(undef, 0)
+    end
     for i in 1:n
-        valid[i], evecs[i] = fixevec(esys.vectors[:, i])
-        evecsum = sum(evecs[i])
-        if real(evecsum) < 0.0
-            evecs[i] .*= -1.0
-            evecsum *= -1.0
-        end
-        if norm && (real(evecsum) > normthreshold)
-            evecs[i] ./= evecsum
-        end
-    end
+        eval = esys.values[i]
+        evec = (@view esys.vectors[:, i])
 
-    (; evals=esys.values, evecs, valid)
-end
-
-function steadystates((; evals, evecs, valid); zerothreshold=1e-8)
-    n = 0
-    while abs(evals[n+1]) < zerothreshold
-        n += 1
-    end
-
-    steadystates = []
-    for i in 1:n
-        if valid[i]
-            push!(steadystates, evecs[i])
+        if abs(eval) < threshold
+            ss = evec / sum(evec)
+            if checkimag
+                maximag = maximum(x -> abs(imag(x)), ss)
+                if maximag > threshold
+                    @warn f"when aligning ss eigenvector encountered imag part of {maximag} over {threshold}"
+                end
+            end
+            push!(steadystates, real(ss))
+        else
+            if checkothers
+                if abs(sum(evec)) > threshold
+                    @warn f"found a non-physical eigenstate the components of which do not sum to 0"
+                end
+            end
+            if Returnothers
+                push!(otherevals, eval)
+                push!(otherevecs, evec)
+            end
         end
     end
-    steadystates
-end
-function steadystates(gm::AbstractGraphModel; zerothreshold=1e-8, kwargs...)
-    steadystates(smarteigen(gm; kwargs...); zerothreshold)
-end
 
-function onlyss(args...; kwargs...)
-    sss = steadystates(args...; kwargs...)
-    if length(sss) == 1
-        sss[1]
+    if !Returnothers
+        steadystates
     else
-        nothing
+        steadystates, (; evals=otherevals, evecs=otherevecs)
     end
 end
 
-function eigsummary(gm::AbstractGraphModel; pevecs=true, zerothreshold=1e-8)
-    esys = smarteigen(gm)
-    n = 0
-    while abs(esys.evals[n+1]) < zerothreshold
-        n += 1
-    end
-    valids = count(i -> esys.valid[i], 1:n)
-    println(f"There are {n} steady states of which {valids} are physical")
-    if pevecs
-        for i in 1:n
-            println(esys.evecs[i])
-        end
-    end
-end
+supersteadystate(args...; kwargs...) = mean(steadystates(args...; kwargs..., returnothers=Val(false)))
 
 ################################################################################
-# Editing/filtering the graph
+# Editing/filtering edges in concrete GraphModel graphs
 ################################################################################
 function filter_edges!(graph::AbstractFloatGraph, threshold)
     for e in edges(graph)
@@ -135,7 +119,7 @@ function filter_edges!(ca::AbstractGraphModel, args...)
     filter_edges!(graph(ca), args...)
 end
 
-function keep_best_only!(graph, threshold=1e-10)
+function keep_best_only!(graph::AbstractFloatGraph, threshold=1e-10)
     for vertex in 1:nv(graph)
         neightbors_ = copy(neighbors(graph, vertex))
 
@@ -171,7 +155,6 @@ function copyand(f!, args...; kwargs...)
         cobj
     end
 end
-
 
 # TODO: FIX: This is not finished!!
 function find_cycles(graph, next_vertex_func=next_vertex_choose_max)

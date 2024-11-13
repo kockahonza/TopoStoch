@@ -1,7 +1,7 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-include(srcdir("gm_ca.jl"))
+include(srcdir("gmca.jl"))
 
 ################################################################################
 # The simple case, C=2 and B mostly 1

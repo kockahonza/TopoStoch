@@ -248,7 +248,7 @@ function plot_ca(ca::ComplexAllosteryGM, args...;
     Makie.FigureAxisPlot(fig, ax, plot)
 end
 # alias used by simGM
-function plotGM(ca::ComplexAllosteryGM, args...; kwargs...)
+function plotgm(ca::ComplexAllosteryGM, args...; kwargs...)
     plot_ca(ca, args...; kwargs...)
 end
 
@@ -332,14 +332,7 @@ function int_plot_ca(ca::ComplexAllosteryGM, args...;
 
     extra_kwargs = Dict{Symbol,Any}()
     if doeig
-        extra_kwargs[:node_size] = lift(ca_obs) do ca
-            maybesizes = onlyss(ca)
-            if !isnothing(maybesizes)
-                50 .* sqrt.(maybesizes)
-            else
-                [20 for _ in 1:numstates(ca)]
-            end
-        end
+        extra_kwargs[:node_size] = lift(supersteadystate, ca_obs)
     end
 
     # Make a suitable ax the the graph plotting

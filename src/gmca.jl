@@ -5,15 +5,11 @@ using Revise
 
 includet(srcdir("gm.jl"))
 
-using Base.Threads
-using PyFormattedStrings
 using Infiltrator
 
-using StatsBase, StaticArrays, SparseArrays, DataFrames, PrettyTables
-using Graphs, SimpleWeightedGraphs
-using GLMakie, GraphMakie, NetworkLayout
-using Symbolics, Latexify, MathLink, SymbolicsMathLink
-using JLD2
+using PrettyTables
+using GLMakie
+using Latexify
 
 import SymbolicUtils
 import SymbolicUtils.Rewriters
@@ -92,7 +88,7 @@ function show(io::IO, mime::MIME"text/plain", em::EnergyMatrices)
     show(io, mime, em.interactions)
 end
 
-mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractGraphModel
+mutable struct ComplexAllosteryGM{S<:Symmetry,F<:Number,T<:Integer} <: AbstractGraphModel{F}
     N::T # Number of monomers
     C::T # Number of possible conformational states per monomer
     B::T # Number of ligand binding sites per monomer
@@ -188,7 +184,6 @@ allstates(ca::ComplexAllosteryGM) = allstates(ca.N, ca.C, ca.B)
 ################################################################################
 # Include all the other bits
 ################################################################################
-includet(srcdir("gm_ca_physics.jl"))
-includet(srcdir("gm_ca_concretizing.jl"))
-includet(srcdir("gm_ca_manipulations.jl"))
-includet(srcdir("gm_ca_io.jl"))
+includet(srcdir("gmca_physics.jl"))
+includet(srcdir("gmca_symbolics.jl"))
+includet(srcdir("gmca_io.jl"))

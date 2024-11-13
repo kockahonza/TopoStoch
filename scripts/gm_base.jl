@@ -1,18 +1,31 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-include(srcdir("gm.jl"))
+using Revise
 
-using Graphs, MetaGraphsNext, SimpleWeightedGraphs
-using GLMakie, GraphMakie, NetworkLayout
-using StatsBase
-using StaticArrays
-using PyFormattedStrings
+includet(srcdir("gm.jl"))
+
+using GLMakie
+
+abstract type AbstractStatefulGraphModel{F,N,T<:Integer} <: AbstractGraphModel{F} end
+struct State{N,T<:Integer}
+    extstate::Union{SVector{N,T},MVector{N,T}}
+    substate::T
+end
+function states(gm::AbstractStatefulGraphModel)
+    throw(ErrorException(f"No method of \"states\" was provided for type \"{typeof(gm)}\""))
+end
+function statetoi(gm::AbstractStatefulGraphModel{F,N,T}, state::State{N,T}) where {F,N,T}
+    findfirst(x -> x == state, states(gm))
+end
+function itostate(gm::AbstractStatefulGraphModel, i)
+    states(gm)[i]
+end
 
 ################################################################################
 # Simple four state mode
 ################################################################################
-struct SimpleFourStateGM <: AbstractStatefulGraphModel{2,Int}
+struct SimpleFourStateGM <: AbstractStatefulGraphModel{Float64,2,Int}
     Nx::Int
     Ny::Int
     γe::Float64
@@ -100,7 +113,7 @@ function sfs_subtype_to_letter(subtype)
     'A' + subtype - 1
 end
 
-function plotGM(sfs::SimpleFourStateGM, args...; ecolorbar=true, kwargs...)
+function plotgm(sfs::SimpleFourStateGM, args...; ecolorbar=true, kwargs...)
     states_ = states(sfs)
     offsets = SA[Point(1, 1), Point(1, -1), Point(-1, -1), Point(-1, 1)] .* 0.15
     layout = [Point(s.extstate[1], s.extstate[2]) + offsets[s.substate] for s in states_]
@@ -124,7 +137,7 @@ end
 ################################################################################
 # 3D counting allostery model
 ################################################################################
-struct Allostery3D1 <: AbstractStatefulGraphModel{3,Int}
+struct Allostery3D1 <: AbstractStatefulGraphModel{Float64,3,Int}
     N::Int
     graph::SimpleWeightedDiGraph{Int,Float64}
     states::Vector{State{3,Int}}
@@ -212,7 +225,7 @@ function states(agm::Allostery3D1)
     agm.states
 end
 
-function plotGM(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
+function plotgm(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
     states_ = states(agm)
     layout = [Point(s.extstate[2], s.extstate[3], s.extstate[1]) for s in states_]
 
@@ -228,20 +241,6 @@ function plotGM(agm::Allostery3D1, args...; ecolorbar=true, kwargs...)
     end
 
     fap
-end
-
-################################################################################
-# Complex network allostery model
-################################################################################
-struct CAState{T}
-    conformations::Vector{T}
-    occupations::Vector{T}
-end
-
-struct ComplexAllostery <: AbstractGraphModel
-    N::Int # Number of monomers
-    C::Int # Number of possible conformational states per monomer
-    B::Int # Number of ligand binding sites per monomer
 end
 
 ################################################################################

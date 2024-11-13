@@ -3,12 +3,12 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm_ca.jl"))
+includet(srcdir("gmca.jl"))
 
 ################################################################################
 # Base setup
 ################################################################################
-struct OnesGM{F} <: AbstractGraphModel
+struct OnesGM{F} <: AbstractGraphModel{F}
     N::Int
     graph::SimpleWeightedDiGraph{Int,F}
     metadata::Union{Nothing,Dict}
@@ -295,10 +295,6 @@ function plot_ogm(ogm::OnesGM, args...;
     plot = plot_ogm_!(ax, ogm, do_layout_rslt, args...; axparent=fig, kwargs...)
 
     Makie.FigureAxisPlot(fig, ax, plot)
-end
-
-function plotGM(ogm::OnesGM, args...; kwargs...)
-    plot_ogm(ogm, args...; kwargs...)
 end
 
 function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
