@@ -216,9 +216,9 @@ function plot_ca!(maybeax, ca::ComplexAllosteryGM, args...;
     if isa(maybeax, Makie.AbstractAxis)
         ax = maybeax
     elseif isa(maybeax, GridPosition)
-        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax)
+        ax = p_make_ax(do_layout_rslt.dim, maybeax)
     elseif isa(maybeax, GridLayout)
-        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax[1, 1])
+        ax = p_make_ax(do_layout_rslt.dim, maybeax[1, 1])
     else
         throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be either Makie.AbstractAxis or GridPosition"))
     end
@@ -241,16 +241,16 @@ function plot_ca(ca::ComplexAllosteryGM, args...;
     do_layout_rslt = p_do_layout(ca, layout, roffset_devs)
 
     fig = Figure()
-    ax = p_make_ca_ax(do_layout_rslt.dim, fig[1, 1])
+    ax = p_make_ax(do_layout_rslt.dim, fig[1, 1])
 
     plot = plot_ca_!(ax, ca, do_layout_rslt, args...; axparent=fig, kwargs...)
 
     Makie.FigureAxisPlot(fig, ax, plot)
 end
 # alias used by simGM
-function plotgm(ca::ComplexAllosteryGM, args...; kwargs...)
-    plot_ca(ca, args...; kwargs...)
-end
+# function plotgm(ca::ComplexAllosteryGM, args...; kwargs...)
+#     plot_ca(ca, args...; kwargs...)
+# end
 
 """
 Very simple and not so efficient caller that can use a graph observable

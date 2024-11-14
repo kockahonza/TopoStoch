@@ -1,4 +1,11 @@
 ################################################################################
+# Basic util
+################################################################################
+function inc_edge!(g, u, v, w)
+    add_edge!(g, u, v, get_weight(g, u, v) + w)
+end
+
+################################################################################
 # Getting the transition matrices in a general way
 ################################################################################
 """
@@ -103,7 +110,7 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     end
 end
 
-supersteadystate(args...; kwargs...) = mean(steadystates(args...; kwargs..., returnothers=Val(false)))
+supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
 
 ################################################################################
 # Editing/filtering edges in concrete GraphModel graphs

@@ -7,7 +7,7 @@ using PyFormattedStrings
 
 using LinearAlgebra, StatsBase, StaticArrays, SparseArrays
 using Graphs, SimpleWeightedGraphs, NetworkLayout
-using Makie, GraphMakie, Colors
+using GLMakie, GraphMakie, Colors
 using Symbolics, MathLink, SymbolicsMathLink
 using JLD2
 
@@ -17,31 +17,30 @@ copy(::Nothing) = nothing
 includet(srcdir("general.jl"))
 
 ################################################################################
-# Abstract type and API definitions
+# Base abstract types
 ################################################################################
 """
 Pretty much synonymous to SimpleWeightedDiGraph but with a clear name.
-The API is: graph(gm), plotgm(gm) for all and for symbolic gms (F <: Num) also
-get_variables, ssubstitute, substitute_to_float and make_factory as defined in
-gm_symbolics.jl.
+The API is: graph(gm), plotgm(gm) and optionally allstates for all and for
+symbolic gms (F <: Num) also get_variables, ssubstitute, substitute_to_float
+and make_factory as defined in gm_symbolics.jl.
 """
 abstract type AbstractGraphModel{F} end
 function graph(gm::AbstractGraphModel)
     throw(ErrorException(f"No method of \"graph\" was provided for type \"{typeof(gm)}\""))
-end
-function plotgm(gm::AbstractGraphModel, args...; kwargs...)
-    throw(ErrorException(f"No method of \"plotgm\" was provided for type \"{typeof(gm)}\""))
 end
 
 AbstractFloatGraph = AbstractSimpleWeightedGraph{T,<:AbstractFloat} where {T}
 AbstractNumGraph = AbstractSimpleWeightedGraph{T,<:Num} where {T}
 
 ################################################################################
-# General graph or AbstractGraphModel util functions
-################################################################################
-function inc_edge!(g, u, v, w)
-    add_edge!(g, u, v, get_weight(g, u, v) + w)
-end
+
+numstates(gm::AbstractGraphModel) = nv(graph(gm))
+allstates(gm::AbstractGraphModel) = throw(ErrorException(f"No method of \"allstates\" was provided for type \"{typeof(gm)}\""))
+
+includet(srcdir("gm_symbolics.jl"))     # Has bits of GM API
+includet(srcdir("gm_manipulations.jl"))
+includet(srcdir("gm_io.jl"))            # Has bits of GM API
 
 ################################################################################
 # Running a graph model
@@ -57,6 +56,7 @@ function next_vertex_choose_max(graph, v)
     options[findmax(weights)[2]]
 end
 
+# TODO: This could use an update and a change of how highlighting is done
 function simgm(gm::AbstractGraphModel{<:AbstractFloat}, steps;
     initial_vertices=nothing,
     num_vertices=1, next_vertex_func=next_vertex_random_proportional, delay=0.5,
@@ -125,7 +125,3 @@ function simgm(gm::AbstractGraphModel{<:AbstractFloat}, steps;
 
     vertices
 end
-
-includet(srcdir("gm_symbolics.jl"))
-includet(srcdir("gm_manipulations.jl"))
-includet(srcdir("gm_io.jl"))

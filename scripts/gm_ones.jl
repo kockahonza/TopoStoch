@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gmca.jl"))
+includet(srcdir("gm.jl"))
 
 ################################################################################
 # Base setup
@@ -72,36 +72,16 @@ end
 ################################################################################
 # Plotting
 ################################################################################
-function p_do_layout(ogm::OnesGM, layout, roffset_devs)
-    if isnothing(layout)
-        layout = :tree
-    end
-    if isnothing(roffset_devs)
-        roffset_devs = :auto
-    end
 
-    # this may or may not be filled
-    axis_labels = nothing
+function p_named_layouts(ogm::OnesGM, layout_name, layout_args)
+    try
+        invoke(p_named_layouts, Tuple{supertype(typeof(ogm)),Any,Any}, ogm, layout_name, layout_args)
+    catch ArgumentError
+        def_roffsets = false
+        axis_labels = nothing
 
-    if isa(layout, NetworkLayout.AbstractLayout)
-        layout = layout(p_get_adjmat_symsafe(ogm))
-        dim = length(layout[1])
-    elseif isa(layout, Function)
-        layout = layout(ogm)
-        dim = length(layout[1])
-    elseif isa(layout, AbstractArray) && (length(layout) == numstates(ogm))
-        dim = length(layout[1])
-    else
-        if isa(layout, Symbol)
-            layout = (layout,)
-        end
-        (type, layout_args...) = layout
-
-        # These are mostly the case, override where not
-        do_default_roffsets = false
-        dim = 3
-
-        if type == :tree
+        if layout_name == :tree
+            dim = 2
             groups = [[] for _ in 1:ogm.N+1]
             for i in 1:numstates(ogm)
                 push!(groups[1+count(x -> x == 1, itostate(i, ogm))], i)
@@ -119,183 +99,21 @@ function p_do_layout(ogm::OnesGM, layout, roffset_devs)
 
             maxs = maximum(layout)
             axis_labels = (f"N({maxs[1]})", "")
-            dim = 2
         else
-            throw(ArgumentError(f"layout of {layout} is not recognised"))
+            rethrow()
         end
 
-        if roffset_devs == :auto
-            if do_default_roffsets
-                roffset_devs = 0.01
-            else
-                roffset_devs = nothing
-            end
-        elseif roffset_devs == true
-            roffset_devs = 0.01
-        elseif roffset_devs == false
-            roffset_devs = nothing
-        end
-
-        if !isnothing(roffset_devs)
-            if length(roffset_devs) == 1
-                roffset_devs = Tuple(roffset_devs for _ in 1:length(layout[1]))
-            end
-            for i in eachindex(layout)
-                offsets = Tuple(randn() * dev for dev in roffset_devs)
-                layout[i] = layout[i] .+ offsets
-            end
-        end
-    end
-    (; layout, dim, axis_labels)
-end
-
-function plot_ogm_!(ax, ogm::OnesGM{F},
-    do_layout_rslt, args...;
-    axparent=nothing,
-    # these apply to all
-    flabels=:auto,
-    fnlabels=nothing,
-    felabels=nothing,
-    node_size_scale=10.0,
-    interactive=:auto,
-    symbolic=:auto,
-    # these only to concrete (non symbolic) cas
-    c_colormap=:dense,
-    c_colorscale=:auto,
-    c_colorrange=:auto,
-    c_colorbar=:auto,
-    kwargs...
-) where {F}
-    layout, dim, axis_labels = do_layout_rslt
-    if symbolic == :auto
-        symbolic = F == Num
-    end
-
-    auto_kwargs = Dict{Symbol,Any}()
-
-    # This is for possible later elementwise updates
-    auto_kwargs[:node_color] = [:snow3 for _ in 1:numstates(ogm)]
-    auto_kwargs[:node_size] = [node_size_scale for _ in 1:numstates(ogm)]
-
-    # Do colored transitions
-    if !symbolic
-        weights = weight.(edges(ogm.graph))
-        auto_kwargs[:edge_color] = weights
-        if c_colorrange == :auto
-            max_weight = maximum(weights)
-            min_weight = minimum(weights)
-            if max_weight == min_weight
-                min_weight -= 0.1
-            end
-            c_colorrange = (min_weight, max_weight)
-        end
-        if c_colorscale == :auto
-            c_colorscale = x -> Makie.pseudolog10(x) * log(10)
-        end
-        edge_colormap_attrs = (;
-            colormap=c_colormap,
-            colorrange=c_colorrange,
-            colorscale=c_colorscale
-        )
-        auto_kwargs[:arrow_attr] = auto_kwargs[:edge_attr] = edge_colormap_attrs
-    end
-
-    # Label nodes and or edges
-    if flabels == :auto
-        flabels = nv(ogm.graph) < 100
-        if isnothing(fnlabels)
-            fnlabels = :repr
-        end
-        if isnothing(felabels)
-            felabels = :repr
-        end
-    end
-    if flabels
-        if fnlabels == :repr
-            auto_kwargs[:nlabels] = repr.(allstates(ogm))
-        end
-        if felabels == :repr
-            auto_kwargs[:elabels] = repr.(weight.(edges(ogm.graph)))
-            auto_kwargs[:elabels_shift] = 0.4
-        end
-    end
-
-    plot = graphplot!(ax, ogm.graph, args...;
-        layout,
-        auto_kwargs...,
-        kwargs...
-    )
-
-    if interactive == :auto
-        interactive = (dim == 2)
-    end
-    if interactive
-        make_interactive(ax, plot)
-    end
-
-    if !isnothing(axis_labels)
-        if dim == 3
-            xlabel!(ax.scene, axis_labels[1])
-            ylabel!(ax.scene, axis_labels[2])
-            zlabel!(ax.scene, axis_labels[3])
-        elseif dim == 2
-            ax.xlabel[] = axis_labels[1]
-            ax.ylabel[] = axis_labels[2]
-        end
-    end
-
-    if !symbolic && !isnothing(axparent)
-        if (c_colorbar == :auto) || c_colorbar
-            Colorbar(axparent[1, 2]; colormap=c_colormap, colorrange=c_colorrange, scale=c_colorscale)
-        end
-    end
-
-    plot
-end
-
-function plot_ogm!(maybeax, ogm::OnesGM, args...;
-    map=nothing, layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
-)
-    if !isnothing(map)
-        ogm = map(ogm)
-    end
-
-    do_layout_rslt = p_do_layout(ogm, layout, roffset_devs)
-
-    if isa(maybeax, Makie.AbstractAxis)
-        ax = maybeax
-    elseif isa(maybeax, GridPosition)
-        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax)
-    elseif isa(maybeax, GridLayout)
-        ax = p_make_ca_ax(do_layout_rslt.dim, maybeax[1, 1])
-    else
-        throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be either Makie.AbstractAxis or GridPosition"))
-    end
-
-    plot = plot_ogm_!(ax, ogm, do_layout_rslt, args...; kwargs...)
-
-    if returnax
-        ax, plot
-    else
-        plot
+        dim, layout, def_roffsets, axis_labels
     end
 end
-function plot_ogm(ogm::OnesGM, args...;
-    map=nothing, layout=nothing, roffset_devs=nothing, kwargs...
-)
-    if !isnothing(map)
-        ogm = map(ogm)
+function p_do_layout(ogm::OnesGM, layout=nothing, roffset_devs=nothing)
+    if isnothing(layout)
+        layout = :tree
     end
-
-    do_layout_rslt = p_do_layout(ogm, layout, roffset_devs)
-
-    fig = Figure()
-    ax = p_make_ca_ax(do_layout_rslt.dim, fig[1, 1])
-
-    plot = plot_ogm_!(ax, ogm, do_layout_rslt, args...; axparent=fig, kwargs...)
-
-    Makie.FigureAxisPlot(fig, ax, plot)
+    invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ogm, layout, roffset_devs)
 end
+
+p_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr)
 
 function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
     plot_ogm(args...;
