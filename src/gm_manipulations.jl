@@ -115,6 +115,15 @@ supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., retu
 ################################################################################
 # Editing/filtering edges in concrete GraphModel graphs
 ################################################################################
+# util func for the modifying functions below
+function copyand(f!, args...; kwargs...)
+    function (obj)
+        cobj = copy(obj)
+        f!(cobj, args...; kwargs...)
+        cobj
+    end
+end
+
 function filter_edges!(graph::AbstractFloatGraph, threshold)
     for e in edges(graph)
         if weight(e) < threshold
@@ -122,9 +131,10 @@ function filter_edges!(graph::AbstractFloatGraph, threshold)
         end
     end
 end
-function filter_edges!(ca::AbstractGraphModel, args...)
-    filter_edges!(graph(ca), args...)
+function filter_edges!(gm::AbstractGraphModel, args...)
+    filter_edges!(graph(gm), args...)
 end
+filter_edges(gm, args...) = copyand(filter_edges!, args...)(gm)
 
 function keep_best_only!(graph::AbstractFloatGraph, threshold=1e-10)
     for vertex in 1:nv(graph)
@@ -150,18 +160,10 @@ function keep_best_only!(graph::AbstractFloatGraph, threshold=1e-10)
         end
     end
 end
-function keep_best_only!(ca::AbstractGraphModel, args...)
-    keep_best_only!(graph(ca), args...)
+function keep_best_only!(gm::AbstractGraphModel, args...)
+    keep_best_only!(graph(gm), args...)
 end
-
-# util func for the modifying functions above
-function copyand(f!, args...; kwargs...)
-    function (obj)
-        cobj = copy(obj)
-        f!(cobj, args...; kwargs...)
-        cobj
-    end
-end
+keep_best_only(gm, args...) = copyand(keep_best_only!, args...)(gm)
 
 # TODO: FIX: This is not finished!!
 function find_cycles(graph, next_vertex_func=next_vertex_choose_max)

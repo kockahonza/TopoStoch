@@ -142,6 +142,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
     e_colorscale=:auto,
     e_colorrange=:auto,
     e_colorbar=:auto,
+    colorrange_threshold=1e-8,
     kwargs...
 ) where {F}
     auto_kwargs = Dict{Symbol,Any}()
@@ -179,7 +180,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
             if n_ss_colorrange == :auto
                 max_weight = maximum(ss)
                 min_weight = minimum(ss)
-                if max_weight == min_weight
+                if (max_weight - min_weight) < colorrange_threshold
                     min_weight -= 0.1
                 end
                 n_ss_colorrange = (min_weight, max_weight)
@@ -202,7 +203,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
     # Color edges
     if e_color == :auto
         if F <: AbstractFloat
-            e_color = :weight
+            e_color = :rates
         else
             e_color = nothing
         end
@@ -210,12 +211,12 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
         e_color = nothing
     end
     if !isnothing(e_color)
-        auto_kwargs[:edge_color] = colors = if e_color == :weight
+        auto_kwargs[:edge_color] = colors = if e_color == :rates
             if e_colorscale == :auto
                 e_colorscale = :pseudolog
             end
             weight.(edges(graph(gm)))
-        elseif e_color == :current
+        elseif e_color == :currents
             if isnothing(ss)
                 throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
             end
@@ -230,7 +231,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
         if e_colorrange == :auto
             max_weight = maximum(colors)
             min_weight = minimum(colors)
-            if max_weight == min_weight
+            if (max_weight - min_weight) < colorrange_threshold
                 min_weight -= 0.1
             end
             e_colorrange = (min_weight, max_weight)
@@ -285,7 +286,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
 
     if !isnothing(axparent)
         if !isnothing(e_color) && ((e_colorbar == :auto) || e_colorbar)
-            Colorbar(axparent[1, 2]; colormap=e_colormap, colorrange=e_colorrange, scale=e_colorscale)
+            Colorbar(axparent[1, 2]; colormap=e_colormap, colorrange=e_colorrange, scale=e_colorscale, label=string(e_color))
         end
         if !isnothing(ss) & n_ss_color && ((n_ss_colorbar == :auto) || n_ss_colorbar)
             Colorbar(axparent[1, 3]; colormap=n_ss_colormap, colorrange=n_ss_colorrange, scale=n_ss_colorscale)

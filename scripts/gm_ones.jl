@@ -8,29 +8,35 @@ includet(srcdir("gm.jl"))
 ################################################################################
 # Base setup
 ################################################################################
-struct OnesGM{F} <: AbstractGraphModel{F}
+abstract type Symmetry end
+struct Chain <: Symmetry end
+struct Loop <: Symmetry end
+broadcastable(s::Symmetry) = Ref(s)
+
+struct OnesGM{S<:Symmetry,F} <: AbstractGraphModel{F}
     N::Int
     graph::SimpleWeightedDiGraph{Int,F}
     metadata::Union{Nothing,Dict}
     function OnesGM(N;
+        symmetry::S=Loop(),
         numtype::Val{F}=Val(Float64),
         graph=nothing,
         metadata=nothing
-    ) where {F}
+    ) where {S,F}
         if isnothing(graph)
             graph = SimpleWeightedDiGraph{Int,F}(numstates(N))
         elseif nv(graph) != numstates(N)
             throw(ArgumentError("invalid graph passed, does not have the correct number of nodes"))
         end
 
-        new{F}(N, graph, metadata)
+        new{S,F}(N, graph, metadata)
     end
 end
-function copy(ogm::OnesGM{F}) where {F}
-    OnesGM(ogm.N; numtype=Val(F), graph=copy(ogm.graph), metadata=copy(ogm.metadata))
+function copy(ogm::OnesGM{S,F}) where {S,F}
+    OnesGM(ogm.N; symmetry=S(), numtype=Val(F), graph=copy(ogm.graph), metadata=copy(ogm.metadata))
 end
-function show(io::IO, mime::MIME"text/plain", ogm::OnesGM{F}) where {F}
-    println(f"OnesGM{{{F}}}(N={ogm.N})")
+function show(io::IO, mime::MIME"text/plain", ogm::OnesGM{S,F}) where {S,F}
+    println(f"OnesGM{{{S},{F}}}(N={ogm.N})")
     print(f"graph: ")
     show(io, mime, ogm.graph)
     if !isnothing(ogm.metadata)
@@ -112,10 +118,10 @@ function p_do_layout(ogm::OnesGM, layout=nothing, roffset_devs=nothing)
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ogm, layout, roffset_devs)
 end
 
-plotgm_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr)
+plotgm_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr, felabels=false, n_size=40., e_color=:currents)
 
 function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
-    plot_ogm(args...;
+    plotgm(args...;
         layout=makeprefunclayout(Spring(), filter_edges!, ecutoff),
         felabels=false,
         c_colormap=make_linalpha_cmap(:dense; amin, amax),
@@ -173,12 +179,6 @@ function make_v1(N; cycle=get_base_cycle1(), kwargs...)
     ogm
 end
 
-function make_v2(N; cycle=get_base_cycle1(), kwargs...)
-    ogm = OnesGM(N; metadata=Dict("chash" => hash(cycle), "ctype" => "full"))
-    add_edges_cycleall!(ogm, cycle; kwargs...)
-    ogm
-end
-
 function make_v3(N)
     ogm = OnesGM(N; metadata=Dict("ctype" => "full"))
     add_edges_cycleall!(ogm, [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -205,9 +205,9 @@ end
 
 function makespringplots2()
     for i in 1:4
-        for n in 3:6
+        for n in 3:8
             ogm = make_v1(n; cycle=get_bc_int(i))
-            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr)
+            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, n_ss_colorbar=false)
             savefig(f"ones/c{i}/", "spring", ogm, fap.figure)
         end
     end
@@ -217,7 +217,7 @@ function makespringplots3()
     for i in 1:4
         for n in 3:6
             ogm = make_v1(n; cycle=get_bc_int(i))
-            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, layout=:tree)
+            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, layout=:tree, n_ss_colorbar=false)
             savefig(f"ones/tc{i}/", "spring", ogm, fap.figure)
         end
     end
