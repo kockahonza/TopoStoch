@@ -176,3 +176,18 @@ function safemat_general(matrix)
     end
     simple_matrix, rev_terms
 end
+
+function get_rewriter()
+    rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
+    rules_explog = [
+        (@rule exp(log(~z)) => ~z),
+        (@rule exp(~y * log(~z)) => ~z^~y),
+        (@rule exp(~x + ~y * log(~z)) => exp(~x) * ~z^~y)
+    ]
+
+    Rewriters.Prewalk(Rewriters.Chain([
+        rule_divexp,
+        rules_explog...,
+        SymbolicUtils.default_simplifier()
+    ]))
+end

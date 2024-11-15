@@ -22,6 +22,12 @@ function itostate(gm::AbstractStatefulGraphModel, i)
     states(gm)[i]
 end
 
+function edgecolorbar(fig, plot)
+    edgeploti = findfirst(typeof(plot_) <: Plot{GraphMakie.edgeplot} for plot_ in plot.plots)
+    Colorbar(fig[1, 2], plot.plots[edgeploti])
+end
+edgecolorbar((fig, ax, plot)) = edgecolorbar(fig, plot)
+
 ################################################################################
 # Simple four state mode
 ################################################################################

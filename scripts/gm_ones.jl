@@ -72,7 +72,6 @@ end
 ################################################################################
 # Plotting
 ################################################################################
-
 function p_named_layouts(ogm::OnesGM, layout_name, layout_args)
     try
         invoke(p_named_layouts, Tuple{supertype(typeof(ogm)),Any,Any}, ogm, layout_name, layout_args)
@@ -113,7 +112,7 @@ function p_do_layout(ogm::OnesGM, layout=nothing, roffset_devs=nothing)
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ogm, layout, roffset_devs)
 end
 
-p_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr)
+plotgm_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr)
 
 function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
     plot_ogm(args...;
