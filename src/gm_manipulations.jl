@@ -50,19 +50,6 @@ end
 ################################################################################
 # Doing stuff with the etransmat
 ################################################################################
-# TODO: Remove, it's kinda obsolete
-function realify_vec_linfit(vec)
-    x = reshape(real.(vec), (length(vec), 1))
-    y = imag.(vec)
-    fit = (x \ y)
-    fitstd = sqrt(sum((x * fit - y) .^ 2))
-
-    slope = fit[1]
-    dir = cis(atan(slope))
-
-    vec / dir, fitstd
-end
-
 function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     threshold=1e-8,
     checkimag=true,
@@ -111,6 +98,16 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
 end
 
 supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
+
+function calc_currents(etm::AbstractMatrix, ss::AbstractVector)
+    cmat = similar(etm)
+    for i in axes(etm, 1)
+        for j in axes(etm, 2)
+            cmat[i, j] = etm[i, j] * ss[j] - etm[j, i]ss[i]
+        end
+    end
+    cmat
+end
 
 ################################################################################
 # Editing/filtering edges in concrete GraphModel graphs

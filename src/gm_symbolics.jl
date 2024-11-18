@@ -131,8 +131,7 @@ function make_safe(safe, obj)
     end
 end
 
-# TODO: Change to full=false
-function w_simplify(obj; full=true, safe=true)
+function w_simplify(obj; full=false, safe=true)
     obj, desafe = make_safe(safe, obj)
     cmd = full ? "FullSimplify" : "Simplify"
     rslt = wcall.(cmd, obj)
