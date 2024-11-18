@@ -8,6 +8,7 @@
 \usepackage{siunitx}
 \usepackage{amsmath}
 \usepackage[version=4]{mhchem}
+\usepackage{amsthm}
 
 % Visual stuff
 \usepackage{graphics}
@@ -19,8 +20,8 @@
 
 % Misc
 \usepackage{subcaption}
-\usepackage{cleveref}
 \usepackage{lipsum}
+\usepackage{cleveref}
 
 \allowdisplaybreaks
 
@@ -45,6 +46,19 @@
     \D = 2;
 }
 
+\newtheoremstyle{nothm}% 〈name〉
+{0pt}% 〈Space above〉1
+{0pt}% 〈Space below 〉1
+{}% 〈Body font〉
+{}% 〈Indent amount〉2
+{\bf}% 〈Theorem head font〉
+{:}% 〈Punctuation after theorem head 〉
+{}% 〈Space after theorem head 〉3
+{}% 〈Theorem head spec (can be left empty, meaning ‘normal’ )〉
+
+\theoremstyle{nothm}
+\newtheorem{nlist}{List}
+
 \begin{document}
 \begin{center}
     \LARGE
@@ -52,7 +66,28 @@
     \vspace{1em}
 \end{center}
 
-\section{Two Digit Cycles}
+\section{The Ones Model}
+This is another graph model where our microstates consist of essentially binary strings of zeros and ones.
+We then add transitions to the according to set rules, the main type of rule we consider is adding transition cycles which affect a subset of the digits.
+For example we may have a 2 digit transition cycle going from $00\rightarrow10\rightarrow11\rightarrow01\rightarrow00$.
+We then add transitions to the graph by looking at all 2 digit susbequences of all the microstates and whenever they match the start of the cycle we add all the relevant transitions stemming from that cycle.
+
+With this being the base of the method, additional complexities can be added but the simplest method is to consider a model with
+\begin{nlist}\label{nlist:simplest}\leavevmode
+    \begin{enumerate}
+        \item only one such futile cycle
+        \item all the transition rates around the futile cycle to be equal
+        \item the futile cycle can take place at any subsequence of the string (except potentially at boundaries).
+    \end{enumerate}
+\end{nlist}
+\Cref{sec:s2dfc} discusses all such simple models with futile cycles affecting 2 digits only.
+It is worth noting that item 2 from \cref{nlist:simplest} guarantees that all steady states will be (piecewise) uniform as it guarantees that each microstate has the equal "outgoing and incoming rates".
+
+Another thing to consider with this method, how do we deal with the ends of the sequence.
+We consider two geometries here, that of a chain where the ends are actually ends with no neighbors beyond them.
+And a loop geometry corresponding essentially to periodic boundary conditions where the two ends are considered to be connected to each other.
+
+\section{Single Two Digit Cycles with Equal Weights}\label{sec:s2dfc}
 What are all the different (as in they lead to different behaviours) 2 digit cycles we can implement in the model?
 In the diagrams as shown in \cref{fig:2d4s} we first note that the diagrams lead to the same behaviour if they are the same under reflection along the top-left to bottom-right axis which corresponds to reflecting the sequence (physically the same system if working with a loop geometry).
 We first focus on such cycles that visit all possible 2 digit sequences.
@@ -183,9 +218,6 @@ As reverses of cycles will give exactly the same behaviour just revered in time,
 In addition, it is reasonable to suspect that replacing all 0s by 1s and vice versa should also be some symmetry of the system and so we only look at one cycle for each of such classes.
 This gives only the cycles shown in \cref{fig:2dint} to look at.
 
-Of these of most interest is the first as that is the only one which does not change two digits at once, a perhaps reasonable physical constraint.
-\Cref{fig:2dbase_graphs} shows the resulting graphs for a couple of different $N$, where we get very interesting loop patterns, though the steady states are still always uniform!
-
 \begin{tcolorbox}
     \begin{figure}[H]
         \centering
@@ -285,6 +317,10 @@ Of these of most interest is the first as that is the only one which does not ch
     \end{figure}
 \end{tcolorbox}
 
+\subsection{Loop geometry graphs}
+The most interesting of these is the first as that is the only one which does not change two digits at once, a perhaps reasonable physical constraint.
+\Cref{fig:2dbase_graphs} shows the resulting graphs for a couple of different $N$, where we get very interesting loop patterns, though the steady states are still always uniform!
+
 The other base cycles all give rise to not quite as interesting patterns, some of which are shown in  .
 And it is also worth noting that all of these also gave rise only to uniform steady states.
 
@@ -314,5 +350,78 @@ And it is also worth noting that all of these also gave rise only to uniform ste
         Some example transition graphs for the other 2 digit base cycles from \cref{fig:2dint}.
     }\label{fig:2dothers}
 \end{figure}
+
+\subsection{Chain geometry graphs}
+First a couple of thoughts, as we're thinking of 2 digit cycles, switching from a loop to a chain geometry will always break precisely those cycles taking place on the last and first digits wrapped around.
+There is one such cycle for any sequence of the intermediate digits so switching to a chain geometry will always break precisely $2^{N-2}$ cycles and thus remove $4*2^{N-2}=2^N$ "edges" from the graph some of which may have contributed to the doubled up edges from \cref{fig:2dbase_graphs,fig:2dothers}.
+
+Some resulting graphs for the most interesting 2 digit cycle are shown in \cref{fig:2dbase_graphs_c}.
+The loops from before entirely disappear and we only get lines which at higher $N$ can have doubled up segments much like the cycles had before.
+For the resulting 2 digit cycles the graphs naturally changes, but not in any simple or interesting way, they got a bit less regular but the nature of each of the cycles stayed the same.
+
+\begin{tcolorbox}
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/cc1/spring_N=3_metadata=(chash=5795298381321907906,ctype=simple).png}
+            \caption{$N=3$}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/cc1/spring_N=4_metadata=(chash=5795298381321907906,ctype=simple).png}
+            \caption{$N=4$}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/cc1/spring_N=5_metadata=(chash=5795298381321907906,ctype=simple).png}
+            \caption{$N=5$}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/cc1/spring_N=6_metadata=(chash=5795298381321907906,ctype=simple).png}
+            \caption{$N=6$}
+        \end{subfigure}
+        \caption{
+            Resulting transition graphs when using only the cycle from \cref{fig:2dbase} for different $N$ in the chain geometry.
+            The node color shows the steady state probability of that node, which notably is always uniform!
+            Transition colors designate the probability current.
+        }\label{fig:2dbase_graphs_c}
+    \end{figure}
+\end{tcolorbox}
+
+\subsection{Different transitions rates within the cycle}
+For a quick look at relaxing item 2 from \cref{nlist:simplest}, we look at the base cycle \cref{fig:2dbase} again.
+We now instead of making all the rates in each futile cycle to be equal and 1.0, we boost one of them to be 1.5 instead.
+This gives an idea of what boosting any of the transitions would do to the graph, the results are shown in \cref{fig:2dbase_weights} for $N=5$ with the same patterns appearing in other cases as well.
+
+\begin{tcolorbox}
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/c1weights/N=5w=1.png}
+            \caption{Boosting 1st transition}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/c1weights/N=5w=2.png}
+            \caption{Boosting 2nd transition}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/c1weights/N=5w=3.png}
+            \caption{Boosting 3th transition}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../../plots/ones/c1weights/N=5w=4.png}
+            \caption{Boosting 4th transition}
+        \end{subfigure}
+        \caption{
+            Transition graphs using the cycle from \cref{fig:2dbase} with $N=5$ and all the transition rates around the cycle being 1.0 except one which is boosted to be 1.5 instead.
+        }\label{fig:2dbase_weights}
+    \end{figure}
+\end{tcolorbox}
 
 \end{document}
