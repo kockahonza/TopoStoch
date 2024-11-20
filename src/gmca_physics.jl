@@ -4,7 +4,7 @@
 # Setting up the energy matrices
 get_em_vars() = @variables ε_t, Δε_r, ε_b
 
-function make_em_sym(B)
+function make_sem_C2(B)
     vars = get_em_vars()
 
     monomer = Matrix{Num}(undef, 2, B + 1)
@@ -17,7 +17,17 @@ function make_em_sym(B)
     EnergyMatrices(monomer, interactions)
 end
 
-function make_em_sym_terms(et, der, eb)
+"""as make_sem_C2 but with et=der=0 aka no allostery"""
+function make_sem_C2_noall(B)
+    vars = get_em_vars()
+
+    monomer = fill(Num(0.), 2, B+1)
+
+    interactions = [0 vars[3]; vars[3] 0]
+    EnergyMatrices(monomer, interactions)
+end
+
+function make_sem_terms(et, der, eb)
     terms = Dict{Num,Num}()
     terms[Symbolics.variable(:ε_t)] = et
     terms[Symbolics.variable(:Δε_r)] = der

@@ -117,7 +117,7 @@ However, to further reduce the number of parameters we use
 where $\epsilon_t$ sets the overall energy of binding additional ligands and $\Delta\epsilon_r$ is a measure of how different the $R$ state is.
 
 \newpage
-\section{Equilibrium/Boltzmann Statistics}
+\section{Equilibrium/Boltzmann Statistics}\label{sec:eqstats}
 Firstly, defining our system as the polymer only (not any ligands or other chemicals floating around) its clear we are working in a Grand Canonical Ensamble.
 Thus for each microstate we are interested in what its energy is and how many ligands are bound in that microstate, denote these as $E_\alpha$ and $N_\alpha$.
 Then the probabilities of microstates being occupied is given by their Gibbs factors so that
@@ -294,7 +294,8 @@ Finally, the exact conditions to have our single monomer futile cycles in this s
 \end{align}
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{../../plots/simple_sg_B=1_C=2_N=1_version=2.5.png}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../../plots/simple_sg_B=1_C=2_N=1_version=2.5.png}
     \caption{
         Diagram of single monomer transitions for $C=2,B=1$ using the simplifying parameter choices.
         Top row is the tense conformational states, bottom is the relaxed ones.
@@ -341,7 +342,7 @@ For the simplified rates these would be
 
 with the full version being in \cref{fig:fullrates}
 
-\subsection{Finding the steady state}
+\subsection{Finding the steady state}\label{sec:findingss}
 However, more interesting to use is the matrix $\du{W}$ given by $W_{ij}=R_{ij}-\delta_{ij}\sum_k R_{ki}$ as puts the probability evolution align
 \begin{equation}
     \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i) \qq{into the convenient form of} \partial_t p_i = \sum_j W_{ij}p_j
@@ -361,15 +362,15 @@ any such matrix is guaranteed to have 0 as an eigenvalue, and all its other eige
 Further, if the graph/matrix is strongly connected (should mostly be true for us) then there is only a single eigenvector associated to the eigenvalue of 0.
 Also, the components of all the other eigenvectors sum to 0.
 
-Symbolically solving for the eigensystem of \cref{eq:W} indeed returns one eigenvector which always has eigenvalue 0, the (not normallized) vector is
+Symbolically solving for the eigensystem of \cref{eq:W} indeed returns one eigenvector which always has eigenvalue 0, it is
 \begin{tcolorbox}
     \begin{equation}
-        \su{p}^\text{ss} = \begin{pmatrix}
+        \su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
             c e g + c e h + c f g + d e h \\
             a e g + a e h + a f g + b f g \\
             a d h + b c g + b c h + b d h \\
             a d e + a d f + b c f + b d f
-        \end{pmatrix} = \begin{pmatrix}
+        \end{pmatrix} = \frac{1}{n} \begin{pmatrix}
             c e \left( g + h \right) + c f g + d e h \\
             a e \left( g + h \right) + \left( a + b \right) f g \\
             \left( a + b \right) d h + b c \left( g + h \right) \\
@@ -377,15 +378,19 @@ Symbolically solving for the eigensystem of \cref{eq:W} indeed returns one eigen
         \end{pmatrix}
     \end{equation}
 \end{tcolorbox}
-after plugging in the simplified version of the variables this gives
+with $n$ being a rather unwieldy positive normalization constant
+\begin{equation}
+    n = a \left( d \left( e + h \right) + \left( d + g \right) f + e \left( g + h \right) \right) + \left( b c + b d + \left( b + c \right) g \right) f + \left( b + e \right) \left( c \left( g + h \right) + d h \right) \overset{\text{notably}}{>} 0
+\end{equation}
+After plugging in the simplified version of the variables this gives
 \footnotesize
 \begin{equation}
-    \su{p}^\text{ss} = \begin{pmatrix}
+    \su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
         \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( r_1 + c_{ADP} r_2 \right) \left( \left( 1 + c_P \right) r_1 + \left( c_{ADP} + c_{ATP} \right) r_2 \alpha \right) \right) r_3 e^{2 \epsilon_{t}} \\
         \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( \left( c_{ADP} + c_{ATP} \right) r_2 + \left( 1 + c_P \right) r_1 \right) \left( r_1 + c_{ADP} r_2 \alpha \right) \right) r_3 e^{ - \Delta\epsilon_{r} + 2 \epsilon_{t}} \\
         \left( \left( r_1 + r_3 + c_P r_1 + r_3 \alpha + c_{ADP} r_2 \alpha + c_P r_1 \alpha \right) c_{ATP} r_2 + \left( r_1 + 2 r_3 + c_P r_1 + c_{ADP} r_2 \alpha \right) c_P r_1 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\epsilon_{t}} \\
         \left( \left( r_1 + 2 r_3 + c_{ADP} r_2 + c_P r_1 \right) c_P r_1 + \left( r_3 \left( 1 + \alpha \right) + c_{ADP} r_2 \alpha + \left( c_P + \alpha + c_P \alpha \right) r_1 \right) c_{ATP} r_2 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\Delta\epsilon_{r} + \epsilon_{t}}
-    \end{pmatrix}
+    \end{pmatrix}\label{eq:pss_simp}
 \end{equation}
 \normalsize
 as an unnormalized steady state probability distribution.
@@ -400,7 +405,7 @@ Then we have
 
 We can then calculate the matrix $\du{J}^\text{ss}$ for the steady state distribution in the $N=1$ case to get
 \begin{equation}
-    \du{J}^\text{ss}\begin{pmatrix}
+    \du{J}^\text{ss} \leftrightarrow \frac{1}{n} \begin{pmatrix}
         0 &  - a d e h + b c f g & a d e h - b c f g & 0 \\
         a d e h - b c f g & 0 & 0 &  - a d e h + b c f g \\
          - a d e h + b c f g & 0 & 0 & a d e h - b c f g \\
@@ -410,9 +415,9 @@ We can then calculate the matrix $\du{J}^\text{ss}$ for the steady state distrib
 which confirms that this is truly a steady state as we have $\sum_j J_{ij} = 0$ for all $i$.
 Alternatively (as this is really the same thing restated in another perspective) we can look at the flow along the loop as in the diagram \cref{fig:4sTs,fig:4sTss}.
 Clearly the net flow along each of the four sides must equal to each other in the steady state, this is equivalent to saying $J^\text{ss}=J^\text{ss}_{31}=J^\text{ss}_{43}=J^\text{ss}_{24}=J^\text{ss}_{12}$ which is indeed true for the resulting $\du{J}^\text{ss}$.
-We then get a flow in the clockwise direction (the one we expect/want) if
+We then get a net flow in the clockwise direction of
 \begin{equation}
-    J^\text{ss}=bcfg-adeh > 0
+    J^\text{ss}=\frac{1}{n}(bcfg-adeh)
 \end{equation}
 notably, if we look at which traditions the letters correspond to as in \cref{fig:N1symalph}, $bcfg$ is the product of the clockwise transition rates and $adeh$ of the counterclockwise transition rates.
 Which seems like quite a curious combination, but at the very least it does agree with the notion that if the transition rates going clockwise are bigger than those going opposite we get a clockwise current and vice-versa.
@@ -425,19 +430,71 @@ Which seems like quite a curious combination, but at the very least it does agre
     }\label{fig:N1symalph}
 \end{figure}
 
-Going beyond that we can plug in the values for the letters and get to the condition of
+Going beyond that we can plug in the values for the letters and get to the flow as
 \begin{align}
-    J^\text{ss}=bcfg-adeh = &r_3^{2} \left( c_{ATP} e^{\frac{\epsilon_{ATP} \theta_{2f}}{kT}} - c_{ADP} c_P e^{\frac{\epsilon_{ADP} + \epsilon_P \theta_{2f}}{kT}} \right) \times \\
-    &\left(  - r_{1}(1) r_{2}(2) e^{\frac{\Delta\varepsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)}{kT}} + r_{1}(2) r_{2}(1) e^{\frac{\Delta\varepsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)}{kT}} \right) \times \\
-    &e^{\frac{ - 2 \varepsilon_{t} - \Delta\varepsilon_{r} \theta_{1b} - \Delta\varepsilon_{r} \theta_{2b} + \epsilon_{ADP} \left( -1 + \theta_{2b} \right) + \epsilon_P \left( -1 + \theta_{1f} \right) + \varepsilon_{t} \theta_{1b} + \varepsilon_{t} \theta_{2b} + \varepsilon_{t} \theta_{3f} + \varepsilon_{t} \theta_{3b}}{kT}} > 0
+    J^\text{ss} =\enspace& \frac{1}{n}(bcfg-adeh) = \nonumber \\
+    =\enspace& \frac{1}{n} r_3^{2} \left( c_{ATP} e^{\frac{\epsilon_{ATP}}{kT}} - c_{ADP} c_P e^{\frac{\epsilon_{ADP} + \epsilon_P}{kT}} \right) \times \nonumber \\
+    &\left(  - r_{1}(1) r_{2}(2) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)}{kT}} + r_{1}(2) r_{2}(1) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)}{kT}} \right) \times \nonumber \\
+    &e^{\frac{ - \epsilon_{ATP} - 2 \epsilon_{t} - \Delta\epsilon_{r} \theta_{1b} - \Delta\epsilon_{r} \theta_{2b} + \epsilon_{ADP} \left( -1 + \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f} + \epsilon_P \left( -1 + \theta_{1f} \right) + \epsilon_{t} \theta_{1b} + \epsilon_{t} \theta_{2b} + \epsilon_{t} \theta_{3f} + \epsilon_{t} \theta_{3b}}{kT}} \label{eq:N1sscur}
 \end{align}
-or for the simplified form of \cref{sec:simpar} we get
-\begin{equation}
-    J^\text{ss} = bcfg-adeh = r_1r_2r_3^{2} (\alpha - 1) \left( c_{ATP} - c_{ADP} c_P \right) e^{2 \epsilon_t} > 0
-\end{equation}
+where I do not plug in for $n$ as that is too large to show. For the simplified form of \cref{sec:simpar} we have
+\begin{tcolorbox}
+    \begin{equation}
+        J^\text{ss} = \frac{1}{n}(bcfg-adeh) = \frac{1}{n}r_1r_2r_3^{2} \left( c_{ATP} - c_{ADP} c_P \right) (1 - \alpha) e^{2 \epsilon_t} \label{eq:N1sscurs}
+    \end{equation}
+    \begin{align}
+        n =&\enspace r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \times \nonumber \\
+        &\big( ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( r_1 + c_{ADP} r_2 \alpha ) e^{\epsilon_{t}} + \nonumber \\
+        &\phantom{(} ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( c_P r_1 + c_{ATP} r_2 \alpha ) e^{2 \Delta\epsilon_{r}} +\nonumber \\
+        &\phantom{(} ( 2 ( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} ) r_1 + ( c_{ADP} e^{\epsilon_{t}} + c_{ATP} e^{\Delta\epsilon_{r}} ) r_2 ( 1 + \alpha ) ) r_3 ( 1 + e^{\Delta\epsilon_{r}} ) + \nonumber \\
+        &\phantom{(} ( c_{ATP} r_2 + c_P r_1 + ( r_1 + c_{ADP} r_2 ) e^{\epsilon_{t}} ) ( ( 1 + c_P ) r_1 + ( c_{ADP} + c_{ATP} ) r_2 \alpha ) e^{\Delta\epsilon_{r}} \big)
+    \end{align}
+\end{tcolorbox}
 
-\subsection{Equilibrium, steady state and currents}
-Starting off with currents as in the last section, at equilibrium we must have net currents of 0 everywhere by detailed balance.
+From both of these we can notably infer whether the current is 0 or is negative or positive (as $n>0$ besides trivial cases).
+We get a current of 0 at equilibrium (due to the first bracket term in either expression, see \cref{sec:eqcurss}) or in the simplified model only if $\alpha = 1$ which means there's no difference in the ATP to monomer coupling by conformation state.
+However, this condition is perhaps more interesting in its general case of \cref{eq:N1sscur} where we get a current of 0 if
+\begin{align}
+    r_{1}(1) r_{2}(2) e^{\beta\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)} &= 
+    r_{1}(2) r_{2}(1) e^{\beta\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)} \\
+    r_{1}(1) e^{\beta\Delta\epsilon_{r}\theta_{1b}} r_{2}(2) e^{\beta\Delta\epsilon_{r}\theta_{2f}} &= 
+    r_{1}(2) e^{\beta\Delta\epsilon_{r}\theta_{1f}} r_{2}(1) e^{\beta\Delta\epsilon_{r}\theta_{2b}}
+\end{align}
+which is quite a peculiar condition that I'm not too sure what to think of.
+
+Coming back to sanity checks for driving the current in the simplified model, note that driving binding by ATP corresponds to having $c_{ATP} \gg c_{ADP}$ and by P to having $c_P \gg 1$.
+
+\subsection{Equilibrium currents and steady state}\label{sec:eqcurss}
+The condition for equilibrium in our system is given by the reaction
+\begin{equation}
+    \ce{ATP <=> ADP + P}
+\end{equation}
+being at its steady state.
+This corresponds to
+\begin{align}
+    \mu_{ATP} &= \mu_{ADP}+\mu_P \\
+    c_{ATP}\exp(\beta \epsilon_{ATP}) &= c_{ADP}c_P\exp(\beta (\epsilon_{ATP} + \epsilon_P))
+\end{align}
+according to the same recipe as we used earlier to derive our reaction rates.
+This perfectly agrees with our net current expressions of \cref{eq:N1sscur,eq:N1sscurs} which ought to both be 0 at equilibrium by detailed balance.
+
+We can also try to plug in this expression into the steady state probability distribution from \cref{sec:findingss}.
+This can be done in multiple ways depending on which concentration we want to eliminate.
+If we plug in $c_{ATP} \rightarrow c_Pc_{ADP}$ to eliminate the ATP concentration into the steady state of the simplified model (\cref{eq:pss_simp}) we get
+\begin{equation}
+    \su{p}^\text{ss}_\text{eq} = \frac{1}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
+        e^{\Delta\epsilon_{r} + \epsilon_{t}} \\
+        e^{\epsilon_{t}} \\
+        c_P e^{\Delta\epsilon_{r}} \\
+        c_P e^{2 \Delta\epsilon_{r}} \\
+    \end{pmatrix} = \frac{e^{\Delta\epsilon_{r} + \epsilon_{t}}}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
+        1 \\
+        e^{-\Delta\epsilon_r} \\
+        c_P e^{-\epsilon_t} \\
+        c_P e^{-(\epsilon_t-\Delta\epsilon_r)} \\
+    \end{pmatrix}
+\end{equation}
+which agrees perfectly with the standard Gibbs factor results of \cref{sec:eqstats} if we readd the $\beta=\frac{1}{\si{k}T}$ factors and use $c_P=e^{\beta \mu_P}$ (both of which are valid in the simplified model).
 
 \newpage
 \section{Going beyond $N=1$}

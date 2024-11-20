@@ -6,24 +6,8 @@ using Revise
 includet(srcdir("gmca.jl"))
 
 ################################################################################
-# The simple case, C=2 and B mostly 1
+# The C=2 case for Model 2.5
 ################################################################################
-function make_v2_5(N, B; edge_t=:full, kwargs...)
-    ca = ComplexAllosteryGM(N, 2, B;
-        symmetry=Loop(),
-        energy_matrices=make_em_sym(B),
-        version=2.5, kwargs...
-    )
-
-    if edge_t == :full
-        add_edges_full!(ca)
-    else
-        throw(ArgumentError(f"edge_t \"{edge_t}\" not recognised"))
-    end
-
-    ca
-end
-
 # define a bunch of symbolic variables so I don't have to keep redoing this
 function get_rs()
     r12s = Symbolics.variables(:r, 1:2, 1:2)
@@ -35,7 +19,14 @@ get_kT() = Symbolics.variable(:kT)
 get_chem_energies() = Symbolics.variable.([:εP, :εATP, :εADP])
 get_concetrations() = Symbolics.variable.([:cP, :cATP, :cADP])
 
-function add_edges_full!(ca::ComplexAllosteryGM)
+function make_v2_5(N, B; symmetry=Loop(), simplified=false, noall=false, kwargs...)
+    ca = ComplexAllosteryGM(N, 2, B;
+        symmetry,
+        energy_matrices=noall ? make_sem_C2_noall(B) : make_sem_C2(B),
+        version=2.5, kwargs...
+    )
+
+    # Do the edges
     # Declare symbolic variables here
     rs = get_rs()
     thetas = get_thetas()
@@ -101,83 +92,84 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                     inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
-                    exp_term_b = thetas[2, 2] * (e_i_new_state + chem_energies[3]) - (1 - thetas[2, 1]) * (e_i_state + chem_energies[1])
+                    exp_term_b = thetas[2, 2] * (e_i_new_state + chem_energies[3]) - (1 - thetas[2, 1]) * (e_i_state + chem_energies[2])
                     rb = rs[2][i_conf] * concetrations[3] * exp(exp_term_b / kT)
                     inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
             end
         end
     end
+
+    if simplified == :both
+        ca, r_subs(ca)
+    elseif simplified == :full
+        r_subs(ca; r1=1.0, r2=1.0, alpha=0.0)
+    elseif simplified
+        r_subs(ca)
+    elseif !simplified
+        ca
+    end
+
 end
 
-function fsimp(obj; which=:both)
-    if which == :both
-        which = [:thetas, :chem_energies]
-    elseif isa(which, Symbol)
-        which = [which]
-    end
-
+################################################################################
+# Simplifications and running
+################################################################################
+"""
+Simplifies by setting all thetas to 1 and chemical energies to 0.
+"""
+function chem_subs(obj; kT=true)
     terms = Dict{Num,Num}()
-    if :thetas in which
-        for theta in get_thetas()
-            terms[theta] = 1.0
-        end
+    for theta in get_thetas()
+        terms[theta] = 1.0
     end
-    if :chem_energies in which
-        for chem_energy in get_chem_energies()
-            terms[chem_energy] = 0.0
-        end
+    for chem_energy in get_chem_energies()
+        terms[chem_energy] = 0.0
     end
 
-    terms[get_kT()] = 1.0
+    if kT
+        terms[get_kT()] = 1.0
+    end
 
     ssubstitute(obj, terms)
 end
 
-function frsimp(obj; do_fsimp=true, kwargs...)
-    rs = get_rs()
-    terms = Dict{Num,Num}()
-
-    terms[rs[1][1]] = 1.0
-    terms[rs[1][2]] = 1.0
-
-    terms[rs[2][1]] = 1.0
-    terms[rs[2][2]] = 0.0
-
-    terms[rs[3]] = 1.0
-
-    if do_fsimp
-        obj = fsimp(obj; kwargs...)
-    end
-    ssubstitute(obj, terms)
-end
-
-function frsimp2(obj; do_fsimp=true, kwargs...)
+"""
+Simplified by setting both r1s to r1, r2(1) = r2 and r2(2)=r2*alpha,
+can also do chem_subs.
+"""
+function r_subs(obj; do_chem_subs=true, r1=nothing, r2=nothing, alpha=nothing, kwargs...)
     rs = get_rs()
     newrs = Symbolics.variables(:r, 1:3)
-    alpha = Symbolics.variable(:α)
+    if isnothing(r1)
+        r1 = newrs[1]
+    end
+    if isnothing(r2)
+        r2 = newrs[2]
+    end
+    if isnothing(alpha)
+        alpha = Symbolics.variable(:α)
+    end
 
     terms = Dict{Num,Num}()
 
-    terms[rs[1][1]] = newrs[1]
-    terms[rs[1][2]] = newrs[1]
+    terms[rs[1][1]] = r1
+    terms[rs[1][2]] = r1
 
-    terms[rs[2][1]] = newrs[2]
-    terms[rs[2][2]] = alpha * newrs[2]
+    terms[rs[2][1]] = r2
+    terms[rs[2][2]] = alpha * r2
 
-    terms[rs[3]] = newrs[3]
-
-    if do_fsimp
-        obj = fsimp(obj; kwargs...)
+    if do_chem_subs
+        obj = chem_subs(obj; kwargs...)
     end
-    ssubstitute(obj, terms), vcat(newrs, alpha)
+    ssubstitute(obj, terms)
 end
 
 function int_plot_1(ca::ComplexAllosteryGM, args...; init_scen=:eonly, kwargs...)
     if ca.version != 2.5
         throw(ArgumentError("this method only works for version 2.5"))
     end
-    sca, frterms = frsimp2(ca)
+    sca, frterms = r_subs(ca)
     variables = vcat(get_em_vars(), get_concetrations(), frterms)
     ranges = [
         -1.0:0.1:10.0,
@@ -199,12 +191,11 @@ function int_plot_1(ca::ComplexAllosteryGM, args...; init_scen=:eonly, kwargs...
     int_plot_ca(sca, args...; variables, ranges, startvalues, kwargs...)
 end
 
-
 function get_eq_subs1()
     terms = Dict{Num,Num}()
     es = get_chem_energies()
-    terms[es[1]] = es[2] - es[3]
+    terms[es[2]] = es[1] + es[3]
     cs = get_concetrations()
-    terms[cs[1]] = cs[2] / cs[3]
+    terms[cs[2]] = cs[1] * cs[3]
     terms
 end

@@ -138,6 +138,12 @@ function w_simplify(obj; full=false, safe=true)
     desafe(rslt)
 end
 
+function swcall(obj, cmd; safe=true)
+    obj, desafe = make_safe(safe, obj)
+    rslt = wcall.(cmd, obj)
+    desafe(rslt)
+end
+
 function w_eigen(matrix; safe=true)
     matrix, desafe = make_safe(safe, matrix)
     rslt = wcall("Eigensystem", collect(transpose(matrix)))

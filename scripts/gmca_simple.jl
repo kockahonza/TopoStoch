@@ -7,7 +7,7 @@ include(srcdir("gmca.jl"))
 # The simple case, C=2 and B mostly 1
 ################################################################################
 function make_simple(N, B; edge_t=:EL1)
-    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_em_sym(B))
+    ca = ComplexAllosteryGM(N, 2, B; energy_matrices=make_sem_C2(B))
 
     if edge_t == :EL1
         add_edges_simple_EL1!(ca)
