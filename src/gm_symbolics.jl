@@ -72,10 +72,11 @@ Achieves a similar goal to the above but much faster especially for multiple cal
 Each of these createsm a "factory" for making the given object given values for all
 the variables in it. These are then very fast to use.
 """
-function make_factory(arr, variables=Num.(get_variables(arr)); kwargs...)
+function make_factory(obj, variables=Num.(get_variables(obj)); kwargs...)
     num_vars = length(variables)
 
-    bfunc = build_function(arr, variables; expression=Val(false), kwargs...)[1]
+    bfunc_ = build_function(obj, variables; expression=Val(false), kwargs...)
+    bfunc = isa(obj, AbstractArray) ? bfunc_[1] : bfunc_
 
     try
         bfunc([1.0 for _ in 1:num_vars])
@@ -138,7 +139,7 @@ function w_simplify(obj; full=false, safe=true)
     desafe(rslt)
 end
 
-function swcall(obj, cmd; safe=true)
+function swcall(cmd, obj; safe=true)
     obj, desafe = make_safe(safe, obj)
     rslt = wcall.(cmd, obj)
     desafe(rslt)

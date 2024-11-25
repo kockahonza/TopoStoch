@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[top=20mm,bottom=40mm,left=20mm,right=20mm]{geometry}
+\usepackage[top=20mm,bottom=30mm,left=20mm,right=20mm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{parskip}
 
@@ -42,9 +42,9 @@
 
 \begin{document}
 \begin{center}
-    \LARGE
-    \textbf{Summary of Model 2.5}
-    \vspace{1em}
+	\LARGE
+	\textbf{Summary of Model 2.5}
+	\vspace{1em}
 \end{center}
 
 Same as Model 2 but with the locality problem fixed and different $r_?$ parameters based on conformation.
@@ -52,9 +52,9 @@ Same as Model 2 but with the locality problem fixed and different $r_?$ paramete
 \section{Energies}\label{sec:energies}
 As before, to summarize:
 \begin{tcolorbox}
-    \begin{equation}\label{eq:energy}
-        E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{1}{2} \sum_i E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})
-    \end{equation}
+	\begin{equation}\label{eq:energy}
+		E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{1}{2} \sum_i E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})
+	\end{equation}
 \end{tcolorbox}
 where $E_M$ is a $C{\times}(B+1)$ matrix defining the energies of each individual monomer according to its conformation and number of bound ligands.
 And $E_I$ is a $C{\times}C$ matrix defining the monomer interaction energies, specifically $E_I(c_1, c_2)$ is the energy cost of having a monomer of conformation $c_1$ to the left of one in conformation $c_2$, hence the particular ordering in \cref{eq:energy}.
@@ -64,55 +64,55 @@ Specifically, are we considering a single chain of monomers or a loop that joins
 
 Notably, we can also write \cref{eq:energy} as
 \begin{equation}\label{eq:energy_ind}
-    E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})}{2} = \sum_i E_{i}
+	E(\set{c_i}, \set{b_i}) \simeq \sum_i E_M(c_i, b_i) + \frac{E_I(c_{i-1}, c_i) + E_I(c_i, c_{i+1})}{2} = \sum_i E_{i}
 \end{equation}
 where $E_i$ are the energies associated with each monomer and its state.
 
 \subsection{General case}
 In the general case we can write
 \begin{align}
-    E_M \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_{1,1} & \epsilon_{1,2} & \cdots \\
-        \epsilon_{2,0} & \epsilon_{2,1} & \epsilon_{2,2} & \cdots \\
-        \epsilon_{3,0} & \epsilon_{3,1} & \epsilon_{3,2} & \cdots \\
-        \vdots & \vdots & \vdots & \ddots
-    \end{pmatrix}
-    &&
-    E_I \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_{b,1} & \epsilon_{b,2} & \cdots \\
-        \epsilon_{b,1} & 0 & \epsilon_{b,B+1} & \cdots \\
-        \epsilon_{b,2} & \epsilon_{b,B+1} & 0 & \cdots \\
-        \vdots & \vdots & \vdots & \ddots
-    \end{pmatrix}
+	E_M \leftrightarrow \begin{pmatrix}
+		                    0              & \epsilon_{1,1} & \epsilon_{1,2} & \cdots \\
+		                    \epsilon_{2,0} & \epsilon_{2,1} & \epsilon_{2,2} & \cdots \\
+		                    \epsilon_{3,0} & \epsilon_{3,1} & \epsilon_{3,2} & \cdots \\
+		                    \vdots         & \vdots         & \vdots         & \ddots
+	                    \end{pmatrix}
+	 &  &
+	E_I \leftrightarrow \begin{pmatrix}
+		                    0              & \epsilon_{b,1}   & \epsilon_{b,2}   & \cdots \\
+		                    \epsilon_{b,1} & 0                & \epsilon_{b,B+1} & \cdots \\
+		                    \epsilon_{b,2} & \epsilon_{b,B+1} & 0                & \cdots \\
+		                    \vdots         & \vdots           & \vdots           & \ddots
+	                    \end{pmatrix}
 \end{align}
 
 Restricting ourselves to the $C=2$, achiral case we can immediately simplify to
 \begin{align}
-    E_M \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_{T,1} & \epsilon_{T,2} & \cdots \\
-        \epsilon_{R,0} & \epsilon_{R,1} & \epsilon_{R,2} & \cdots \\
-    \end{pmatrix}
-    &&
-    E_I \leftrightarrow \begin{pmatrix}
-        0 & \epsilon_b \\
-        \epsilon_b & 0 \\
-    \end{pmatrix}
+	E_M \leftrightarrow \begin{pmatrix}
+		                    0              & \epsilon_{T,1} & \epsilon_{T,2} & \cdots \\
+		                    \epsilon_{R,0} & \epsilon_{R,1} & \epsilon_{R,2} & \cdots \\
+	                    \end{pmatrix}
+	 &  &
+	E_I \leftrightarrow \begin{pmatrix}
+		                    0          & \epsilon_b \\
+		                    \epsilon_b & 0          \\
+	                    \end{pmatrix}
 \end{align}
 borrowing the tense ($T$) and relaxed ($R$) conformation labels from haemoglobin models where presumably $\epsilon_{R,0} \geq 0$ and $\epsilon_{T,i} \geq \epsilon_{R,i}$ for most of $i \neq 0$.
 \subsection{Simplest case}
 However, to further reduce the number of parameters we use
 \begin{tcolorbox}
-    \begin{align}
-        E_M \leftrightarrow \begin{pmatrix}
-            0 & \epsilon_t & 2\epsilon_t & \cdots \\
-            \Delta\epsilon_r & \epsilon_t - \Delta\epsilon_r & 2\epsilon_t - \Delta\epsilon_r & \cdots \\
-        \end{pmatrix}
-        &&
-        E_I \leftrightarrow \begin{pmatrix}
-            0 & \epsilon_b \\
-            \epsilon_b & 0 \\
-        \end{pmatrix}
-    \end{align}
+	\begin{align}
+		E_M \leftrightarrow \begin{pmatrix}
+			                    0                & \epsilon_t                    & 2\epsilon_t                    & \cdots \\
+			                    \Delta\epsilon_r & \epsilon_t - \Delta\epsilon_r & 2\epsilon_t - \Delta\epsilon_r & \cdots \\
+		                    \end{pmatrix}
+		 &  &
+		E_I \leftrightarrow \begin{pmatrix}
+			                    0          & \epsilon_b \\
+			                    \epsilon_b & 0          \\
+		                    \end{pmatrix}
+	\end{align}
 \end{tcolorbox}
 where $\epsilon_t$ sets the overall energy of binding additional ligands and $\Delta\epsilon_r$ is a measure of how different the $R$ state is.
 
@@ -122,7 +122,7 @@ Firstly, defining our system as the polymer only (not any ligands or other chemi
 Thus for each microstate we are interested in what its energy is and how many ligands are bound in that microstate, denote these as $E_\alpha$ and $N_\alpha$.
 Then the probabilities of microstates being occupied is given by their Gibbs factors so that
 \begin{equation}
-    p_\alpha \propto \exp(-\beta(E_\alpha - \mu N_\alpha))
+	p_\alpha \propto \exp(-\beta(E_\alpha - \mu N_\alpha))
 \end{equation}
 with $\mu$ being the chemical potential of the ligand.
 This is a slightly problematic quantity as I'm not too sure how this fits in with the next section, however I suspect it should be kept as a separate thing as long as possible.
@@ -131,25 +131,25 @@ This is a slightly problematic quantity as I'm not too sure how this fits in wit
 \section{Modified Transition Rates}
 We still consider the recipe as in Model 2 where for a reaction
 \begin{equation}
-    \ce{S_1 + S_2 + $\cdots$ <=>[$r_f$][$r_b$] P_1 + P_2 + $\cdots$}
+	\ce{S_1 + S_2 + $\cdots$ <=>[$r_f$][$r_b$] P_1 + P_2 + $\cdots$}
 \end{equation}
 we get
 \begin{equation}
-    \frac{r_f}{r_b} = \exp(\beta(\mu_{\text{S}_1} + \mu_{\text{S}_2} + \cdots - \mu_{\text{P}_1} - \mu_{\text{P}_2} - \cdots))
+	\frac{r_f}{r_b} = \exp(\beta(\mu_{\text{S}_1} + \mu_{\text{S}_2} + \cdots - \mu_{\text{P}_1} - \mu_{\text{P}_2} - \cdots))
 \end{equation}
 where each $\mu_X = \epsilon_X + \si{k_B}T\ln(c_X)$ and we make a choice to split the terms so that
 \begin{align}
-    &r_f = r c_{\text{S}_1}c_{\text{S}_1}\cdots \exp(\beta(\theta_f(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots) - (1-\theta_b)(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots))) \\
-    &r_b = r c_{\text{P}_1}c_{\text{P}_1}\cdots \exp(\beta(\theta_b(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots) - (1-\theta_f)(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots)))
+	 & r_f = r c_{\text{S}_1}c_{\text{S}_1}\cdots \exp(\beta(\theta_f(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots) - (1-\theta_b)(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots))) \\
+	 & r_b = r c_{\text{P}_1}c_{\text{P}_1}\cdots \exp(\beta(\theta_b(\epsilon_{\text{P}_1} + \epsilon_{\text{P}_2} + \cdots) - (1-\theta_f)(\epsilon_{\text{S}_1} + \epsilon_{\text{S}_2} + \cdots)))
 \end{align}
 so that higher concentrations of any chemicals increase the rates of those reactions using them (reasonable) and then we can split the energetic contributions to the $\mu$ between the forward and backward rates using the dimensionless $\theta_?$ parameters.
 
 \subsection{Transition rates for Model 2.5}
 We still consider the following three processes
 \begin{align}
-    \text{Process 1:} && \ce{P + $S$ &<=>[$r_{1f}$][$r_{1b}$] $S'$} \\
-    \text{Process 2:} && \ce{ATP + $S$ &<=>[$r_{2f}$][$r_{2b}$] ADP + $S'$} \\
-    \text{Process 3:} && \ce{$S$ &<=>[$r_{3f}$][$r_{3b}$] $S'$}
+	\text{Process 1:} &  & \ce{P + $S$   & <=>[$r_{1f}$][$r_{1b}$] $S'$}       \\
+	\text{Process 2:} &  & \ce{ATP + $S$ & <=>[$r_{2f}$][$r_{2b}$] ADP + $S'$} \\
+	\text{Process 3:} &  & \ce{$S$       & <=>[$r_{3f}$][$r_{3b}$] $S'$}
 \end{align}
 where the $S$s are different in each process and denote different microstates of our polymer.
 
@@ -167,20 +167,20 @@ We label these as $r_1(c_i)$ and $r_2(c_i)$ where again $i$ is the index of the 
 
 Taking all this into account we arrive at
 \begin{align}
-    &\frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_P-\epsilon_i^{S'})) = c_P\exp(\beta(\epsilon_i^S+\epsilon_P-\epsilon_i^{S'})) \label{eq:rp1} \\
-    &\frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_{ATP}-\epsilon_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(\epsilon_i^S+\epsilon_{ATP}-\epsilon_i^{S'}-\epsilon_{ADP})) \label{eq:rp2} \\
-    &\frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'})) \label{eq:rp3}
+	 & \frac{r_{1f}(c_i)}{r_{1b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_P-\epsilon_i^{S'})) = c_P\exp(\beta(\epsilon_i^S+\epsilon_P-\epsilon_i^{S'})) \label{eq:rp1}                                                      \\
+	 & \frac{r_{2f}(c_i)}{r_{2b}(c_i)} = \exp(\beta(\epsilon_i^S+\mu_{ATP}-\epsilon_i^{S'}-\mu_{ADP})) = \frac{c_{ATP}}{c_{ADP}}\exp(\beta(\epsilon_i^S+\epsilon_{ATP}-\epsilon_i^{S'}-\epsilon_{ADP})) \label{eq:rp2} \\
+	 & \frac{r_{3f}}{r_{3b}} = \exp(\beta(\epsilon_i^S-\epsilon_i^{S'})) \label{eq:rp3}
 \end{align}
 and so
 \begin{tcolorbox}
-    \begin{align}
-        &r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) \label{eq:rate1f} \\
-        &r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) \label{eq:rate1b} \\
-        &r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
-        &r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
-        &r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) \label{eq:rate3f} \\
-        &r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
-    \end{align}
+	\begin{align}
+		 & r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) \label{eq:rate1f}                          \\
+		 & r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) \label{eq:rate1b}                             \\
+		 & r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) \label{eq:rate2f} \\
+		 & r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) \label{eq:rate2b} \\
+		 & r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) \label{eq:rate3f}                                                    \\
+		 & r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) \label{eq:rate3b}
+	\end{align}
 \end{tcolorbox}
 where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
 
@@ -189,12 +189,12 @@ where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are 
 Focusing on the $N=1$ system with also $C=2,B=1$ we get essentially the simple subsystem we considered before (especially as now we don't have the locality breaking as before).
 This system has 4 microstates which along with the full symbolic transition rates between them are shown in \cref{fig:4sTs} (with slightly differing notation).
 \begin{figure}[h]
-    \includegraphics[width=\textwidth]{../../plots/symgraph_B=1_C=2_N=1_version=2.5.png}
-    \caption{
-        Diagram of single monomer transitions for $C=2,B=1$.
-        Top row is the tense conformational states, bottom is the relaxed ones.
-        Left column are without a ligand and right column with one ligand bound.
-    }\label{fig:4sTs}
+	\includegraphics[width=\textwidth]{../../plots/symgraph_B=1_C=2_N=1_version=2.5.png}
+	\caption{
+		Diagram of single monomer transitions for $C=2,B=1$.
+		Top row is the tense conformational states, bottom is the relaxed ones.
+		Left column are without a ligand and right column with one ligand bound.
+	}\label{fig:4sTs}
 \end{figure}
 As before the up and down transition (that change conformation) are naturally "driven" clockwise just due to the nature of the energies $\epsilon_t,\Delta\epsilon_r$.
 But how do we complete the cycle?
@@ -204,14 +204,14 @@ Before we look at the exact rates for the $N=1$ system it is worth looking at th
 From \cref{eq:rp1} we can see that binding a ligand in process 1 is favoured as long as the energy is not raised by more than $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$
 The same logic can be applied to process 2 and the results are summarized as
 \begin{table}[H]
-    \centering
-    \begin{tabular}{c|c|c}
-        Process & binding favoured if $\epsilon^{S'}_i-\epsilon^S_i<$ & overall rate scale \\
-        \hline
-        1 & $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$ & $r_1(c_i)$ \\
-        \hline
-        2 & $\mu_{ATP}-\mu_{ADP} = \epsilon_{ATP}-\epsilon_{ADP}+\frac{1}{\beta}\ln{\frac{c_{ATP}}{c_{ADP}}}$ & $r_2(c_i)$
-    \end{tabular}
+	\centering
+	\begin{tabular}{c|c|c}
+		Process & binding favoured if $\epsilon^{S'}_i-\epsilon^S_i<$                                               & overall rate scale \\
+		\hline
+		1       & $\mu_P = \epsilon_P+\frac{1}{\beta}\ln(c_P)$                                                      & $r_1(c_i)$         \\
+		\hline
+		2       & $\mu_{ATP}-\mu_{ADP} = \epsilon_{ATP}-\epsilon_{ADP}+\frac{1}{\beta}\ln{\frac{c_{ATP}}{c_{ADP}}}$ & $r_2(c_i)$
+	\end{tabular}
 \end{table}
 Coming back to the $N=1$ system, to complete the clockwise cycles from \cref{fig:4sTs} we want ligand binding to be favoured on the top edge where the energy difference $\epsilon^{S'}_i-\epsilon^S_i$ is $\epsilon_t$.
 But we want it not to be favoured by the bottom edge where the energy difference is $\epsilon_t-2\Delta\epsilon_r$ which is always lower.
@@ -229,29 +229,29 @@ It seems reasonable to have process 1 couple equally to both conformations, but 
 \subsection{Brute force approach}
 But in case it is useful, these are the conditions in full to get the single monomer cycles described above
 \begin{multline}
-    c_P r_{1}(1) e^{\frac{\epsilon_P \theta_{1f} - \varepsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} + c_{ATP} r_{2}(1) e^{\frac{ - \left( \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f}}{kT}} > \\
-    r_{1}(1) e^{\frac{ - \epsilon_P \left( 1 - \theta_{1f} \right) + \varepsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b} - \epsilon_P \left( 1 - \theta_{2f} \right)}{kT}} \\
+	c_P r_{1}(1) e^{\frac{\epsilon_P \theta_{1f} - \varepsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} + c_{ATP} r_{2}(1) e^{\frac{ - \left( \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f}}{kT}} > \\
+	r_{1}(1) e^{\frac{ - \epsilon_P \left( 1 - \theta_{1f} \right) + \varepsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b} - \epsilon_P \left( 1 - \theta_{2f} \right)}{kT}} \\
 \end{multline}
 \begin{multline}
-    c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_{ATP} \right) \theta_{2f} - \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_P \right) \theta_{1f} - \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} < \\
-    r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
+	c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_{ATP} \right) \theta_{2f} - \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\varepsilon_{r} + \epsilon_P \right) \theta_{1f} - \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} < \\
+	r_{1}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\varepsilon_{r} + \varepsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\varepsilon_{r} + \epsilon_P \right) \left( 1 - \theta_{2ff} \right) + \left(  - \Delta\varepsilon_{r} + \epsilon_{ADP} + \varepsilon_{t} \right) \theta_{2b}}{kT}}
 \end{multline}
 
 \newpage
 \section{Simplified Model with Reduced Parameters}\label{sec:simpar}
 Overall, the model has the following parameters
 \begin{table}[H]
-    \centering
-    \begin{tabular}{c|c|c}
-        Where they come from & parameters & units \\
-        \hline
-        Energy parameters & $\epsilon_t, \Delta\epsilon_r, \epsilon_b$ & \si{E} \\
-        Equilibrium statistics & $\mu, \si{k_b}T$ & \si{E} \\
-        Rates: overall scaling & $r_{1/2}(c_i),r_3$ -- $2C+1$ of these & rates -- \si{T^{-1}} \\
-        Rates: dimensionless concentrations & $c_P,c_{ATP},c_{ADP}$ & \si{1} \\
-        Rates: intrinsic chemical energies & $\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ & \si{E} \\
-        Rates: thetas/balancing & $\theta_{1/2/3,f/b}$ -- 6 of these & \si{1} \\
-    \end{tabular}
+	\centering
+	\begin{tabular}{c|c|c}
+		Where they come from                & parameters                                 & units                \\
+		\hline
+		Energy parameters                   & $\epsilon_t, \Delta\epsilon_r, \epsilon_b$ & \si{E}               \\
+		Equilibrium statistics              & $\mu, \si{k_b}T$                           & \si{E}               \\
+		Rates: overall scaling              & $r_{1/2}(c_i),r_3$ -- $2C+1$ of these      & rates -- \si{T^{-1}} \\
+		Rates: dimensionless concentrations & $c_P,c_{ATP},c_{ADP}$                      & \si{1}               \\
+		Rates: intrinsic chemical energies  & $\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ & \si{E}               \\
+		Rates: thetas/balancing             & $\theta_{1/2/3,f/b}$ -- 6 of these         & \si{1}               \\
+	\end{tabular}
 \end{table}
 which is quite a lot to make initial progress, so here we outline a simplified model with these reduced.
 
@@ -260,84 +260,84 @@ We can also reasonably take all the $\theta_?$ to be equal.
 Beyond this it gets more questionable.
 
 \begin{tcolorbox}
-    We can start off with setting all $\theta_? = 1$ which is very convenient as that then makes the somewhat redundant degrees of freedom of the concentrations and intrinsic chemical energies have the same effect.
-    As such, with this simplification we can also without loss of complexity set all the intrinsic chemical energies $\epsilon_P=\epsilon_{ATP}=\epsilon_{ADP}=0$ as well.
+	We can start off with setting all $\theta_? = 1$ which is very convenient as that then makes the somewhat redundant degrees of freedom of the concentrations and intrinsic chemical energies have the same effect.
+	As such, with this simplification we can also without loss of complexity set all the intrinsic chemical energies $\epsilon_P=\epsilon_{ATP}=\epsilon_{ADP}=0$ as well.
 \end{tcolorbox}
 
-In addition, inspired from \cref{sec:fcsys}, we let the rates $r_1(?)$ all be the same, call it $r_1$, and we let $r_2=r_2(1)$ and $r_2(2)=\alpha r_2$, with presumably $\alpha < 1$.
+In addition, inspired from \cref{sec:fcsys}, we let the rates be $r_1(1)=r_1(2)=r_1$, $r_2(1)=r_2$ and $r_2(2)=\alpha r_2$, with presumably $\alpha < 1$.
 This makes the rates become
 \begin{tcolorbox}
-    \begin{align}
-        &r_{1f}(c_i) = r_1c_P\exp(\beta\epsilon_i^S) \label{eq:rate1f} \\
-        &r_{1b}(c_i) = r_1\exp(\beta\epsilon_i^{S'}) \label{eq:rate1b} \\
-        &r_{2f}(c_i) = r_2c_{ATP}\exp(\beta\epsilon_i^S) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2f} \\
-        &r_{2b}(c_i) = r_2c_{ADP}\exp(\beta\epsilon_i^{S'}) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2b} \\
-        &r_{3f} = r_3\exp(\beta\epsilon_i^S) \label{eq:rate3f} \\
-        &r_{3b} = r_3\exp(\beta\epsilon_i^{S'}) \label{eq:rate3b}
-    \end{align}
+	\begin{align}
+		 & r_{1f}(c_i) = r_1c_P\exp(\beta\epsilon_i^S) \label{eq:rate1f}                                                   \\
+		 & r_{1b}(c_i) = r_1\exp(\beta\epsilon_i^{S'}) \label{eq:rate1b}                                                   \\
+		 & r_{2f}(c_i) = r_2c_{ATP}\exp(\beta\epsilon_i^S) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2f}    \\
+		 & r_{2b}(c_i) = r_2c_{ADP}\exp(\beta\epsilon_i^{S'}) \quad \{\times \alpha \qq{if in conf. 2}\} \label{eq:rate2b} \\
+		 & r_{3f} = r_3\exp(\beta\epsilon_i^S) \label{eq:rate3f}                                                           \\
+		 & r_{3b} = r_3\exp(\beta\epsilon_i^{S'}) \label{eq:rate3b}
+	\end{align}
 \end{tcolorbox}
 which from a slightly different perspective is
 \begin{align}
-    r_{\text{binding},b_i,c_i=1} &= (r_1c_P+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
-    r_{\text{debinding},b_i,c_i=1} &= (r_1+r_2c_{ATP})\exp(\beta E_M(1, b_i)) \\
-    r_{\text{binding},b_i,c_i=2} &= (r_1c_P+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
-    r_{\text{debinding},b_i,c_i=2} &= (r_1+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i)) \\
-    r_{c_i \rightarrow c_i',b_i} &= r_3\exp(\beta (E_M(c_i, b_i) + \text{NN interaction energy}))
+	r_{\text{binding},b_i,c_i=1}   & = (r_1c_P+r_2c_{ATP})\exp(\beta E_M(1, b_i))                    \\
+	r_{\text{debinding},b_i,c_i=1} & = (r_1+r_2c_{ATP})\exp(\beta E_M(1, b_i))                       \\
+	r_{\text{binding},b_i,c_i=2}   & = (r_1c_P+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i))             \\
+	r_{\text{debinding},b_i,c_i=2} & = (r_1+\alpha r_2c_{ATP})\exp(\beta E_M(2, b_i))                \\
+	r_{c_i \rightarrow c_i',b_i}   & = r_3\exp(\beta (E_M(c_i, b_i) + \text{NN interaction energy}))
 \end{align}
 where we have plugged in the corresponding terms for $\epsilon_i^S$ as well.
 The resulting transition graph for the $N=1$ system can be seen in \cref{fig:4sTss}
 
 Finally, the exact conditions to have our single monomer futile cycles in this simplified model where we further assumer $B=1$ are
 \begin{align}
-    \frac{r_{\text{binding},b_i,1}}{r_{\text{debinding},b_i+1,1}} = \frac{(r_1c_P+r_2c_{ATP})}{(r_1+r_2c_{ADP})\exp(\beta \epsilon_t)} &> 1 \\
-    \frac{r_{\text{binding},b_i,2}}{r_{\text{debinding},b_i+1,2}} = \frac{(r_1c_P+\alpha r_2c_{ATP})\exp(\beta \Delta\epsilon_r)}{(r_1+\alpha r_2c_{ADP})\exp(\beta (\epsilon_t-\Delta\epsilon_r))} &< 1 \\
+	\frac{r_{\text{binding},b_i,1}}{r_{\text{debinding},b_i+1,1}} = \frac{(r_1c_P+r_2c_{ATP})}{(r_1+r_2c_{ADP})\exp(\beta \epsilon_t)}                                                              & > 1 \\
+	\frac{r_{\text{binding},b_i,2}}{r_{\text{debinding},b_i+1,2}} = \frac{(r_1c_P+\alpha r_2c_{ATP})\exp(\beta \Delta\epsilon_r)}{(r_1+\alpha r_2c_{ADP})\exp(\beta (\epsilon_t-\Delta\epsilon_r))} & < 1 \\
 \end{align}
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../../plots/simple_sg_B=1_C=2_N=1_version=2.5.png}
-    \caption{
-        Diagram of single monomer transitions for $C=2,B=1$ using the simplifying parameter choices.
-        Top row is the tense conformational states, bottom is the relaxed ones.
-        Left column are without a ligand and right column with one ligand bound.
-    }\label{fig:4sTss}
+	\centering
+	\includegraphics[width=0.8\textwidth]{../../plots/simple_sg_B=1_C=2_N=1_version=2.5.png}
+	\caption{
+		Diagram of single monomer transitions for $C=2,B=1$ using the simplifying parameter choices.
+		Top row is the tense conformational states, bottom is the relaxed ones.
+		Left column are without a ligand and right column with one ligand bound.
+	}\label{fig:4sTss}
 \end{figure}
 
 \newpage
 \section{Symbolic Analysis of $N=1$ using the Transition Matrix}
 It is worth looking directly at the transition matrix $\du{R}$ where $R_{ij}$ corresponds to the transition from $j$ to $i$.
 This takes the form
-\begin{align}
-    \du{R} \leftrightarrow \begin{pmatrix}
-    0 & c & e & 0 \\
-    a & 0 & 0 & g \\
-    b & 0 & 0 & h \\
-    0 & d & f & 0 \\
-    \end{pmatrix} \qq{with states ordered as} \begin{pmatrix}
-        (\set{1}, \set{0}) \\
-        (\set{2}, \set{0}) \\
-        (\set{1}, \set{1}) \\
-        (\set{2}, \set{1})
-    \end{pmatrix}
-\end{align}
+\begin{equation}\label{eq:Rinvars}
+	\du{R} \leftrightarrow \begin{pmatrix}
+		0 & c & e & 0 \\
+		a & 0 & 0 & g \\
+		b & 0 & 0 & h \\
+		0 & d & f & 0 \\
+	\end{pmatrix} \qq{with states ordered as} \begin{pmatrix}
+		(\set{1}, \set{0}) \\
+		(\set{2}, \set{0}) \\
+		(\set{1}, \set{1}) \\
+		(\set{2}, \set{1})
+	\end{pmatrix}
+\end{equation}
 where the variables are shorthands for the rates in \cref{fig:4sTs} or the simplified ones in \cref{fig:4sTss}.
 For the simplified rates these would be
 
 \begin{minipage}{0.45\textwidth}
-    \begin{align}
-        a &= r_3 \\
-        f &= r_3 e^{\epsilon_{t}} \\
-        d &= c_P r_1 e^{\Delta\epsilon_{r}} + c_{ATP} r_2 e^{\Delta\epsilon_{r}} \alpha \\
-        g &= r_1 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} + c_{ADP} r_2 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \alpha
-    \end{align}
+	\begin{align}
+		a & = r_3                                                                                                        \\
+		f & = r_3 e^{\epsilon_{t}}                                                                                       \\
+		d & = c_P r_1 e^{\Delta\epsilon_{r}} + c_{ATP} r_2 e^{\Delta\epsilon_{r}} \alpha                                 \\
+		g & = r_1 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} + c_{ADP} r_2 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \alpha
+	\end{align}
 \end{minipage}
 \begin{minipage}{0.45\textwidth}
-    \begin{align}
-        h &= r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \\
-        b &= c_{ATP} r_2 + c_P r_1 \\
-        e &= r_1 e^{\epsilon_{t}} + c_{ADP} r_2 e^{\epsilon_{t}} \\
-        c &= r_3 e^{\Delta\epsilon_{r}}
-    \end{align}
+	\begin{align}
+		h & = r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}}        \\
+		b & = c_{ATP} r_2 + c_P r_1                               \\
+		e & = r_1 e^{\epsilon_{t}} + c_{ADP} r_2 e^{\epsilon_{t}} \\
+		c & = r_3 e^{\Delta\epsilon_{r}}
+	\end{align}
 \end{minipage}
 
 with the full version being in \cref{fig:fullrates}
@@ -345,18 +345,18 @@ with the full version being in \cref{fig:fullrates}
 \subsection{Finding the steady state}\label{sec:findingss}
 However, more interesting to use is the matrix $\du{W}$ given by $W_{ij}=R_{ij}-\delta_{ij}\sum_k R_{ki}$ as puts the probability evolution align
 \begin{equation}
-    \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i) \qq{into the convenient form of} \partial_t p_i = \sum_j W_{ij}p_j
+	\partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i) \qq{into the convenient form of} \partial_t p_i = \sum_j W_{ij}p_j
 \end{equation}
 using substitutions from before we get
 \begin{tcolorbox}
-    \begin{equation}\label{eq:W}
-        \du{W} \leftrightarrow \begin{pmatrix}
-        -a-b & c & e & 0 \\
-        a & -c-d & 0 & g \\
-        b & 0 & -e-f & h \\
-        0 & d & f & -g-h \\
-        \end{pmatrix}
-    \end{equation}
+	\begin{equation}\label{eq:W}
+		\du{W} \leftrightarrow \begin{pmatrix}
+			-a-b & c    & e    & 0    \\
+			a    & -c-d & 0    & g    \\
+			b    & 0    & -e-f & h    \\
+			0    & d    & f    & -g-h \\
+		\end{pmatrix}
+	\end{equation}
 \end{tcolorbox}
 any such matrix is guaranteed to have 0 as an eigenvalue, and all its other eigenvalues to be negative.
 Further, if the graph/matrix is strongly connected (should mostly be true for us) then there is only a single eigenvector associated to the eigenvalue of 0.
@@ -364,33 +364,33 @@ Also, the components of all the other eigenvectors sum to 0.
 
 Symbolically solving for the eigensystem of \cref{eq:W} indeed returns one eigenvector which always has eigenvalue 0, it is
 \begin{tcolorbox}
-    \begin{equation}
-        \su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
-            c e g + c e h + c f g + d e h \\
-            a e g + a e h + a f g + b f g \\
-            a d h + b c g + b c h + b d h \\
-            a d e + a d f + b c f + b d f
-        \end{pmatrix} = \frac{1}{n} \begin{pmatrix}
-            c e \left( g + h \right) + c f g + d e h \\
-            a e \left( g + h \right) + \left( a + b \right) f g \\
-            \left( a + b \right) d h + b c \left( g + h \right) \\
-            a d \left( e + f \right) + b \left( c + d \right) f
-        \end{pmatrix}
-    \end{equation}
+	\begin{equation}
+		\su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
+			c e g + c e h + c f g + d e h \\
+			a e g + a e h + a f g + b f g \\
+			a d h + b c g + b c h + b d h \\
+			a d e + a d f + b c f + b d f
+		\end{pmatrix} = \frac{1}{n} \begin{pmatrix}
+			c e \left( g + h \right) + c f g + d e h            \\
+			a e \left( g + h \right) + \left( a + b \right) f g \\
+			\left( a + b \right) d h + b c \left( g + h \right) \\
+			a d \left( e + f \right) + b \left( c + d \right) f
+		\end{pmatrix}
+	\end{equation}
 \end{tcolorbox}
 with $n$ being a rather unwieldy positive normalization constant
 \begin{equation}
-    n = a \left( d \left( e + h \right) + \left( d + g \right) f + e \left( g + h \right) \right) + \left( b c + b d + \left( b + c \right) g \right) f + \left( b + e \right) \left( c \left( g + h \right) + d h \right) \overset{\text{notably}}{>} 0
+	n = a \left( d \left( e + h \right) + \left( d + g \right) f + e \left( g + h \right) \right) + \left( b c + b d + \left( b + c \right) g \right) f + \left( b + e \right) \left( c \left( g + h \right) + d h \right) \overset{\text{notably}}{>} 0
 \end{equation}
 After plugging in the simplified version of the variables this gives
 \footnotesize
 \begin{equation}
-    \su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
-        \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( r_1 + c_{ADP} r_2 \right) \left( \left( 1 + c_P \right) r_1 + \left( c_{ADP} + c_{ATP} \right) r_2 \alpha \right) \right) r_3 e^{2 \epsilon_{t}} \\
-        \left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( \left( c_{ADP} + c_{ATP} \right) r_2 + \left( 1 + c_P \right) r_1 \right) \left( r_1 + c_{ADP} r_2 \alpha \right) \right) r_3 e^{ - \Delta\epsilon_{r} + 2 \epsilon_{t}} \\
-        \left( \left( r_1 + r_3 + c_P r_1 + r_3 \alpha + c_{ADP} r_2 \alpha + c_P r_1 \alpha \right) c_{ATP} r_2 + \left( r_1 + 2 r_3 + c_P r_1 + c_{ADP} r_2 \alpha \right) c_P r_1 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\epsilon_{t}} \\
-        \left( \left( r_1 + 2 r_3 + c_{ADP} r_2 + c_P r_1 \right) c_P r_1 + \left( r_3 \left( 1 + \alpha \right) + c_{ADP} r_2 \alpha + \left( c_P + \alpha + c_P \alpha \right) r_1 \right) c_{ATP} r_2 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\Delta\epsilon_{r} + \epsilon_{t}}
-    \end{pmatrix}\label{eq:pss_simp}
+	\su{p}^\text{ss} = \frac{1}{n} \begin{pmatrix}
+		\left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( r_1 + c_{ADP} r_2 \right) \left( \left( 1 + c_P \right) r_1 + \left( c_{ADP} + c_{ATP} \right) r_2 \alpha \right) \right) r_3 e^{2 \epsilon_{t}}                         \\
+		\left( \left( 2 r_1 + c_{ADP} r_2 \left( 1 + \alpha \right) \right) r_3 + \left( \left( c_{ADP} + c_{ATP} \right) r_2 + \left( 1 + c_P \right) r_1 \right) \left( r_1 + c_{ADP} r_2 \alpha \right) \right) r_3 e^{ - \Delta\epsilon_{r} + 2 \epsilon_{t}} \\
+		\left( \left( r_1 + r_3 + c_P r_1 + r_3 \alpha + c_{ADP} r_2 \alpha + c_P r_1 \alpha \right) c_{ATP} r_2 + \left( r_1 + 2 r_3 + c_P r_1 + c_{ADP} r_2 \alpha \right) c_P r_1 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\epsilon_{t}}                    \\
+		\left( \left( r_1 + 2 r_3 + c_{ADP} r_2 + c_P r_1 \right) c_P r_1 + \left( r_3 \left( 1 + \alpha \right) + c_{ADP} r_2 \alpha + \left( c_P + \alpha + c_P \alpha \right) r_1 \right) c_{ATP} r_2 + r_2^{2} c_{ATP}^{2} \alpha \right) r_3 e^{\Delta\epsilon_{r} + \epsilon_{t}}
+	\end{pmatrix}\label{eq:pss_simp}
 \end{equation}
 \normalsize
 as an unnormalized steady state probability distribution.
@@ -398,67 +398,67 @@ as an unnormalized steady state probability distribution.
 \subsection{Probability currents}
 Next we want to get the steady state probability currents between microstates.
 Denote $J_{ij}$ to be the net probability current flowing from $j$ to $i$ at some probability distribution $\su{p}$.
-Then we have 
+Then we have
 \begin{equation}\label{eq:current}
-    J_{ij} = R_{ij}p_j-R_{ji}p_i
+	J_{ij} = R_{ij}p_j-R_{ji}p_i
 \end{equation}
 
 We can then calculate the matrix $\du{J}^\text{ss}$ for the steady state distribution in the $N=1$ case to get
 \begin{equation}
-    \du{J}^\text{ss} \leftrightarrow \frac{1}{n} \begin{pmatrix}
-        0 &  - a d e h + b c f g & a d e h - b c f g & 0 \\
-        a d e h - b c f g & 0 & 0 &  - a d e h + b c f g \\
-         - a d e h + b c f g & 0 & 0 & a d e h - b c f g \\
-        0 & a d e h - b c f g &  - a d e h + b c f g & 0 \\
-    \end{pmatrix}
+	\du{J}^\text{ss} \leftrightarrow \frac{1}{n} \begin{pmatrix}
+		0                   & - a d e h + b c f g & a d e h - b c f g   & 0                   \\
+		a d e h - b c f g   & 0                   & 0                   & - a d e h + b c f g \\
+		- a d e h + b c f g & 0                   & 0                   & a d e h - b c f g   \\
+		0                   & a d e h - b c f g   & - a d e h + b c f g & 0                   \\
+	\end{pmatrix}
 \end{equation}
 which confirms that this is truly a steady state as we have $\sum_j J_{ij} = 0$ for all $i$.
 Alternatively (as this is really the same thing restated in another perspective) we can look at the flow along the loop as in the diagram \cref{fig:4sTs,fig:4sTss}.
 Clearly the net flow along each of the four sides must equal to each other in the steady state, this is equivalent to saying $J^\text{ss}=J^\text{ss}_{31}=J^\text{ss}_{43}=J^\text{ss}_{24}=J^\text{ss}_{12}$ which is indeed true for the resulting $\du{J}^\text{ss}$.
 We then get a net flow in the clockwise direction of
 \begin{equation}
-    J^\text{ss}=\frac{1}{n}(bcfg-adeh)
+	J^\text{ss}=\frac{1}{n}(bcfg-adeh)
 \end{equation}
 notably, if we look at which traditions the letters correspond to as in \cref{fig:N1symalph}, $bcfg$ is the product of the clockwise transition rates and $adeh$ of the counterclockwise transition rates.
 Which seems like quite a curious combination, but at the very least it does agree with the notion that if the transition rates going clockwise are bigger than those going opposite we get a clockwise current and vice-versa.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{../../plots/symalph_B=1_C=2_N=1_version=2.5.png}
-    \caption{
-        Transition diagram in the simplified form of \cref{sec:simpar}
-    }\label{fig:N1symalph}
+	\centering
+	\includegraphics[width=0.6\textwidth]{../../plots/symalph_B=1_C=2_N=1_version=2.5.png}
+	\caption{
+		Transition diagram in terms of the substituted variables of \cref{eq:Rinvars}.
+	}\label{fig:N1symalph}
 \end{figure}
 
 Going beyond that we can plug in the values for the letters and get to the flow as
 \begin{align}
-    J^\text{ss} =\enspace& \frac{1}{n}(bcfg-adeh) = \nonumber \\
-    =\enspace& \frac{1}{n} r_3^{2} \left( c_{ATP} e^{\frac{\epsilon_{ATP}}{kT}} - c_{ADP} c_P e^{\frac{\epsilon_{ADP} + \epsilon_P}{kT}} \right) \times \nonumber \\
-    &\left(  - r_{1}(1) r_{2}(2) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)}{kT}} + r_{1}(2) r_{2}(1) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)}{kT}} \right) \times \nonumber \\
-    &e^{\frac{ - \epsilon_{ATP} - 2 \epsilon_{t} - \Delta\epsilon_{r} \theta_{1b} - \Delta\epsilon_{r} \theta_{2b} + \epsilon_{ADP} \left( -1 + \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f} + \epsilon_P \left( -1 + \theta_{1f} \right) + \epsilon_{t} \theta_{1b} + \epsilon_{t} \theta_{2b} + \epsilon_{t} \theta_{3f} + \epsilon_{t} \theta_{3b}}{kT}} \label{eq:N1sscur}
+	J^\text{ss} =\enspace & \frac{1}{n}(bcfg-adeh) = \nonumber                                                                                                                                                                                                                                                                                                                                            \\
+	=\enspace             & \frac{1}{n} r_3^{2} \left( c_{ATP} e^{\frac{\epsilon_{ATP}}{kT}} - c_{ADP} c_P e^{\frac{\epsilon_{ADP} + \epsilon_P}{kT}} \right) \times \nonumber                                                                                                                                                                                                                            \\
+	                      & \left(  - r_{1}(1) r_{2}(2) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)}{kT}} + r_{1}(2) r_{2}(1) e^{\frac{\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)}{kT}} \right) \times \nonumber                                                                                                                                                \\
+	                      & e^{\frac{ - \epsilon_{ATP} - 2 \epsilon_{t} - \Delta\epsilon_{r} \theta_{1b} - \Delta\epsilon_{r} \theta_{2b} + \epsilon_{ADP} \left( -1 + \theta_{2b} \right) + \epsilon_{ATP} \theta_{2f} + \epsilon_P \left( -1 + \theta_{1f} \right) + \epsilon_{t} \theta_{1b} + \epsilon_{t} \theta_{2b} + \epsilon_{t} \theta_{3f} + \epsilon_{t} \theta_{3b}}{kT}} \label{eq:N1sscur}
 \end{align}
 where I do not plug in for $n$ as that is too large to show. For the simplified form of \cref{sec:simpar} we have
 \begin{tcolorbox}
-    \begin{equation}
-        J^\text{ss} = \frac{1}{n}(bcfg-adeh) = \frac{1}{n}r_1r_2r_3^{2} \left( c_{ATP} - c_{ADP} c_P \right) (1 - \alpha) e^{2 \epsilon_t} \label{eq:N1sscurs}
-    \end{equation}
-    \begin{align}
-        n =&\enspace r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \times \nonumber \\
-        &\big( ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( r_1 + c_{ADP} r_2 \alpha ) e^{\epsilon_{t}} + \nonumber \\
-        &\phantom{(} ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( c_P r_1 + c_{ATP} r_2 \alpha ) e^{2 \Delta\epsilon_{r}} +\nonumber \\
-        &\phantom{(} ( 2 ( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} ) r_1 + ( c_{ADP} e^{\epsilon_{t}} + c_{ATP} e^{\Delta\epsilon_{r}} ) r_2 ( 1 + \alpha ) ) r_3 ( 1 + e^{\Delta\epsilon_{r}} ) + \nonumber \\
-        &\phantom{(} ( c_{ATP} r_2 + c_P r_1 + ( r_1 + c_{ADP} r_2 ) e^{\epsilon_{t}} ) ( ( 1 + c_P ) r_1 + ( c_{ADP} + c_{ATP} ) r_2 \alpha ) e^{\Delta\epsilon_{r}} \big)
-    \end{align}
+	\begin{equation}
+		J^\text{ss} = \frac{1}{n}(bcfg-adeh) = \frac{1}{n}r_1r_2r_3^{2} \left( c_{ATP} - c_{ADP} c_P \right) (1 - \alpha) e^{2 \epsilon_t} \label{eq:N1sscurs}
+	\end{equation}
+	\begin{align}
+		n = & \enspace r_3 e^{ - \Delta\epsilon_{r} + \epsilon_{t}} \times \nonumber                                                                                                                                    \\
+		    & \big( ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( r_1 + c_{ADP} r_2 \alpha ) e^{\epsilon_{t}} + \nonumber                                                                                           \\
+		    & \phantom{(} ( ( c_{ADP} + c_{ATP} ) r_2 + ( 1 + c_P ) r_1 ) ( c_P r_1 + c_{ATP} r_2 \alpha ) e^{2 \Delta\epsilon_{r}} +\nonumber                                                                          \\
+		    & \phantom{(} ( 2 ( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} ) r_1 + ( c_{ADP} e^{\epsilon_{t}} + c_{ATP} e^{\Delta\epsilon_{r}} ) r_2 ( 1 + \alpha ) ) r_3 ( 1 + e^{\Delta\epsilon_{r}} ) + \nonumber \\
+		    & \phantom{(} ( c_{ATP} r_2 + c_P r_1 + ( r_1 + c_{ADP} r_2 ) e^{\epsilon_{t}} ) ( ( 1 + c_P ) r_1 + ( c_{ADP} + c_{ATP} ) r_2 \alpha ) e^{\Delta\epsilon_{r}} \big)
+	\end{align}
 \end{tcolorbox}
 
 From both of these we can notably infer whether the current is 0 or is negative or positive (as $n>0$ besides trivial cases).
 We get a current of 0 at equilibrium (due to the first bracket term in either expression, see \cref{sec:eqcurss}) or in the simplified model only if $\alpha = 1$ which means there's no difference in the ATP to monomer coupling by conformation state.
 However, this condition is perhaps more interesting in its general case of \cref{eq:N1sscur} where we get a current of 0 if
 \begin{align}
-    r_{1}(1) r_{2}(2) e^{\beta\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)} &= 
-    r_{1}(2) r_{2}(1) e^{\beta\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)} \\
-    r_{1}(1) e^{\beta\Delta\epsilon_{r}\theta_{1b}} r_{2}(2) e^{\beta\Delta\epsilon_{r}\theta_{2f}} &= 
-    r_{1}(2) e^{\beta\Delta\epsilon_{r}\theta_{1f}} r_{2}(1) e^{\beta\Delta\epsilon_{r}\theta_{2b}}
+	r_{1}(1) r_{2}(2) e^{\beta\Delta\epsilon_{r} \left( \theta_{1b} + \theta_{2f} \right)}          & =
+	r_{1}(2) r_{2}(1) e^{\beta\Delta\epsilon_{r} \left( \theta_{1f} + \theta_{2b} \right)}              \\
+	r_{1}(1) e^{\beta\Delta\epsilon_{r}\theta_{1b}} r_{2}(2) e^{\beta\Delta\epsilon_{r}\theta_{2f}} & =
+	r_{1}(2) e^{\beta\Delta\epsilon_{r}\theta_{1f}} r_{2}(1) e^{\beta\Delta\epsilon_{r}\theta_{2b}}
 \end{align}
 which is quite a peculiar condition that I'm not too sure what to think of.
 
@@ -467,13 +467,13 @@ Coming back to sanity checks for driving the current in the simplified model, no
 \subsection{Equilibrium currents and steady state}\label{sec:eqcurss}
 The condition for equilibrium in our system is given by the reaction
 \begin{equation}
-    \ce{ATP <=> ADP + P}
+	\ce{ATP <=> ADP + P}
 \end{equation}
 being at its steady state.
 This corresponds to
 \begin{align}
-    \mu_{ATP} &= \mu_{ADP}+\mu_P \\
-    c_{ATP}\exp(\beta \epsilon_{ATP}) &= c_{ADP}c_P\exp(\beta (\epsilon_{ATP} + \epsilon_P))
+	\mu_{ATP}                         & = \mu_{ADP}+\mu_P                                     \\
+	c_{ATP}\exp(\beta \epsilon_{ATP}) & = c_{ADP}c_P\exp(\beta (\epsilon_{ATP} + \epsilon_P))
 \end{align}
 according to the same recipe as we used earlier to derive our reaction rates.
 This perfectly agrees with our net current expressions of \cref{eq:N1sscur,eq:N1sscurs} which ought to both be 0 at equilibrium by detailed balance.
@@ -482,29 +482,107 @@ We can also try to plug in this expression into the steady state probability dis
 This can be done in multiple ways depending on which concentration we want to eliminate.
 If we plug in $c_{ATP} \rightarrow c_Pc_{ADP}$ to eliminate the ATP concentration into the steady state of the simplified model (\cref{eq:pss_simp}) we get
 \begin{equation}
-    \su{p}^\text{ss}_\text{eq} = \frac{1}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
-        e^{\Delta\epsilon_{r} + \epsilon_{t}} \\
-        e^{\epsilon_{t}} \\
-        c_P e^{\Delta\epsilon_{r}} \\
-        c_P e^{2 \Delta\epsilon_{r}} \\
-    \end{pmatrix} = \frac{e^{\Delta\epsilon_{r} + \epsilon_{t}}}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
-        1 \\
-        e^{-\Delta\epsilon_r} \\
-        c_P e^{-\epsilon_t} \\
-        c_P e^{-(\epsilon_t-\Delta\epsilon_r)} \\
-    \end{pmatrix}
+	\su{p}^\text{ss}_\text{eq} = \frac{1}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
+		e^{\Delta\epsilon_{r} + \epsilon_{t}} \\
+		e^{\epsilon_{t}}                      \\
+		c_P e^{\Delta\epsilon_{r}}            \\
+		c_P e^{2 \Delta\epsilon_{r}}          \\
+	\end{pmatrix} = \frac{e^{\Delta\epsilon_{r} + \epsilon_{t}}}{\left( e^{\epsilon_{t}} + c_P e^{\Delta\epsilon_{r}} \right) \left( 1 + e^{\Delta\epsilon_{r}} \right)}\begin{pmatrix}
+		1                                      \\
+		e^{-\Delta\epsilon_r}                  \\
+		c_P e^{-\epsilon_t}                    \\
+		c_P e^{-(\epsilon_t-\Delta\epsilon_r)} \\
+	\end{pmatrix}
 \end{equation}
 which agrees perfectly with the standard Gibbs factor results of \cref{sec:eqstats} if we readd the $\beta=\frac{1}{\si{k}T}$ factors and use $c_P=e^{\beta \mu_P}$ (both of which are valid in the simplified model).
 
-\newpage
-\section{Going beyond $N=1$}
-For an illustration on how the graphs scale see \cref{fig:N2trans} where the corresponding graph is shown for $N=2$ and 
+\subsection{Steady state current as a function of drive}
+We only work in the simplified model here where to recap, we have
+\begin{equation}
+	J^\text{ss} = \frac{1}{n}(bcfg-adeh) = \frac{1}{n}r_1r_2r_3^{2} \left( c_{ATP} - c_{ADP} c_P \right) (1 - \alpha) e^{2 \epsilon_t} \tag{\ref{eq:N1sscurs} revisited}
+\end{equation}
+where $n$ is a complicated function of all the variables.
+To simplify given that the ADP concentration is usually very small compared to ATP and P we set $c_{ADP} \sim 0$.
+After which we are left with two main parameters coming from the outside environment, the concentrations of ATP and P.
+As such we analyse the current as a function of these two parameters.
+
+Firstly, we would expect the current to grow (with $\alpha < 1$) as $c_{ATP}$ increases and perhaps to reduce as $c_P$ increases (as then the current driving ATP process is more washed out).
+Kabir was curious about whether this is a monotonic relation so lets have a look.
+Symbolically obtaining the partial derivatives we get
+\begin{align}
+	\pdv{J^\text{ss}}{c_P}     & = \frac{-r_1^{2} cATP \left( 2 r_3 e^{\Delta\epsilon_{r}} + \left( e^{\Delta\epsilon_{r}} + e^{\epsilon_{t}} + 2 cP e^{\Delta\epsilon_{r}} \right) r_1 + cATP r_2 e^{\Delta\epsilon_{r}} \left( 1 + \alpha \right) \right) r_2 r_3 \left( 1 + e^{\Delta\epsilon_{r}} \right) e^{\Delta\epsilon_{r} + \epsilon_{t}} \left( 1 - \alpha \right)}{\text{positive denominator}}                     \\
+	\pdv{J^\text{ss}}{c_{ATP}} & = \frac{ \left( 2 \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right) r_1 r_3 + r_1^{2} \left( 1 + cP \right) \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right) - r_2^{2} cATP^{2} e^{\Delta\epsilon_{r}} \alpha \right) r_1 r_2 r_3 \left( 1 + e^{\Delta\epsilon_{r}} \right) e^{\Delta\epsilon_{r} + \epsilon_{t}} \left( 1 - \alpha \right)}{\text{positive denominator}}
+\end{align}
+where note that all the concentrations, the overall rates $r_?$ and $\alpha$ are positive with $\alpha < 1$ meaning the ATP reaction acts stronger on conformation 1 than on conformation 2.
+Thus, for a fixed $\alpha$ the current function is monotonic with respect to $c_P$ essentially always acting against the current that is driven by the ATP process.
+The derivative with respect to $c_{ATP}$ is more interesting though, it will have the opposite sign if
+\begin{align}
+	r_2^{2} cATP^{2} e^{\Delta\epsilon_{r}} \alpha & < 2 \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right) r_1 r_3 + r_1^{2} \left( 1 + cP \right) \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right)                                                                \\
+	cATP                                           & < +\sqrt{\frac{2 \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right) r_1 r_3 + r_1^{2} \left( 1 + cP \right) \left( e^{\epsilon_{t}} + cP e^{\Delta\epsilon_{r}} \right)}{r_2^{2} e^{\Delta\epsilon_{r}} \alpha}} = \kappa
+\end{align}
+where assuming the energies $\epsilon_t$ and $\Delta\epsilon_r$ are positive we have
+\begin{equation}
+	\kappa \geq +\sqrt{\frac{2 \left( 1 + 0 \right) r_1 r_3 + r_1^{2} \left( 1 + 0 \right) \left( 1 + 0 \right)}{r_2^{2} \alpha}} = +\sqrt{\frac{r_1(2 r_3 + r_1)}{r_2^{2} \alpha}}
+\end{equation}
+which is notably inversely proportional to $\alpha$, meaning that at least in the $\alpha=0$ limit this point is never reached and generally, we mostly have the $c_{ATP}$ driving a current.
+The overall behaviour can be summarized as
+\begin{tcolorbox}
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{c|c|c}
+			sign of $J^\text{ss}$, slope w.r.t. $c_P$, and $c_{ATP}$ & $c_{ATP} < \kappa \sim \sqrt{\frac{2}{\alpha}}$ & $c_{ATP} > \kappa \sim \sqrt{\frac{2}{\alpha}}$ \\
+			\hline
+			$\alpha < 1$                                             & $+,-,+$                                         & $+,-,-$                                         \\
+			$\alpha > 1$                                             & $-,+,-$                                         & $-,+,+$                                         \\
+		\end{tabular}
+		\caption{Simplified behaviour of the current \cref{eq:N1sscurs} with very small $c_{ADP}$}
+	\end{table}
+\end{tcolorbox}
+
+Beyond this relatively simple but general analysis, we can look at some sample plots for $r_?$ of order 1, a couple of $\alpha$ values (in particular 0) and some sample energy values.
+Such plots can be seen in \cref{fig:N1sscur_plotsnoall,fig:N1sscur_plots2,fig:N1sscur_plots3} and which agree with the general features discussed above.
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{../../plots/simple_sg_B=1_C=2_N=2_version=2.5.png}
-    \caption{
-        Transition diagram in the simplified form of \cref{sec:simpar}
-    }\label{fig:N2trans}
+	\centering
+	\includegraphics[width=0.9\textwidth]{../../plots/N1sym/sscurs_noallos.png}
+	\caption{
+		Plotting the steady state current $J^\text{ss}$ as a function of $c_{ATP}$ for different $c_P$ (shown in colors).
+		These are all for $\epsilon_t=\Delta\epsilon_r=0$ (the no allostery model) and the values of $r_1,r_2,r_3$ and $\alpha$ are noted above each subplot.
+		In particular, we do not change $r_2$ as that simply scales $c_{ATP}$.
+		For $r_1$ and $r_2$ we have plots for each being 1 or 2, with different combinations of these being in each column.
+		Finally, the rows differ by values of $\alpha$ which are 0, 0.1 and 0.4.
+	}\label{fig:N1sscur_plotsnoall}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../../plots/N1sym/sscurs_et=3_der=0.png}
+	\caption{
+		Plotting the steady state current $J^\text{ss}$ as a function of $c_{ATP}$.
+		In the same format as \cref{fig:N1sscur_plotsnoall}, but with $\epsilon_t=3\si{k}T$ and $\Delta\epsilon_r=0$.
+	}\label{fig:N1sscur_plots2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{../../plots/N1sym/sscurs_et=3_der=1.png}
+	\caption{
+		Plotting the steady state current $J^\text{ss}$ as a function of $c_{ATP}$.
+		In the same format as \cref{fig:N1sscur_plotsnoall}, but with $\epsilon_t=3\si{k}T$ and $\Delta\epsilon_r=1\si{k}T$.
+	}\label{fig:N1sscur_plots3}
+\end{figure}
+
+
+
+\newpage
+\section{Going beyond $N=1$}
+For an illustration on how the graphs scale see \cref{fig:N2trans} where the corresponding graph is shown for $N=2$ and
+
+\begin{figure}[H]
+	\includegraphics[width=\textwidth]{../../plots/simple_sg_B=1_C=2_N=2_version=2.5.png}
+	\caption{
+		Transition diagram in the simplified form of \cref{sec:simpar}
+	}\label{fig:N2trans}
 \end{figure}
 
 \subsection{Single monomer futile cycles?}
@@ -515,27 +593,27 @@ This means some of our single monomer futile cycles get disrupted, unless the en
 \Cref{fig:N2fcs} shows a sample diagram with all the futile cycles present, as in, with this condition true.
 
 \begin{figure}[H]
-    \includegraphics[width=\textwidth]{../../plots/fcs_B=1_C=2_N=2_version=2.5.png}
-    \caption{
-        Diagram for $N=2$ with only those transitions required for the single monomer futile cycles being shown.
-    }\label{fig:N2fcs}
+	\includegraphics[width=\textwidth]{../../plots/fcs_B=1_C=2_N=2_version=2.5.png}
+	\caption{
+		Diagram for $N=2$ with only those transitions required for the single monomer futile cycles being shown.
+	}\label{fig:N2fcs}
 \end{figure}
 
 
 \newpage
 \section{Extras}
 \begin{figure}[H]
-    \begin{align}
-        a &= r_3 e^{\frac{ - \Delta\epsilon_{r} \left( 1 - \theta_{3b} \right)}{kT}} \\
-        b &= c_{ATP} r_{2}(1) e^{\frac{ - \left( {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right) + {\epsilon}_{ATP} \theta_{2f}}{kT}} + c_P r_{1}(1) e^{\frac{{\epsilon}_P \theta_{1f} - \epsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}} \\
-        c &= r_3 e^{\frac{\Delta\epsilon_{r} \theta_{3b}}{kT}} \\
-        d &= c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_{ATP} \right) \theta_{2f} - \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_P \right) \theta_{1f} - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} \\
-        e &= r_{1}(1) e^{\frac{ - {\epsilon}_P \left( 1 - \theta_{1f} \right) + \epsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b} - {\epsilon}_P \left( 1 - \theta_{2f} \right)}{kT}} \\
-        f &= r_3 e^{\frac{ - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{3b} \right) + \epsilon_{t} \theta_{3f}}{kT}} \\
-        g &= r_{1}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{2f} \right) + \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b}}{kT}} \\
-        h &= r_3 e^{\frac{\left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{3b} - \epsilon_{t} \left( 1 - \theta_{3f} \right)}{kT}}
-    \end{align}
-    \caption{full rate version}\label{fig:fullrates}
+	\begin{align}
+		a & = r_3 e^{\frac{ - \Delta\epsilon_{r} \left( 1 - \theta_{3b} \right)}{kT}}                                                                                                                                                                                                                                                                                                                  \\
+		b & = c_{ATP} r_{2}(1) e^{\frac{ - \left( {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right) + {\epsilon}_{ATP} \theta_{2f}}{kT}} + c_P r_{1}(1) e^{\frac{{\epsilon}_P \theta_{1f} - \epsilon_{t} \left( 1 - \theta_{1b} \right)}{kT}}                                                                                                                                     \\
+		c & = r_3 e^{\frac{\Delta\epsilon_{r} \theta_{3b}}{kT}}                                                                                                                                                                                                                                                                                                                                        \\
+		d & = c_{ATP} r_{2}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_{ATP} \right) \theta_{2f} - \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \left( 1 - \theta_{2b} \right)}{kT}} + c_P r_{1}(2) e^{\frac{\left( \Delta\epsilon_{r} + {\epsilon}_P \right) \theta_{1f} - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{1b} \right)}{kT}} \\
+		e & = r_{1}(1) e^{\frac{ - {\epsilon}_P \left( 1 - \theta_{1f} \right) + \epsilon_{t} \theta_{1b}}{kT}} + c_{ADP} r_{2}(1) e^{\frac{\left( {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b} - {\epsilon}_P \left( 1 - \theta_{2f} \right)}{kT}}                                                                                                                                             \\
+		f & = r_3 e^{\frac{ - \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \left( 1 - \theta_{3b} \right) + \epsilon_{t} \theta_{3f}}{kT}}                                                                                                                                                                                                                                                      \\
+		g & = r_{1}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{1f} \right) + \left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{1b}}{kT}} + c_{ADP} r_{2}(2) e^{\frac{ - \left( \Delta\epsilon_{r} + {\epsilon}_P \right) \left( 1 - \theta_{2f} \right) + \left(  - \Delta\epsilon_{r} + {\epsilon}_{ADP} + \epsilon_{t} \right) \theta_{2b}}{kT}}   \\
+		h & = r_3 e^{\frac{\left(  - \Delta\epsilon_{r} + \epsilon_{t} \right) \theta_{3b} - \epsilon_{t} \left( 1 - \theta_{3f} \right)}{kT}}
+	\end{align}
+	\caption{full rate version}\label{fig:fullrates}
 \end{figure}
 
 \end{document}

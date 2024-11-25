@@ -31,7 +31,7 @@ get_rs() = Symbolics.variables(:r, 1:3)
 get_thetas() = Symbolics.variables(:θ, 1:3, 1:2)
 get_kT() = Symbolics.variable(:kT)
 get_chem_energies() = Symbolics.variable.([:εP, :εATP, :εADP])
-get_concetrations() = Symbolics.variable.([:cP, :cATP, :cADP])
+get_concentrations() = Symbolics.variable.([:cP, :cATP, :cADP])
 
 function add_edges_full!(ca::ComplexAllosteryGM)
     # Declare symbolic variables here
@@ -39,7 +39,7 @@ function add_edges_full!(ca::ComplexAllosteryGM)
     thetas = get_thetas()
     kT = get_kT()
     chem_energies = get_chem_energies()
-    concetrations = get_concetrations()
+    concentration = get_concentrations()
 
     for vertex in 1:numstates(ca)
         state = itostate(vertex, ca)
@@ -80,7 +80,7 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                 begin
                     # forward rate
                     exp_term_f = thetas[1, 1] * (E_state + chem_energies[1]) - (1 - thetas[1, 2]) * E_new_state
-                    rf = rs[1] * concetrations[1] * exp(exp_term_f / kT)
+                    rf = rs[1] * concentration[1] * exp(exp_term_f / kT)
                     inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
@@ -93,12 +93,12 @@ function add_edges_full!(ca::ComplexAllosteryGM)
                 begin
                     # forward rate
                     exp_term_f = thetas[2, 1] * (E_state + chem_energies[2]) - (1 - thetas[2, 2]) * (E_new_state + chem_energies[3])
-                    rf = rs[2] * concetrations[2] * exp(exp_term_f / kT)
+                    rf = rs[2] * concentration[2] * exp(exp_term_f / kT)
                     inc_edge!(ca.graph, vertex, new_vertex, rf)
 
                     # backward rate
                     exp_term_b = thetas[2, 2] * (E_new_state + chem_energies[3]) - (1 - thetas[2, 1]) * (E_state + chem_energies[1])
-                    rb = rs[2] * concetrations[3] * exp(exp_term_b / kT)
+                    rb = rs[2] * concentration[3] * exp(exp_term_b / kT)
                     inc_edge!(ca.graph, new_vertex, vertex, rb)
                 end
             end

@@ -11,6 +11,8 @@ using GLMakie, GraphMakie, Colors
 using Symbolics, MathLink, SymbolicsMathLink
 using JLD2
 
+import PlotUtils
+
 import Base: copy, broadcastable, show, display
 copy(::Nothing) = nothing
 

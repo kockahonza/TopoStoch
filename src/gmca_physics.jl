@@ -2,10 +2,10 @@
 # Dealing with energy and equilibrium probability calculations
 ################################################################################
 # Setting up the energy matrices
-get_em_vars() = @variables ε_t, Δε_r, ε_b
+get_sem_vars() = @variables ε_t, Δε_r, ε_b
 
 function make_sem_C2(B)
-    vars = get_em_vars()
+    vars = get_sem_vars()
 
     monomer = Matrix{Num}(undef, 2, B + 1)
     monomer[1, 1] = 0
@@ -19,21 +19,29 @@ end
 
 """as make_sem_C2 but with et=der=0 aka no allostery"""
 function make_sem_C2_noall(B)
-    vars = get_em_vars()
+    vars = get_sem_vars()
 
-    monomer = fill(Num(0.), 2, B+1)
+    monomer = fill(Num(0.0), 2, B + 1)
 
     interactions = [0 vars[3]; vars[3] 0]
     EnergyMatrices(monomer, interactions)
 end
 
-function make_sem_terms(et, der, eb)
+function make_sem_terms(; et=nothing, der=nothing, eb=nothing)
+    vars = get_sem_vars()
     terms = Dict{Num,Num}()
-    terms[Symbolics.variable(:ε_t)] = et
-    terms[Symbolics.variable(:Δε_r)] = der
-    terms[Symbolics.variable(:ε_b)] = eb
+    if !isnothing(et)
+        terms[vars[1]] = et
+    end
+    if !isnothing(der)
+        terms[vars[2]] = der
+    end
+    if !isnothing(eb)
+        terms[vars[3]] = eb
+    end
     terms
 end
+make_sem_terms(et, der=nothing, eb=nothing) = make_sem_terms(; et, der, eb)
 
 # Simple calculator functions
 function get_neighbors(st::CAState, i, ::Chain)

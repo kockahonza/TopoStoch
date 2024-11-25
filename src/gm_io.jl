@@ -21,31 +21,37 @@ end
 p_safe_adjmat(gm::AbstractGraphModel) = p_safe_adjmat(graph(gm))
 
 # axis setup
-function p_set_axis_labels!(ax, dim, axis_labels)
-    if !isnothing(axis_labels)
-        if dim == 2
-            ax.xlabel[] = axis_labels[1]
-            ax.ylabel[] = axis_labels[2]
-        elseif dim == 3
-            xlabel!(ax.scene, axis_labels[1])
-            ylabel!(ax.scene, axis_labels[2])
-            zlabel!(ax.scene, axis_labels[3])
-        else
-            throw(ArgumentError("the layout dimension was not 2 or 3"))
-        end
+function p_set_axis_labels!(ax::Makie.AbstractAxis, axis_labels=[])
+    if isa(ax, Axis)
+        ax.xlabel[] = axis_labels[1]
+        ax.ylabel[] = axis_labels[2]
+    elseif isa(ax, LScene)
+        xlabel!(ax.scene, axis_labels[1])
+        ylabel!(ax.scene, axis_labels[2])
+        zlabel!(ax.scene, axis_labels[3])
+    elseif isa(ax, Axis3)
+        ax.xlabel[] = axis_labels[1]
+        ax.ylabel[] = axis_labels[2]
+        ax.zlabel[] = axis_labels[3]
+    else
+        throw(ArgumentError(f"unrecognised ax type {typeof(ax)}"))
     end
 end
-function p_make_ax(dim, place, axis_labels=nothing)
+function p_make_ax(dim, place, axis_labels=nothing; useaxis3=false)
     ax = if dim == 2
         Axis(place)
     elseif dim == 3
-        LScene(place)
+        if !useaxis3
+            LScene(place)
+        else
+            Axis3(place)
+        end
     else
         throw(ArgumentError("the layout dimension was not 2 or 3"))
     end
 
     if !isnothing(axis_labels)
-        p_set_axis_labels!(ax, dim, axis_labels)
+        p_set_axis_labels!(ax, axis_labels)
     end
 
     ax
@@ -350,7 +356,6 @@ function makeprefunclayout(base_layout::NetworkLayout.AbstractLayout, f, args...
     end
 end
 
-# adding extras
 function make_interactive(ax, plot)
     interactions_ = keys(interactions(ax))
     if :rectanglezoom in interactions_
@@ -367,6 +372,25 @@ function make_interactive(ax, plot)
     register_interaction!(ax, :ndrag, ndrag)
 end
 make_interactive((_, ax, plot)) = make_interactive(ax, plot)
+
+# More interactivity
+function prep_sliders(variables; ranges=nothing, startvalues=nothing)
+    slider_specs = []
+    for i in eachindex(variables)
+        range_ = isnothing(ranges) ? (0.0:0.1:10.0) : ranges[i]
+        startvalue_ = isnothing(startvalues) ? 1.0 : startvalues[i]
+        push!(slider_specs, (;
+            label=string(variables[i]),
+            range=range_,
+            startvalue=startvalue_
+        ))
+    end
+
+    fig = Figure()
+    sg = SliderGrid(fig[1, 1], slider_specs...)
+
+    fig, [x.value for x in sg.sliders], sg
+end
 
 ################################################################################
 # Saving

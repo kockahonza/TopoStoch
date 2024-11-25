@@ -99,24 +99,6 @@ function plot_cao!(maybeax, cao::Observable, args...;
     end
 end
 
-function prep_sliders(variables; ranges=nothing, startvalues=nothing)
-    slider_specs = []
-    for i in eachindex(variables)
-        range_ = isnothing(ranges) ? (0.0:0.1:10.0) : ranges[i]
-        startvalue_ = isnothing(startvalues) ? 1.0 : startvalues[i]
-        push!(slider_specs, (;
-            label=string(variables[i]),
-            range=range_,
-            startvalue=startvalue_
-        ))
-    end
-
-    fig = Figure()
-    sg = SliderGrid(fig[1, 1], slider_specs...)
-
-    fig, [x.value for x in sg.sliders], sg
-end
-
 function int_plot_ca(ca::ComplexAllosteryGM, args...;
     variables=Num.(get_variables(ca)),
     noplot=false, ranges=nothing, startvalues=nothing, kwargs...
