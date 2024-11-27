@@ -60,6 +60,18 @@ function p_do_layout(ca::ComplexAllosteryGM, layout=nothing, roffset_devs=nothin
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ca, layout, roffset_devs)
 end
 
+function plotgm_kwarg_defaults(_::ComplexAllosteryGM{S,Num}) where {S}
+    (; fnlabels=:repr)
+end
+function plotgm_kwarg_defaults(gm::ComplexAllosteryGM{S,<:AbstractFloat}) where {S}
+    fnlabels = if numstates(gm) < 10
+        :repr
+    else
+        labelstate_NR
+    end
+    (; flabels=true, fnlabels, n_size=15.0, n_ss_size=false, n_ss_colorscale=log10, felabels=false, e_color=:dcurrents)
+end
+
 # FIX: Everything from now on should be replaced by new stuff in gm_io.jl,
 # keeping for now for observables stuff and interactivity
 ################################################################################
@@ -79,7 +91,7 @@ function plot_cao!(maybeax, cao::Observable, args...;
         if remove_colorbars
             delete!.(filter(x -> isa(x, Colorbar), ax.parent.content))
         end
-        plot = plotgm!(ax, ca, args...; kwargs..., layout)
+        plot = plotgm!(ax, ca, args...; kwargs..., layout, roffset_devs=false)
     end
 
     if !isnothing(refresh_layout_obs)

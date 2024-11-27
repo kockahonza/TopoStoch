@@ -1,5 +1,5 @@
 ################################################################################
-# Main plotting
+# Plotting basics
 ################################################################################
 struct FigureAxisAnything
     figure::Figure
@@ -57,6 +57,9 @@ function p_make_ax(dim, place, axis_labels=nothing; useaxis3=false)
     ax
 end
 
+################################################################################
+# Main plotgm stuff
+################################################################################
 # layout setup
 function p_named_layouts(gm::AbstractGraphModel, layout_name, layout_args)
     def_roffsets = false
@@ -123,18 +126,18 @@ function p_do_layout(gm::AbstractGraphModel, layout=nothing, roffset_devs=nothin
 end
 
 # fancy plotting
-function plotgm_!(ax, gm::AbstractGraphModel{F},
-    (; dim, layout), args...;
+function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     axparent=nothing,       # needed for adding colorbars
     # these apply to all
     interactive=:auto,
     flabels=:auto,          # labeling nodes and edges
     fnlabels=:index,
-    felabels=:repr,
+    felabels=:auto,
     # the following can only be used for non-symbolics GMs
     ss=:auto,            # calculate steady state?
+    ss_curgraph=nothing,
     # dealing with nodes
-    n_size=30.0,
+    n_size=15.0,
     n_color=:snow3,
     n_ss_size=:sqrt,
     n_ss_color=true,
@@ -164,6 +167,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
     if !isnothing(ss)
         # do node sizes which can only be based on ss
         if !(isnothing(n_ss_size) || (n_ss_size == false))
+            n_size *= 4.0
             if n_ss_size == :lin
                 auto_kwargs[:node_size] = [n_size * x for x in ss]
             elseif n_ss_size == :log
@@ -206,6 +210,9 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
         auto_kwargs[:node_color] = [n_color for _ in 1:numstates(gm)]
     end
 
+    # The graph that will eventually be plotted, this can be modified!
+    plotgraph = graph(gm)
+
     # Color edges
     if e_color == :auto
         if F <: AbstractFloat
@@ -221,15 +228,18 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
             if e_colorscale == :auto
                 e_colorscale = :pseudolog
             end
-            weight.(edges(graph(gm)))
+            weight.(edges(plotgraph))
         elseif e_color == :currents
             if isnothing(ss)
                 throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
             end
-            if e_colorscale == :auto
-                e_colorscale = :lin
+            [e.weight * ss[e.src] for e in edges(plotgraph)]
+        elseif e_color == :dcurrents
+            if isnothing(ss)
+                throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
             end
-            [e.weight * ss[e.src] for e in edges(graph(gm))]
+            plotgraph = isnothing(ss_curgraph) ? make_current_graph(gm, ss) : ss_curgraph
+            weight.(edges(plotgraph))
         else
             throw(ArgumentError(f"e_color of {e_color} is not recognised"))
         end
@@ -242,12 +252,10 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
             end
             e_colorrange = (min_weight, max_weight)
         end
-        if e_colorscale == :pseudolog
-            e_colorscale = x -> Makie.pseudolog10(x) * log(10)
-        elseif e_colorscale == :lin
+        if e_colorscale == :auto
             e_colorscale = identity
-        else
-            throw(ArgumentError(f"e_colorscale of {e_colorscale} is not recognised"))
+        elseif e_colorscale == :pseudolog
+            e_colorscale = x -> Makie.pseudolog10(x) * log(10)
         end
         edge_colormap_attrs = (;
             colormap=e_colormap,
@@ -266,18 +274,30 @@ function plotgm_!(ax, gm::AbstractGraphModel{F},
             auto_kwargs[:nlabels] = repr.(1:numstates(gm))
         elseif fnlabels == :repr
             auto_kwargs[:nlabels] = repr.(allstates(gm))
+        elseif isa(fnlabels, Function)
+            auto_kwargs[:nlabels] = fnlabels.(allstates(gm))
         elseif !(isnothing(fnlabels) || (fnlabels == false))
             throw(ArgumentError(f"fnlabels of {fnlabels} is not recognised"))
         end
-        if felabels == :repr
-            auto_kwargs[:elabels] = repr.(weight.(edges(graph(gm))))
+        if felabels == :auto
+            if !(F <: AbstractFloat)
+                felabels = :repr
+            elseif !isnothing(e_color)
+                felabels = :e_color
+            end
+        end
+        if felabels == :e_color
+            auto_kwargs[:elabels] = roundrepr.(auto_kwargs[:edge_color])
+            auto_kwargs[:elabels_shift] = 0.4
+        elseif felabels == :repr
+            auto_kwargs[:elabels] = repr.(weight.(edges(plotgraph)))
             auto_kwargs[:elabels_shift] = 0.4
         elseif !(isnothing(felabels) || (felabels == false))
             throw(ArgumentError(f"felabels of {felabels} is not recognised"))
         end
     end
 
-    plot = graphplot!(ax, graph(gm), args...;
+    plot = graphplot!(ax, plotgraph;
         layout,
         auto_kwargs...,
         kwargs...
@@ -304,7 +324,7 @@ end
 
 plotgm_kwarg_defaults(_::AbstractGraphModel) = (;)
 
-function plotgm!(maybeax, gm::AbstractGraphModel, args...;
+function plotgm!(maybeax, gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
     do_layout_rslt = p_do_layout(gm, layout, roffset_devs)
@@ -319,7 +339,10 @@ function plotgm!(maybeax, gm::AbstractGraphModel, args...;
         throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be Makie.AbstractAxis, GridPosition or GridLayout"))
     end
 
-    plot = plotgm_!(ax, gm, do_layout_rslt, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
+    plot = plotgm_!(ax, gm, do_layout_rslt;
+        plotgm_kwarg_defaults(gm)...,
+        kwargs...
+    )
 
     if returnax
         ax, plot
@@ -327,7 +350,7 @@ function plotgm!(maybeax, gm::AbstractGraphModel, args...;
         plot
     end
 end
-function plotgm(gm::AbstractGraphModel, args...;
+function plotgm(gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, kwargs...
 )
     do_layout_rslt = p_do_layout(gm, layout, roffset_devs)
@@ -335,7 +358,76 @@ function plotgm(gm::AbstractGraphModel, args...;
     fig = Figure()
     ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels)
 
-    plot = plotgm_!(ax, gm, do_layout_rslt, args...; axparent=fig, plotgm_kwarg_defaults(gm)..., kwargs...)
+    plot = plotgm_!(ax, gm, do_layout_rslt;
+        axparent=fig,
+        plotgm_kwarg_defaults(gm)...,
+        kwargs...
+    )
+
+    Makie.FigureAxisPlot(fig, ax, plot)
+end
+
+################################################################################
+# Main plotcgm stuff - plotting the net currents of some state
+################################################################################
+function p_do_clayout(
+    gm::AbstractGraphModel,
+    cgraph::SimpleWeightedDiGraph{<:Integer,<:AbstractFloat},
+    layout=nothing, roffset_devs=nothing
+)
+    if isa(layout, NetworkLayout.AbstractLayout)
+        layout = layout(cgraph)
+    elseif isa(layout, Function)
+        layout = layout(cgraph)
+    end
+
+    p_do_layout(gm, layout, roffset_devs)
+end
+function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
+    layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
+)
+    curgraph = make_current_graph(gm, state)
+    do_layout_rslt = p_do_clayout(gm, curgraph, layout, roffset_devs)
+
+    if isa(maybeax, Makie.AbstractAxis)
+        ax = maybeax
+    elseif isa(maybeax, GridPosition)
+        ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
+    elseif isa(maybeax, GridLayout)
+        ax = p_make_ax(do_layout_rslt.dim, maybeax[1, 1], do_layout_rslt.axis_labels)
+    else
+        throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be Makie.AbstractAxis, GridPosition or GridLayout"))
+    end
+
+    plot = plotgm_!(ax, gm, do_layout_rslt;
+        ss=state,
+        ss_curgraph=curgraph,
+        plotgm_kwarg_defaults(gm)...,
+        kwargs...
+    )
+
+    if returnax
+        ax, plot
+    else
+        plot
+    end
+end
+function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
+    layout=nothing, roffset_devs=nothing, kwargs...
+)
+    curgraph = make_current_graph(gm, state)
+    do_layout_rslt = p_do_clayout(gm, curgraph, layout, roffset_devs)
+
+    fig = Figure()
+    ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels)
+
+    plot = plotgm_!(ax, gm, do_layout_rslt;
+        axparent=fig,
+        ss=state,
+        ss_curgraph=curgraph,
+        plotgm_kwarg_defaults(gm)...,
+        kwargs...
+    )
 
     Makie.FigureAxisPlot(fig, ax, plot)
 end
@@ -372,6 +464,10 @@ function make_interactive(ax, plot)
     register_interaction!(ax, :ndrag, ndrag)
 end
 make_interactive((_, ax, plot)) = make_interactive(ax, plot)
+
+function roundrepr(x)
+    f"{x:.3g}"
+end
 
 # More interactivity
 function prep_sliders(variables; ranges=nothing, startvalues=nothing)

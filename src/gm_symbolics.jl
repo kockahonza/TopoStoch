@@ -56,14 +56,15 @@ end
 function substitute_to_float(gm::AbstractGraphModel{<:Num}, terms::Dict{Num,Float64})
     throw(ErrorException(f"No method of \"substitute_to_float\" was provided for type \"{typeof(gm)}\""))
 end
+function substitute_to_float(gm::AbstractGraphModel{<:Num}, vals::AbstractVector)
+    substitute_to_float(gm, Dict(get_variables(gm) .=> Float64.(vals)))
+end
 
-function substitute_test_terms(args...)
+function terms_full_test(args...)
     terms = Dict{Num,Float64}()
     for var in get_variables(args...)
         terms[var] = 1.0
     end
-    terms[Symbolics.variable(:μ)] = 1.0
-    terms[Symbolics.variable(:kT)] = 1.0
     terms
 end
 
@@ -196,4 +197,9 @@ function get_rewriter()
         rules_explog...,
         SymbolicUtils.default_simplifier()
     ]))
+end
+
+function convert(::Type{T}, num::Num) where {T<:Number}
+    up = Symbolics.unwrap(num)
+    convert(T, up)
 end

@@ -13,7 +13,7 @@ using JLD2
 
 import PlotUtils
 
-import Base: copy, broadcastable, show, display
+import Base: copy, broadcastable, show, display, convert
 copy(::Nothing) = nothing
 
 includet(srcdir("general.jl"))

@@ -51,7 +51,7 @@ function N1curplot(type=:lines;
 
     sscur = aa.sscv2 / aa.sscn2
     sscur = ssubstitute(sscur, get_concentrations()[3] => 0.0)
-    vars = get_sem_vars()[1:2]
+    vars = get_sem_C2_vars()[1:2]
     ranges = [0.0:0.1:10.0, 0.0:0.05:5.0]
     startvalues = [0.0, 0.0]
     if !keeprs
@@ -141,7 +141,7 @@ function make_sscurfactory()
     sscur = w_simplify(ssubstitute(sscur, get_concentrations()[3] => 0.0))
 
     # vars: r1, r2, r3, alpha, et, der
-    vars = [get_newrs(); get_sem_vars()[1:2]]
+    vars = [get_newrs(); get_sem_C2_vars()[1:2]]
 
     # conc_vars eP, eATP
     conc_vars = get_concentrations()[1:2]

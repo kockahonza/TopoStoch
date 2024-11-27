@@ -103,13 +103,12 @@ function make_v2_5(N, B; symmetry=Loop(), simplified=false, noall=false, kwargs.
     if simplified == :both
         ca, r_subs(ca)
     elseif simplified == :full
-        r_subs(ca; r1=1.0, r2=1.0, alpha=0.0)
+        r_subs(ca; r1=1.0, r2=1.0, r3=1.0, alpha=0.0)
     elseif simplified
         r_subs(ca)
     elseif !simplified
         ca
     end
-
 end
 
 ################################################################################
@@ -142,7 +141,7 @@ function get_newrs()
     nrs = Symbolics.variables(:r, 1:3)
     [nrs; Symbolics.variable(:α)]
 end
-function r_subs(obj; do_chem_subs=true, r1=nothing, r2=nothing, alpha=nothing, kwargs...)
+function r_subs(obj; do_chem_subs=true, r1=nothing, r2=nothing, r3=nothing, alpha=nothing, kwargs...)
     rs = get_rs()
     newrs = Symbolics.variables(:r, 1:3)
     if isnothing(r1)
@@ -150,6 +149,9 @@ function r_subs(obj; do_chem_subs=true, r1=nothing, r2=nothing, alpha=nothing, k
     end
     if isnothing(r2)
         r2 = newrs[2]
+    end
+    if isnothing(r3)
+        r3 = newrs[3]
     end
     if isnothing(alpha)
         alpha = Symbolics.variable(:α)
@@ -162,6 +164,8 @@ function r_subs(obj; do_chem_subs=true, r1=nothing, r2=nothing, alpha=nothing, k
 
     terms[rs[2][1]] = r2
     terms[rs[2][2]] = alpha * r2
+
+    terms[rs[3]] = r3
 
     if do_chem_subs
         obj = chem_subs(obj; kwargs...)

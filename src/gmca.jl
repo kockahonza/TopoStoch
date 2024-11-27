@@ -181,6 +181,9 @@ itostate(i, ca::ComplexAllosteryGM) = itostate(i, ca.N, ca.C, ca.B)
 allstates(N, C, B) = (itostate(i, N, C, B) for i in 1:numstates(N, C, B))
 allstates(ca::ComplexAllosteryGM) = allstates(ca.N, ca.C, ca.B)
 
+labelstate_NT(st::CAState) = f"{calc_numligands(st)}, {calc_numofconf(st)}"
+labelstate_NR(st::CAState) = f"{calc_numligands(st)}, {calc_numofconf(st, 2)}"
+
 ################################################################################
 # Include all the other bits
 ################################################################################

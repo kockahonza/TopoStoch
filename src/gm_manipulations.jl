@@ -18,7 +18,7 @@ function transmat(gm::AbstractGraphModel; mat=false)
 end
 
 """
-Returns the modified transition matrix that can be used to get the time
+Makes the modified transition matrix that can be used to get the time
 derivative as matrix multiplication only. See latex_notes/MasterEq this
 is W. Follows the same convention as `transmat`.
 """
@@ -28,6 +28,7 @@ function etransmat!(tm::AbstractMatrix)
         tm[i, i] -= sum(tm[k, i] for k in 1:n)
     end
 end
+@doc (@doc etransmat!)
 function etransmat(tm::AbstractMatrix)
     ctm = copy(tm)
     etransmat!(ctm)
@@ -99,6 +100,12 @@ end
 
 supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
 
+"""
+Calculates the current matrix (antisymmetric by definition) from the transition
+matrix (works with either transmat or etransmat, as diagonal elements cancel)
+in the physics convention where J_ij corresponds to the net probability current
+flowing from j to i.
+"""
 function calc_currents(etm::AbstractMatrix, ss::AbstractVector)
     cmat = similar(etm)
     for i in axes(etm, 1)
@@ -107,6 +114,20 @@ function calc_currents(etm::AbstractMatrix, ss::AbstractVector)
         end
     end
     cmat
+end
+
+function make_current_graph(gm::AbstractGraphModel, state::AbstractVector)
+    cmat = calc_currents(transmat(gm), state)
+    cadjmat = spzeros(size(cmat))
+    for i in axes(cadjmat, 1)
+        for j in axes(cadjmat, 2)
+            x = cmat[j, i]
+            if x > 0
+                cadjmat[i, j] = x
+            end
+        end
+    end
+    SimpleWeightedDiGraph(cadjmat)
 end
 
 ################################################################################

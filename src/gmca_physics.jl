@@ -2,33 +2,28 @@
 # Dealing with energy and equilibrium probability calculations
 ################################################################################
 # Setting up the energy matrices
-get_sem_vars() = @variables ε_t, Δε_r, ε_b
+get_sem_C2_vars() = SVector(Symbolics.variable(:ε_t), Symbolics.variable(:Δε_r), Symbolics.variable(:ε_b))
 
-function make_sem_C2(B)
-    vars = get_sem_vars()
-
-    monomer = Matrix{Num}(undef, 2, B + 1)
+function make_sem_C2(B=1;
+    et::F=get_sem_C2_vars()[1],
+    der::F=get_sem_C2_vars()[2],
+    eb::F=get_sem_C2_vars()[3]
+) where {F}
+    monomer = Matrix{F}(undef, 2, B + 1)
     monomer[1, 1] = 0
-    monomer[2, 1] = vars[2]
-    monomer[1, 2:B+1] .= vars[1] .* collect(1:B)
-    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- vars[2]
+    monomer[2, 1] = der
+    monomer[1, 2:B+1] .= et .* collect(1:B)
+    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- der
 
-    interactions = [0 vars[3]; vars[3] 0]
+    interactions = [0 eb; eb 0]
     EnergyMatrices(monomer, interactions)
 end
-
-"""as make_sem_C2 but with et=der=0 aka no allostery"""
-function make_sem_C2_noall(B)
-    vars = get_sem_vars()
-
-    monomer = fill(Num(0.0), 2, B + 1)
-
-    interactions = [0 vars[3]; vars[3] 0]
-    EnergyMatrices(monomer, interactions)
+function make_sem_C2_noall(args...; eb::F=get_sem_C2_vars()[3]) where {F}
+    make_sem_C2(args...; et=convert(F, 0.0), der=convert(F, 0.0), eb)
 end
 
-function make_sem_terms(; et=nothing, der=nothing, eb=nothing)
-    vars = get_sem_vars()
+function terms_sem_C2(; et=nothing, der=nothing, eb=nothing)
+    vars = get_sem_C2_vars()
     terms = Dict{Num,Num}()
     if !isnothing(et)
         terms[vars[1]] = et
@@ -41,7 +36,7 @@ function make_sem_terms(; et=nothing, der=nothing, eb=nothing)
     end
     terms
 end
-make_sem_terms(et, der=nothing, eb=nothing) = make_sem_terms(; et, der, eb)
+terms_sem_C2(et, der=nothing, eb=nothing) = terms_sem_C2(; et, der, eb)
 
 # Simple calculator functions
 function get_neighbors(st::CAState, i, ::Chain)

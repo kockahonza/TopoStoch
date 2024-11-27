@@ -41,6 +41,11 @@ function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}
     new_graph = SimpleWeightedDiGraph(
         substitute_to_float(adjacency_matrix(ca.graph), terms)
     )
+    env = try
+        (terms[Symbolics.variable(:μ)], terms[Symbolics.variable(:kT)])
+    catch
+        nothing
+    end
     new_metadata = Dict{Any,Any}(terms)
     new_metadata["old"] = ca.metadata
     ComplexAllosteryGM(ca.N, ca.C, ca.B;
@@ -48,7 +53,7 @@ function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}
         numtype=Val(Float64),
         energy_matrices=new_energy_matrices,
         graph=new_graph,
-        environment=(terms[Symbolics.variable(:μ)], terms[Symbolics.variable(:kT)]),
+        environment=env,
         metadata=new_metadata
     )
 end
