@@ -11,12 +11,13 @@ using GLMakie, GraphMakie, Colors
 using Symbolics, MathLink, SymbolicsMathLink
 using JLD2
 
+import Dates
 import PlotUtils
 
 import Base: copy, broadcastable, show, display, convert
 copy(::Nothing) = nothing
 
-includet(srcdir("general.jl"))
+timestamp() = Dates.format(Dates.now(), "yymmdd_HMS")
 
 ################################################################################
 # Base abstract types

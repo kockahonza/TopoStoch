@@ -145,12 +145,14 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     n_ss_colorscale=identity,
     n_ss_colorrange=:auto,
     n_ss_colorbar=:auto,
+    n_ss_colorbar_label=:auto,
     # color mappings for edge weights
     e_color=:auto,
     e_colormap=:dense,
     e_colorscale=:auto,
     e_colorrange=:auto,
     e_colorbar=:auto,
+    e_colorbar_label=:auto,
     colorrange_threshold=1e-8,
     kwargs...
 ) where {F}
@@ -228,15 +230,24 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             if e_colorscale == :auto
                 e_colorscale = :pseudolog
             end
+            if e_colorbar_label == :auto
+                e_colorbar_label = "Transition rates"
+            end
             weight.(edges(plotgraph))
         elseif e_color == :currents
             if isnothing(ss)
                 throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
             end
+            if e_colorbar_label == :auto
+                e_colorbar_label = "Probability currents"
+            end
             [e.weight * ss[e.src] for e in edges(plotgraph)]
         elseif e_color == :dcurrents
             if isnothing(ss)
                 throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
+            end
+            if e_colorbar_label == :auto
+                e_colorbar_label = "Net probability currents"
             end
             plotgraph = isnothing(ss_curgraph) ? make_current_graph(gm, ss) : ss_curgraph
             weight.(edges(plotgraph))
@@ -312,10 +323,26 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
 
     if !isnothing(axparent)
         if !isnothing(e_color) && ((e_colorbar == :auto) || e_colorbar)
-            Colorbar(axparent[1, 2]; colormap=e_colormap, colorrange=e_colorrange, scale=e_colorscale, label=string(e_color))
+            if e_colorbar_label == :auto
+                e_colorbar_label = string(e_color)
+            end
+            Colorbar(axparent[1, 2];
+                colormap=e_colormap,
+                colorrange=e_colorrange,
+                scale=e_colorscale,
+                label=e_colorbar_label
+            )
         end
-        if !isnothing(ss) & n_ss_color && ((n_ss_colorbar == :auto) || n_ss_colorbar)
-            Colorbar(axparent[1, 3]; colormap=n_ss_colormap, colorrange=n_ss_colorrange, scale=n_ss_colorscale)
+        if !isnothing(ss) && n_ss_color && ((n_ss_colorbar == :auto) || n_ss_colorbar)
+            if n_ss_colorbar_label == :auto
+                n_ss_colorbar_label = "Occupation probability"
+            end
+            Colorbar(axparent[1, 3];
+                colormap=n_ss_colormap,
+                colorrange=n_ss_colorrange,
+                scale=n_ss_colorscale,
+                label=n_ss_colorbar_label
+            )
         end
     end
 
@@ -491,13 +518,22 @@ end
 ################################################################################
 # Saving
 ################################################################################
-function savefig(subdir, prefix, gm::AbstractGraphModel, fig)
+function savefig(subdir, basename, fig; kwargs...)
+    mkpath(plotsdir(subdir))
+    save(plotsdir(subdir, basename * ".png"), fig;
+        px_per_unit=2.0,
+        kwargs...
+    )
+end
+savefig(basename, fig; kwargs...) = savefig("", basename, fig; kwargs...)
+function savefig(subdir, prefix, gm::AbstractGraphModel, fig; kwargs...)
     savefig(subdir,
         savename(prefix, gm;
             allowedtypes=[DrWatson.default_allowed(gm)...; Dict],
-            expand=["metadata"]),
-        fig)
+            expand=["metadata"]
+        ), fig; kwargs...)
 end
+savefig(prefix, gm::AbstractGraphModel, fig; kwargs...) = savefig("", prefix, gm, fig; kwargs...)
 
 function save_transmat(gm::AbstractGraphModel; name=savename(f"tm_{string(typeof(gm).name.name)}", gm, "table"), short=false)
     file = open(datadir(name), "w")
