@@ -3,7 +3,11 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm.jl"))
+using GraphModels
+
+import GraphModels: graph, numstates, allstates
+import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
+import Base: copy, broadcastable, show
 
 ################################################################################
 # Base setup
@@ -46,16 +50,16 @@ function show(io::IO, mime::MIME"text/plain", ogm::OnesGM{S,F}) where {S,F}
 end
 graph(ogm::OnesGM) = ogm.graph
 
-numstates(N) = 2^N
-numstates(ogm::OnesGM) = numstates(ogm.N)
+numstates_ones(N) = 2^N
+numstates(ogm::OnesGM) = numstates_ones(ogm.N)
 
 itostate(i, N) = digits(i - 1; base=2, pad=N)
 itostate(i, ogm::OnesGM) = itostate(i, ogm.N)
 
 statetoi(state) = 1 + sum(state[i] * 2^(i - 1) for i in 1:length(state))
 
-allstates(N) = itostate.(1:numstates(N), N)
-allstates(ogm::OnesGM) = allstates(ogm.N)
+allstates_ones(N) = itostate.(1:numstates_ones(N), N)
+allstates(ogm::OnesGM) = allstates_ones(ogm.N)
 
 function findall_subvects(_::Chain, vect::Vector, subvect::Vector)
     subvect_len = length(subvect)
@@ -174,8 +178,16 @@ function p_do_layout(ogm::OnesGM, layout=nothing, roffset_devs=nothing)
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ogm, layout, roffset_devs)
 end
 
-plotgm_kwarg_defaults(_::OnesGM) = (; fnlabels=:repr, felabels=false, n_size=40.0, e_color=:currents)
+plotgm_kwarg_defaults(_::OnesGM) = (;
+    fnlabels=:repr,
+    felabels=false,
+    n_size=10.0,
+    e_color=:dcurrents
+)
 
+"""
+Alternative plotting option which makes low rate edges partially transparent
+"""
 function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
     plotgm(args...;
         layout=makeprefunclayout(Spring(), filter_edges!, ecutoff),
@@ -241,6 +253,7 @@ end
 ################################################################################
 # Making OnesGMs
 ################################################################################
+# Basic equal rate FC makers
 function make_single_cycle(N, cycle, symmetry::Symmetry=Loop(); kwargs...)
     ogm = OnesGM(N;
         symmetry,
@@ -266,6 +279,19 @@ function make_multi_cycle(N, symmetry::Symmetry, cyclesandweights...; kwargs...)
     ogm
 end
 
+# Same but have different rates
+function make_single_wcycle(N, wcycle, symmetry::Symmetry=Loop(); kwargs...)
+    ogm = OnesGM(N;
+        symmetry,
+        metadata=Dict("chash" => hash(wcycle), "ctype" => "simple")
+    )
+    add_edges_wcycle!(ogm, wcycle; kwargs...)
+    ogm
+end
+
+"""
+Get any of the interesting 2 digit cycles
+"""
 function get_c2d_int(i)
     xx = [
         [[0, 0], [1, 0], [1, 1], [0, 1]],
@@ -276,111 +302,12 @@ function get_c2d_int(i)
     xx[i]
 end
 
-function make_3denzym(N, args...; kwargs...)
-    cycle = [
-        [1, 0, 0],
-        [1, 1, 0],
-        [1, 1, 1],
-        [1, 0, 1]
-    ]
-    make_single_cycle(N, cycle, args...; kwargs...)
-end
-
-function make_3denzym2(N, symmetry, alpha; kwargs...)
-    cycle1 = [
-        [1, 0, 0],
-        [1, 1, 0],
-        [1, 1, 1],
-        [1, 0, 1]
-    ]
-    cycle2 = [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 0, 1]
-    ]
-    make_multi_cycle(N, symmetry, cycle1, 1.0, cycle2, alpha)
-end
-
-
-function make_single_wcycle(N, wcycle, symmetry::Symmetry=Loop(); kwargs...)
-    ogm = OnesGM(N;
-        symmetry,
-        metadata=Dict("chash" => hash(wcycle), "ctype" => "simple")
-    )
-    add_edges_wcycle!(ogm, wcycle; kwargs...)
-    ogm
-end
-
-
-function make_big(N)
-    ogm = OnesGM(N; metadata=Dict("ctype" => "full"))
-    add_edges_cycle!(ogm, [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    add_edges_cycle!(ogm, [[1, 0, 0], [1, 1, 0], [1, 0, 1]])
-    add_edges_cycle!(ogm, [[0, 1, 0], [1, 1, 0], [0, 1, 1]])
-    add_edges_cycle!(ogm, [[0, 0, 1], [1, 0, 1], [0, 1, 1]])
-    add_edges_cycle!(ogm, [[0, 1, 1], [1, 1, 1]])
-    add_edges_cycle!(ogm, [[1, 0, 1], [1, 1, 1]])
-    add_edges_cycle!(ogm, [[1, 1, 0], [1, 1, 1]])
-    ogm
-end
-
 ################################################################################
-# Particular plotting functions
+# Util
 ################################################################################
-plotgm_save_kwargs() = (; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr)
-
-function makespringplots(dirname, ns=3, ne=6; kwargs...)
-    for n in ns:ne
-        ogm = make_single_cycle(n, get_c2d_int(1); kwargs...)
-        fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr)
-        savefig(f"ones/{dirname}/", "spring", ogm, fap.figure)
-    end
-end
-
-function makespringplots1()
-    makespringplots("c1", 3, 8)
-end
-
-function makespringplots2()
-    for i in 1:4
-        for n in 3:8
-            ogm = make_single_cycle(n, get_c2d_int(i))
-            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, n_ss_colorbar=false)
-            savefig(f"ones/c{i}/", "spring", ogm, fap.figure)
-        end
-    end
-end
-
-function makespringplots2_1()
-    for i in 1:4
-        for n in 3:8
-            ogm = make_single_cycle(n, get_c2d_int(i), Chain())
-            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, n_ss_colorbar=false)
-            savefig(f"ones/cc{i}/", "spring", ogm, fap.figure)
-        end
-    end
-end
-
-function makespringplots3()
-    for i in 1:4
-        for n in 3:6
-            ogm = make_single_cycle(n, get_c2d_int(i))
-            fap = plot_ogm_min(ogm; node_size_scale=6.0, nlabels_fontsize=6, flabels=true, fnlabels=:repr, layout=:tree, n_ss_colorbar=false)
-            savefig(f"ones/tc{i}/", "spring", ogm, fap.figure)
-        end
-    end
-end
-
-function msp_2d_differentw()
-    for n in 3:6
-        for i in 1:4
-            wcycle = [(c, 1.0 + 0.5 * Int(ci == i)) for (ci, c) in enumerate(get_c2d_int(1))]
-            ogm = make_single_wcycle(n, wcycle)
-            fap = plotgm(ogm; plotgm_save_kwargs()..., e_color=:rates, layout=:tree)
-            savefig("ones/c1weights/", f"R_N={ogm.N}w={i}", fap.figure)
-            fap = plotgm(ogm; plotgm_save_kwargs()..., e_color=:currents, layout=:tree)
-            savefig("ones/c1weights/", f"N={ogm.N}w={i}", fap.figure)
-        end
-    end
-end
+plotgm_save_kwargs() = (;
+    n_size=10.0,
+    nlabels_fontsize=6,
+    flabels=true,
+    fnlabels=:repr
+)

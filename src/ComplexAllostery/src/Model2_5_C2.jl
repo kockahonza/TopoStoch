@@ -1,14 +1,11 @@
-using DrWatson
-@quickactivate "TopoStochSim"
-
-using Revise
-
-includet(srcdir("gmca.jl"))
+module Model2_5_C2
+using ..ComplexAllostery
 
 ################################################################################
-# The C=2 case for Model 2.5
+# Setting up the variables
 ################################################################################
-struct Vars_2_5_C2{F<:Number}
+# These variables define the system
+struct SystemVars{F<:Number}
     energies::SVector{3,F} # ε_t, Δε_r, ε_b in order
     rs::Tuple{SVector{2,F},SVector{2,F},F}
     chem_energies::SVector{3,F} # in order of P, ATP, ADP
@@ -16,7 +13,7 @@ struct Vars_2_5_C2{F<:Number}
     thetas::SMatrix{3,2,F} # first means forwards, second backwards
     kT::F
 end
-function make_vars_smart(
+function smart_vars(
     energies::SVector{3,A},
     rs::Tuple{SVector{2,B},SVector{2,C},D},
     chem_energies::SVector{3,F},
@@ -26,7 +23,7 @@ function make_vars_smart(
     concretetype::Val{FT}=Val(Float64)
 ) where {A,B,C,D,E,F,G,H,FT}
     if Num in SA[A, B, C, D, E, F, G, H]
-        Vars_2_5_C2(
+        SystemVars(
             convert.(Num, energies),
             (convert.(Num, rs[1]), convert.(Num, rs[2]), convert(Num, rs[3])),
             convert.(Num, chem_energies),
@@ -35,7 +32,7 @@ function make_vars_smart(
             convert(Num, kT)
         )
     else
-        Vars_2_5_C2(
+        SystemVars(
             convert.(FT, energies),
             (convert.(FT, rs[1]), convert.(FT, rs[2]), convert(FT, rs[3])),
             convert.(FT, chem_energies),
@@ -45,26 +42,21 @@ function make_vars_smart(
         )
     end
 end
-function make_sem_C2(B, vars::Vars_2_5_C2)
-    make_sem_C2(B; et=vars.energies[1], der=vars.energies[2], eb=vars.energies[3])
-end
+export SystemVars, smart_vars
 
-################################################################################
-# Setting up particular Vars_2_5_C2 choices
-################################################################################
-# Making simplified models directly using Vars_2_5_C2
 function vars_base()
     r12s = Symbolics.variables(:r, 1:2, 1:2)
     rs = [SVector(r12s[i, :]...) for i in 1:2]
-    make_vars_smart(
-        get_sem_C2_vars(),
+    smart_vars(
+        SVector(Symbolics.variable.([:ε_t, :Δε_r, :ε_b])...),
         (rs[1], rs[2], Symbolics.variable(:r, 3)),
         SVector(Symbolics.variable.([:εP, :εATP, :εADP])...),
         SVector(Symbolics.variable.([:cP, :cATP, :cADP])...),
         SMatrix{3,2}(Symbolics.variables(:θ, 1:3, 1:2)...),
-        Symbolics.variable(:kT)
+        symvar_kT
     )
 end
+export vars_base
 
 function vars_simplified(;
     newrs=nothing,
@@ -72,6 +64,8 @@ function vars_simplified(;
     concentrations=nothing,
     kT=nothing
 )
+    base = vars_base()
+
     if isnothing(newrs)
         rs = Symbolics.variables(:r, 1:3)
         alpha = Symbolics.variable(:α)
@@ -87,23 +81,24 @@ function vars_simplified(;
     newrs = (SVector(rs[1], rs[1]), SVector(rs[2], alpha * rs[2]), rs[3])
 
     if isnothing(energies) || (energies == false)
-        energies = get_sem_C2_vars()
+        energies = base.energies
     elseif energies == :noall
-        energies = SA[0.0, 0.0, get_sem_C2_vars()[end]]
+        energies = SA[0.0, 0.0, base.energies[end]]
     elseif (isa(energies, AbstractVector) || isa(energies, Tuple))
         if length(energies) == 2
-            energies = SVector(energies[1], energies[2], get_sem_C2_vars()[end])
+            energies = SVector(energies[1], energies[2], base.energies[end])
         end
     else
         throw(ArgumentError(f"invalid energies of {energies}"))
     end
 
     if isnothing(concentrations) || (concentrations == false)
-        concentrations = SVector(Symbolics.variable.([:cP, :cATP, :cADP])...)
+        concentrations = base.concentrations
     elseif concentrations == :ss1
-        concentrations = SVector(Symbolics.variable(:cP), Symbolics.variable(:cATP), 0.0)
+        concentrations = setindex(base.concentrations, 0.0, 3)
     elseif concentrations == :ss2
-        concentrations = SVector(0.0, Symbolics.variable(:cATP), 0.0)
+        concentrations = setindex(base.concentrations, 0.0, 3)
+        concentrations = setindex(concentrations, 0.0, 1)
     else
         throw(ArgumentError(f"invalid concentrations of {concentrations}"))
     end
@@ -111,12 +106,12 @@ function vars_simplified(;
     if isnothing(kT)
         kT = 1.0
     elseif (kT == :sym) || (kT == false)
-        kT = Symbolics.variable(:kT)
+        kT = symvar_kT
     else
         throw(ArgumentError(f"invalid kT of {kT}"))
     end
 
-    make_vars_smart(
+    smart_vars(
         energies,
         newrs,
         (@SVector fill(Num(0.0), 3)),
@@ -125,18 +120,34 @@ function vars_simplified(;
         kT
     )
 end
+export vars_simplified
 
 ################################################################################
-# Making the ComplexAllosteryGM
+# Making the system given SystemVars
 ################################################################################
-function make_v2_5(N, B;
+function makeEM(et::F, der::F, eb::F, B=1) where {F}
+    monomer = Matrix{F}(undef, 2, B + 1)
+    monomer[1, 1] = 0
+    monomer[2, 1] = der
+    monomer[1, 2:B+1] .= et .* collect(1:B)
+    monomer[2, 2:B+1] .= monomer[1, 2:B+1] .- der
+
+    interactions = [0 eb; eb 0]
+    EnergyMatrices(monomer, interactions)
+end
+function makeEM(vars::SystemVars{F}=vars_base(), B=1) where {F}
+    makeEM(vars.energies[1], vars.energies[2], vars.energies[3], B)
+end
+export makeEM
+
+function makeCAGM(N, B=1;
     symmetry=Loop(),
-    vars::Vars_2_5_C2{F}=vars_base(),
+    vars::SystemVars{F}=vars_base(),
     kwargs...
 ) where {F}
     ca = ComplexAllosteryGM(N, 2, B;
         symmetry,
-        energy_matrices=make_sem_C2(B, vars),
+        energy_matrices=makeEM(vars, B),
         version=2.5,
         metadata=Dict("vars" => vars),
         kwargs...
@@ -210,8 +221,11 @@ function make_v2_5(N, B;
 
     ca
 end
+export makeCAGM
 
-# Also make terms for further simplifying using ssubstitute and similar
+################################################################################
+# Helper functions for later substitutions
+################################################################################
 function terms_simplified(; kwargs...)
     basevars = vars_base()
     simvars = vars_simplified(; kwargs...)
@@ -247,6 +261,7 @@ function terms_simplified(; kwargs...)
     end
     terms
 end
+export terms_simplified
 
 function terms_delta_concentrations()
     conc = vars_base().concentrations
@@ -259,6 +274,7 @@ function terms_delta_concentrations()
 
     terms
 end
+export terms_delta_concentrations
 
 function terms_equilibrium(elim=:cATP)
     terms = Dict{Num,Num}()
@@ -276,4 +292,24 @@ function terms_equilibrium(elim=:cATP)
         terms[cs[2]] = cs[1] / cs[3]
     end
     terms
+end
+export terms_equilibrium
+
+function terms_energies(; et=nothing, der=nothing, eb=nothing)
+    basevars = vars_base()
+    terms = Dict{Num,Num}()
+    if !isnothing(et)
+        terms[basevars.energies[1]] = et
+    end
+    if !isnothing(der)
+        terms[basevars.energies[2]] = der
+    end
+    if !isnothing(eb)
+        terms[basevars.energies[3]] = eb
+    end
+    terms
+end
+terms_energies(et, der=nothing, eb=nothing) = terms_energies(; et, der, eb)
+export terms_energies
+
 end
