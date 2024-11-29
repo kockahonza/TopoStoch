@@ -41,9 +41,9 @@ AbstractNumGraph = AbstractSimpleWeightedGraph{T,<:Num} where {T}
 numstates(gm::AbstractGraphModel) = nv(graph(gm))
 allstates(gm::AbstractGraphModel) = throw(ErrorException(f"No method of \"allstates\" was provided for type \"{typeof(gm)}\""))
 
-includet(srcdir("gm_symbolics.jl"))     # Has bits of GM API
-includet(srcdir("gm_manipulations.jl"))
-includet(srcdir("gm_io.jl"))            # Has bits of GM API
+includet("gm_symbolics.jl")     # Has bits of GM API
+includet("gm_manipulations.jl")
+includet("gm_io.jl")            # Has bits of GM API
 
 ################################################################################
 # Running a graph model

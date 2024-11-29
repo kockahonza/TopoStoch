@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm.jl"))
+includet("gm.jl")
 
 using Infiltrator
 
@@ -187,6 +187,6 @@ labelstate_NR(st::CAState) = f"{calc_numligands(st)}, {calc_numofconf(st, 2)}"
 ################################################################################
 # Include all the other bits
 ################################################################################
-includet(srcdir("gmca_physics.jl"))
-includet(srcdir("gmca_symbolics.jl"))
-includet(srcdir("gmca_io.jl"))
+includet("gmca_physics.jl")
+includet("gmca_symbolics.jl")
+includet("gmca_io.jl")

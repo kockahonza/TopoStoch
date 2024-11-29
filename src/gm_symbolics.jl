@@ -99,7 +99,7 @@ end
 ################################################################################
 # Dealing with wolfram
 ################################################################################
-includet(srcdir("letter_codes.jl"))
+includet("letter_codes.jl")
 
 function substitute_safenames(obj)
     terms = Dict{Num,Num}()

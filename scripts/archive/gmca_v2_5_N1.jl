@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(scriptsdir("gmca_v2_5.jl"))
+includet("gmca_v2_5.jl")
 
 function N1sscur(; dofull=false)
     ca, sca = make_v2_5(1, 1; simplified=:both)
