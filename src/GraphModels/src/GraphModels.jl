@@ -9,10 +9,11 @@ using Reexport
 @reexport using Graphs, SimpleWeightedGraphs, NetworkLayout
 @reexport using Makie, GraphMakie, Colors
 @reexport using Symbolics, MathLink, SymbolicsMathLink
+@reexport using Symbolics: variable, variables
 @reexport using JLD2
 
 import Dates
-import PlotUtils
+@reexport import PlotUtils
 
 import Base: copy, broadcastable, display, convert
 copy(::Nothing) = nothing

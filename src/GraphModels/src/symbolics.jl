@@ -1,3 +1,17 @@
+# Little things
+function tuplevariables(args...)
+    tuple(variables(args...)...)
+end
+# NOTE: These are definitely not type stable!
+function savariables(symbol, args...)
+    lenghts = filter(x -> x != 1, length.(args))
+    SArray{Tuple{lenghts...},Num,length(lenghts)}(variables(symbol, args...)...)
+end
+function listsavariables(symbols...)
+    SVector(variable.(symbols)...)
+end
+export tuplevariables, savariables, listsavariables
+
 ################################################################################
 # Concretizing symbolic objects
 ################################################################################
@@ -152,7 +166,7 @@ export swcall
 
 function w_eigen(matrix; safe=true)
     matrix, desafe = make_safe(safe, matrix)
-    rslt = wcall("Eigensystem", collect(transpose(matrix)))
+    rslt = wcall("Eigensystem", collect(matrix))
     (evals=desafe(rslt[1]), evecs=desafe.(rslt[2]))
 end
 export w_eigen

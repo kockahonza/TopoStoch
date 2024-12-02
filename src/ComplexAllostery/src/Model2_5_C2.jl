@@ -44,15 +44,24 @@ function smart_vars(
 end
 export SystemVars, smart_vars
 
+symvars = (;
+    # The base model 2.5 variables
+    energies=listsavariables(:ε_t, :Δε_r, :ε_b),
+    rs=(savariables(:r, 1, 1:2), savariables(:r, 2, 1:2), variable(:r, 3)),
+    chem_energies=listsavariables(:εP, :εATP, :εADP),
+    concentrations=listsavariables(:cP, :cATP, :cADP),
+    thetas=savariables(:θ, 1:3, 1:2),
+    # Simplifed model vars
+    sim_rs=SVector(variables(:r, 1:3)..., variable(:α))
+)
+
 function vars_base()
-    r12s = Symbolics.variables(:r, 1:2, 1:2)
-    rs = [SVector(r12s[i, :]...) for i in 1:2]
     smart_vars(
-        SVector(Symbolics.variable.([:ε_t, :Δε_r, :ε_b])...),
-        (rs[1], rs[2], Symbolics.variable(:r, 3)),
-        SVector(Symbolics.variable.([:εP, :εATP, :εADP])...),
-        SVector(Symbolics.variable.([:cP, :cATP, :cADP])...),
-        SMatrix{3,2}(Symbolics.variables(:θ, 1:3, 1:2)...),
+        symvars.energies,
+        symvars.rs,
+        symvars.chem_energies,
+        symvars.concentrations,
+        symvars.thetas,
         symvar_kT
     )
 end
@@ -67,8 +76,8 @@ function vars_simplified(;
     base = vars_base()
 
     if isnothing(newrs)
-        rs = Symbolics.variables(:r, 1:3)
-        alpha = Symbolics.variable(:α)
+        rs = symvars.sim_rs[1:3]
+        alpha = symvars.sim_rs[4]
     elseif newrs == :ss1
         rs = [1.0, 1.0, 1.0]
         alpha = 0.0
@@ -226,38 +235,17 @@ export makeCAGM
 ################################################################################
 # Helper functions for later substitutions
 ################################################################################
-function terms_simplified(; kwargs...)
-    basevars = vars_base()
+function terms_simplified(basevars=vars_base(); kwargs...)
     simvars = vars_simplified(; kwargs...)
 
-    oldterms = Num[]
-    newterms = Num[]
-
-    if !isequal(basevars.energies, simvars.energies)
-        append!(oldterms, basevars.energies)
-        append!(newterms, simvars.energies)
-    end
-
-    for i in 1:3
-        append!(oldterms, basevars.rs[i])
-        append!(newterms, simvars.rs[i])
-    end
-    append!(oldterms, basevars.chem_energies)
-    append!(newterms, simvars.chem_energies)
-    if !isequal(basevars.concentrations, simvars.concentrations)
-        append!(oldterms, basevars.concentrations)
-        append!(newterms, simvars.concentrations)
-    end
-    append!(oldterms, basevars.thetas)
-    append!(newterms, simvars.thetas)
-    if !isequal(basevars.kT, simvars.kT)
-        append!(oldterms, basevars.kT)
-        append!(newterms, simvars.kT)
-    end
+    kaka1 = [basevars.energies; basevars.rs[1]; basevars.rs[2]; basevars.rs[3]; basevars.chem_energies; basevars.concentrations; collect(Iterators.flatten(basevars.thetas)); basevars.kT]
+    kaka2 = [simvars.energies; simvars.rs[1]; simvars.rs[2]; simvars.rs[3]; simvars.chem_energies; simvars.concentrations; collect(Iterators.flatten(simvars.thetas)); simvars.kT]
 
     terms = Dict{Num,Num}()
-    for (old, new) in zip(oldterms, newterms)
-        terms[old] = new
+    for (old, new) in zip(kaka1, kaka2)
+        if !isequal(old, new)
+            terms[old] = new
+        end
     end
     terms
 end
