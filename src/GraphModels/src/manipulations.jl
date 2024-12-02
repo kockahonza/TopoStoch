@@ -5,9 +5,12 @@
 The standard Markov chain/Master equation transition matrix where the
 ij th element corresponds to a transition/rate from j to i.
 """
-function transmat(gm::AbstractGraphModel; mat=false)
-    tm = transpose(adjacency_matrix(graph(gm)))
+function transmat(graph::SimpleWeightedDiGraph; mat=false)
+    tm = transpose(adjacency_matrix(graph))
     mat ? Matrix(tm) : sparse(tm)
+end
+function transmat(gm::AbstractGraphModel; mat=false)
+    transmat(graph(gm); mat)
 end
 export transmat
 
@@ -28,10 +31,13 @@ function etransmat(tm::AbstractMatrix)
     etransmat!(ctm)
     ctm
 end
-function etransmat(gm::AbstractGraphModel, args...; kwargs...)
-    tm = transmat(gm, args...; kwargs...)
+function etransmat(graph::SimpleWeightedDiGraph, args...; kwargs...)
+    tm = transmat(graph, args...; kwargs...)
     etransmat!(tm)
     tm
+end
+function etransmat(gm::AbstractGraphModel, args...; kwargs...)
+    etransmat(graph(gm), args...; kwargs...)
 end
 export etransmat!, etransmat
 
