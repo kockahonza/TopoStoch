@@ -1,0 +1,107 @@
+\documentclass[11pt]{article}
+\usepackage[top=20mm,bottom=30mm,left=20mm,right=20mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+
+% Mathy stuff
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage[version=4]{mhchem}
+
+% Visual stuff
+\usepackage{graphics}
+\usepackage{tikz}
+\usetikzlibrary{math}
+\usepackage{stackengine}
+\usepackage{float}
+\usepackage{tcolorbox}
+
+% Misc
+\usepackage{cleveref}
+\usepackage{lipsum}
+
+\allowdisplaybreaks
+
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0em}
+
+\newcommand\set[1]{\ensuremath{\{#1\}}}
+\newcommand\textbff[1]{\textbf{\boldmath #1}}
+\newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
+
+\stackMath
+\newcommand{\suf}[2]{\stackunder[0.5pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\duf}[2]{\stackunder[0.5pt]{\stackunder[0.8pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\su}[1]{\suf{#1}{#1}}
+\newcommand{\du}[1]{\duf{#1}{#1}}
+\newcommand{\ssu}[1]{\scriptsize\su{#1}\normalsize}
+\newcommand{\sdu}[1]{\scriptsize\du{#1}\normalsize}
+
+\newcommand{\pp}{\ensuremath{\partial}}
+
+\begin{document}
+\begin{center}
+	\LARGE
+	\textbf{Derivation of the formula relating chemical potentials and chemical concentrations}
+	\vspace{1em}
+\end{center}
+
+We consider a lattice model with $\Omega$ sites at thermal equilibrium (canonical ensemble).
+We denote the number of each species of ligand by $L_i$ and from statical physics we have that chemical potential of each is $\mu_i = \pdv{F}{L_i}$ with $F = U - TS$.
+We have $U = \sum_i L_i \epsilon_i$ with the $\epsilon_i$ being the inherent chemical energies per molecule of each ligand type.
+And finally we have $S=\si{k}\ln(W)$ with $W$ being the number of lattice microstates for any particular set of $L_i$ given by $W=\binom{\Omega}{L_1 \enspace L_2 \enspace \cdots}$.
+Now we can calculate
+\begin{align}
+	\mu_i = \epsilon_i - \si{k}T \pdv{L_i} \ln(W)
+\end{align}
+but first approximate using Stirling's approximation
+\begin{align}
+	\ln(W) & = \ln(\binom{\Omega}{L_1 \enspace L_2 \enspace \cdots}) = \ln(\frac{\Omega!}{L_1!L_2!\cdots(\Omega-L_1-L_2-\cdots)!}) \\
+	       & = \ln(\Omega!)-\ln(L_1!)-\ln(L_2!)-\cdots-\ln((\Omega-L_1-L_2-\cdots)!)
+\end{align}
+now assuming all the individual $L_i$ and $(\Omega-L_1-L_2-\cdots)$ are large we get to
+\begin{align}
+	\ln(W) \simeq & \enspace \Omega\ln(\Omega)-\Omega -L_1\ln(L_1)+L_1 -L_2\ln(L_2)+L_2 -\cdots                                       \\
+	              & -(\Omega-L_1-L_2-\cdots)\ln((\Omega-L_1-L_2-\cdots)) + (\Omega-L_1-L_2-\cdots)                                    \\
+	=             & \enspace \Omega\ln(\Omega) -L_1\ln(L_1) -L_2\ln(L_2) -\cdots -(\Omega-L_1-L_2-\cdots)\ln((\Omega-L_1-L_2-\cdots)) \\
+	=             & \enspace \Omega\ln(\frac{\Omega}{\Omega-L_1-L_2-\cdots}) -L_1\ln(\frac{L_1}{\Omega-L_1-L_2-\cdots}) -\cdots       \\
+	=             & \enspace -\Omega\ln(1-\frac{L_1+L_2+\cdots}{\Omega}) -L_1\ln(\frac{L_1}{\Omega-L_1-L_2-\cdots}) -\cdots           \\
+\end{align}
+now there's two alternative methods I want to try
+
+\subsection{Approximate first}
+Approximate by saying $\frac{L_1+L_2+\cdots}{\Omega}$ is small or in other words $\Omega \gg L_1+L_2+\cdots$ to get
+\begin{align}
+	\ln(W) \simeq & \enspace -\Omega\qty(-\frac{L_1+L_2+\cdots}{\Omega}) -L_1\ln(\frac{L_1}{\Omega}) -\cdots \\
+	=             & \enspace L_1+L_2+\cdots -L_1\ln(\frac{L_1}{\Omega}) -\cdots                              \\
+	=             & \enspace L_1\qty(1-\ln(\frac{L_1}{\Omega})) -\cdots                                      \\
+\end{align}
+this leads to
+\begin{align}
+	\mu_i = & \enspace \epsilon_i - \si{k}T \pdv{L_i} \ln(W)                                                                                                              \\
+	\simeq  & \enspace \epsilon_i - \si{k}T\qty(1-\ln(\frac{L_i}{\Omega})+L_i\frac{-1}{\frac{L_i}{\Omega}}\frac{1}{\Omega}) = \epsilon_i + \si{k}T\ln(\frac{L_i}{\Omega})
+\end{align}
+
+\subsection{The full version}
+Or just stick through with the pretty gross expressions to calculate
+\begin{align}
+	\pdv{L_i}\ln(W) = & \enspace \pdv{L_i} \qty(-\Omega\ln(1-\frac{L_1+L_2+\cdots}{\Omega}) -\sum_j L_j\ln(\frac{L_j}{K})) \qq{with} K=\Omega-L_1-L_2-\cdots \\
+	=                 & \enspace -\Omega\frac{1}{1-\frac{\Omega-K}{\Omega}}(-\frac{1}{\Omega}) - \pdv{L_i}\sum_jL_j\ln(\frac{L_j}{K})                        \\
+	=                 & \enspace \frac{\Omega}{\Omega-\Omega+K} - \sum_j\qty(\delta_{ij}\ln(\frac{L_j}{K}) + L_j\pdv{L_i}\ln(\frac{L_j}{K}))                 \\
+	=                 & \enspace \frac{\Omega}{K} -\ln(\frac{L_i}{K}) -\sum_j L_j\frac{K}{L_j}\pdv{L_i}\frac{L_j}{K}                                         \\
+	=                 & \enspace \frac{\Omega}{K} -\ln(\frac{L_i}{K}) -\sum_j K\qty(\frac{\delta_{ij}}{K}+L_j\frac{-1}{K^2}(-1))                             \\
+	=                 & \enspace \frac{\Omega}{K} -\ln(\frac{L_i}{K}) -\sum_j \delta_{ij} + L_j\frac{1}{K}                                                   \\
+	=                 & \enspace -1 +\frac{\Omega-\sum_jL_j}{K} -\ln(\frac{L_i}{K})                                                                          \\
+	=                 & \enspace -\ln(\frac{L_i}{K})                                                                                                         \\
+\end{align}
+which is beautiful as it agrees perfectly and gives a simple expression for
+\begin{align}
+	\mu_i = \epsilon_i - \si{k}T \pdv{L_i} \ln(W) = \epsilon_i + \si{k}T \ln(\frac{L_i}{\Omega-L_1-L_2-\cdots})
+\end{align}
+
+\subsection{Relation to concentration}
+In our simplified lattice model it seems clear that $\frac{L_i}{\Omega}$ is some measure of a concentration.
+I'm not entirely sure how to relate it to a "real" experimental concentration but I'm sure it's possible, maybe worth doing sometime.
+
+\end{document}

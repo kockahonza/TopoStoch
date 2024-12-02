@@ -3,16 +3,16 @@ import GraphModels: get_variables, ssubstitute, substitute_to_float, make_factor
 # Extend the functions from gm_symbolics.jl
 ################################################################################
 function get_variables(em::EnergyMatrices)
-    union(get_variables(em.monomer), get_variables(em.interactions))
+    unique([get_variables(em.monomer); get_variables(em.interactions)])
 end
 function get_variables(ca::ComplexAllosteryGM{S,Num}) where {S}
-    variables = Set{Num}()
+    variables = Num[]
     for edge in edges(ca.graph)
         for var in Symbolics.get_variables(weight(edge))
             push!(variables, var)
         end
     end
-    union(variables, get_variables(ca.energy_matrices))
+    unique([get_variables(ca.energy_matrices); variables])
 end
 
 function ssubstitute(em::EnergyMatrices, terms)
@@ -59,27 +59,29 @@ function substitute_to_float(ca::ComplexAllosteryGM{S}, terms::Dict{Num,Float64}
     )
 end
 
-function make_factory(em::EnergyMatrices, variables=Num.(get_variables(em)); kwargs...)
+function make_factory(em::EnergyMatrices, variables=get_variables(em); kwargs...)
     mono_fact = make_factory(em.monomer, variables; kwargs...)
     int_fact = make_factory(em.interactions, variables; kwargs...)
 
     function (args...)
+        fargs = convert.(Float64, args)
         EnergyMatrices(
-            Matrix{Float64}(mono_fact(args...)),
-            Matrix{Float64}(int_fact(args...))
+            Matrix{Float64}(mono_fact(fargs...)),
+            Matrix{Float64}(int_fact(fargs...))
         )
     end
 end
-function make_factory(ca::ComplexAllosteryGM{S}, variables=Num.(get_variables(ca)); kwargs...) where {S}
+function make_factory(ca::ComplexAllosteryGM{S}, variables=get_variables(ca); kwargs...) where {S}
     em_fact = make_factory(ca.energy_matrices, variables; kwargs...)
     adjmat_fact = make_factory(adjacency_matrix(ca.graph), variables; kwargs...)
 
     function (args...)
+        fargs = convert.(Float64, args)
         ComplexAllosteryGM(ca.N, ca.C, ca.B;
             symmetry=S(),
             numtype=Val(Float64),
-            energy_matrices=em_fact(args...),
-            graph=SimpleWeightedDiGraph(adjmat_fact(args...))
+            energy_matrices=em_fact(fargs...),
+            graph=SimpleWeightedDiGraph(adjmat_fact(fargs...))
         )
     end
 end

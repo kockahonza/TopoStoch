@@ -15,17 +15,19 @@ export tuplevariables, savariables, listsavariables
 ################################################################################
 # Concretizing symbolic objects
 ################################################################################
-get_variables(term) = Set{Num}(Symbolics.get_variables(term))
+get_variables(::Nothing) = Num[]
+get_variables(term) = unique(Num.(Symbolics.get_variables(term)))
 function get_variables(arr::AbstractArray)
-    variables = Set{Num}()
+    variables = Num[]
     for term in arr
         for var in get_variables(term)
-            push!(variables, Num(var))
+            if all(x -> !isequal(x, var), variables)
+                push!(variables, Num(var))
+            end
         end
     end
     variables
 end
-get_variables(::Nothing) = Set{Num}()
 function get_variables(gm::AbstractGraphModel{<:Num})
     throw(ErrorException(f"No method of \"get_variables\" was provided for type \"{typeof(gm)}\""))
 end
@@ -89,9 +91,10 @@ export terms_full_test
 """
 Achieves a similar goal to the above but much faster especially for multiple calls.
 Each of these createsm a "factory" for making the given object given values for all
-the variables in it. These are then very fast to use.
+the variables in it. These are then very fast to use. Returned closure internally
+converts all arguments to Float64 as otherwise I get runtime errors.
 """
-function make_factory(obj, variables=Num.(get_variables(obj)); kwargs...)
+function make_factory(obj, variables=get_variables(obj); kwargs...)
     num_vars = length(variables)
 
     bfunc_ = build_function(obj, variables; expression=Val(false), kwargs...)
@@ -107,10 +110,10 @@ function make_factory(obj, variables=Num.(get_variables(obj)); kwargs...)
         if length(args) != num_vars
             throw(ArgumentError(f"closure expected {num_vars} arguments but received {length(args)}"))
         end
-        bfunc(SVector(args))
+        bfunc(SVector(convert.(Float64, args)))
     end
 end
-function make_factory(gm::AbstractGraphModel{<:Num}, variables=Num.(get_variables(arr)))
+function make_factory(gm::AbstractGraphModel{<:Num}, variables=get_variables(arr))
     throw(ErrorException(f"No method of \"make_factory\" was provided for type \"{typeof(gm)}\""))
 end
 export make_factory

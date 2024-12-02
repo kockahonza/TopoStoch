@@ -3,6 +3,8 @@ using DrWatson
 
 using Revise
 
+using GLMakie
+
 using ComplexAllostery
 using ComplexAllostery.Model2_5_C2
 
@@ -67,7 +69,7 @@ function N1curplot(type=:lines;
     if !keeprs
         sscur = ssubstitute(sscur, terms_simplified(vars_simplified(); newrs=:ss1))
     else
-        vars = [Model2_5_C2.symvars.sim_rs; vars]
+        vars = [symvars.sim_rs; vars]
         ranges = [[0.0:0.01:3.0, 0.0:0.01:3.0, 0.0:0.01:3.0, 0.0:0.01:2.0]; ranges]
         startvalues = [[1.0, 1.0, 1.0, 0.0]; startvalues]
     end
@@ -152,7 +154,7 @@ function make_sscurfactory()
     sscur = w_simplify(sscur)
 
     # vars: r1, r2, r3, alpha, et, der
-    vars = [Model2_5_C2.symvars.sim_rs; svars.energies[1:2]]
+    vars = [symvars.sim_rs; svars.energies[1:2]]
 
     # conc_vars cP, cATP
     conc_vars = svars.concentrations[1:2]

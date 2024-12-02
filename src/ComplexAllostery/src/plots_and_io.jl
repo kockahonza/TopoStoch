@@ -113,7 +113,7 @@ function plot_cao!(maybeax, cao::Observable, args...;
 end
 
 function int_plot_ca(ca::ComplexAllosteryGM, args...;
-    variables=Num.(get_variables(ca)),
+    variables=get_variables(ca),
     noplot=false, ranges=nothing, startvalues=nothing, kwargs...
 )
     # Setup sliders and the graph observable
@@ -150,7 +150,7 @@ end
 function eq_stats_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     fig = Figure()
 
-    variables = Num.(get_variables(ca.energy_matrices))
+    variables = get_variables(ca.energy_matrices)
     mu, kT = symvar_mu, symvar_kT
     append!(variables, mu)
 
@@ -198,7 +198,7 @@ export eq_stats_plot
 function eq_coopbinding_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     fig = Figure()
 
-    energy_vars = collect(get_variables(ca.energy_matrices))
+    energy_vars = get_variables(ca.energy_matrices)
     mu, kT = symvar_mu, symvar_kT
     @variables εsol, c
 

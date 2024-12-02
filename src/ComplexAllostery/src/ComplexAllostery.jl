@@ -4,7 +4,6 @@ using Reexport
 
 @reexport using GraphModels # This reexports many of its dependencies
 
-using GLMakie
 using PrettyTables
 
 import GraphModels: graph, numstates, allstates

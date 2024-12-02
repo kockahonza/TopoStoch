@@ -44,6 +44,7 @@ function smart_vars(
 end
 export SystemVars, smart_vars
 
+# The major symbolic variables so that I don't have to keep redefining them
 symvars = (;
     # The base model 2.5 variables
     energies=listsavariables(:ε_t, :Δε_r, :ε_b),
@@ -54,6 +55,7 @@ symvars = (;
     # Simplifed model vars
     sim_rs=SVector(variables(:r, 1:3)..., variable(:α))
 )
+export symvars
 
 function vars_base()
     smart_vars(
@@ -103,9 +105,9 @@ function vars_simplified(;
 
     if isnothing(concentrations) || (concentrations == false)
         concentrations = base.concentrations
-    elseif concentrations == :ss1
+    elseif concentrations == :ss1 # cADP -> 0
         concentrations = setindex(base.concentrations, 0.0, 3)
-    elseif concentrations == :ss2
+    elseif concentrations == :ss2 # cADP -> 0, cP -> 0
         concentrations = setindex(base.concentrations, 0.0, 3)
         concentrations = setindex(concentrations, 0.0, 1)
     else
