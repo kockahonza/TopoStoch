@@ -19,34 +19,70 @@ function p_named_layouts(ca::ComplexAllosteryGM, layout_name, layout_args)
                 (calc_numligands(st), calc_energy(st, ca), calc_numboundaries(st, ca)) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"E({maxs[2]})", f"boundaries({maxs[3]})")
-        elseif layout_name == :NRB
+            axis_labels = (f"#ligands({maxs[1]})", f"E({maxs[2]})", f"boundaries({maxs[3]})")
+        elseif layout_name == :NTB
             layout = [
                 Point{3,Float64}(calc_numligands(st), calc_numofconf(st), calc_numboundaries(st, ca)) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"#tense({maxs[2]})", f"#boundaries({maxs[3]})")
+            axis_labels = (f"#ligands({maxs[1]})", f"#tense({maxs[2]})", f"#boundaries({maxs[3]})")
         elseif layout_name == :NB
             layout = [
                 (Float64(calc_numligands(st)), Float64(calc_numboundaries(st, ca))) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"boundaries({maxs[2]})")
+            axis_labels = (f"#ligands({maxs[1]})", f"#boundaries({maxs[2]})")
             dim = 2
-        elseif layout_name == :NR
+        elseif layout_name == :NT
             layout = [
                 (Float64(calc_numligands(st)), Float64(calc_numofconf(st))) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", f"Number of tense({maxs[2]})")
+            axis_labels = (f"#ligands({maxs[1]})", f"#tense({maxs[2]})")
             dim = 2
         elseif layout_name == :N
             layout = [
                 (Float64(calc_numligands(st)), 0.0) for st in allstates(ca)
             ]
             maxs = maximum(layout)
-            axis_labels = (f"N({maxs[1]})", "")
+            axis_labels = (f"#ligands({maxs[1]})", "")
             dim = 2
+        elseif layout_name == :NTc
+            if ca.C != 2
+                @warn "named layout NTc is specific to C=2, this will likely not work well"
+            end
+
+            groups = Matrix{Vector{Int}}(undef, ca.N * ca.B + 1, ca.N + 1)
+            for i in eachindex(groups)
+                groups[i] = Int[]
+            end
+            for (i, st) in enumerate(allstates(ca))
+                numlig = calc_numligands(st)
+                numtense = calc_numofconf(st)
+                push!(groups[numlig+1, numtense+1], i)
+            end
+
+            layout = Vector{Point}(undef, numstates(ca))
+            R = (length(layout_args) >= 1) ? layout_args[1] : 0.3
+            for i in axes(groups, 1)
+                for j in axes(groups, 2)
+                    numlig = i - 1
+                    numtense = j - 1
+                    group = groups[i, j]
+                    Ngroup = length(group)
+                    for (group_i, global_i) in enumerate(group)
+                        theta = ((group_i - 1) / Ngroup) * 2 * pi
+                        layout[global_i] = Point2f(numlig, numtense)
+                        if Ngroup != 1
+                            layout[global_i] += Point2f(R * cos(theta), R * sin(theta))
+                        end
+                    end
+                end
+            end
+            maxs = maximum(layout)
+            axis_labels = (f"#ligands({maxs[1]})", f"#tense({maxs[2]})")
+            dim = 2
+            def_roffsets = false
         else
             rethrow()
         end
@@ -56,7 +92,7 @@ function p_named_layouts(ca::ComplexAllosteryGM, layout_name, layout_args)
 end
 function p_do_layout(ca::ComplexAllosteryGM, layout=nothing, roffset_devs=nothing)
     if isnothing(layout)
-        layout = :NR
+        layout = :NTc
     end
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ca, layout, roffset_devs)
 end

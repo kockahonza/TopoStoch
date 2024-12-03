@@ -51,21 +51,22 @@ end
 export etransmat_safe
 
 ################################################################################
-# Doing stuff with the etransmat
+# Dealing with etransmat and its eigensystem
 ################################################################################
 function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     threshold=1e-8,
     checkimag=true,
+    checkss=true,
     checkothers=true,
-    returnothers::Val{Returnothers}=Val(false)
+    returnothers::Val{Returnothers}=Val(false),
+    sortothers=true
 ) where {Returnothers}
     esys = eigen!(etransmat(gm; mat=true))
     n = length(esys.values)
 
     steadystates = Vector{Vector{Float64}}(undef, 0)
     if Returnothers
-        otherevals = Vector{ComplexF64}(undef, 0)
-        otherevecs = Vector{Vector{ComplexF64}}(undef, 0)
+        nonss = Eigensystem(numstates(gm); numtype=Val(ComplexF64))
     end
     for i in 1:n
         eval = esys.values[i]
@@ -76,19 +77,25 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
             if checkimag
                 maximag = maximum(x -> abs(imag(x)), ss)
                 if maximag > threshold
-                    @warn f"when aligning ss eigenvector encountered imag part of {maximag} over {threshold}"
+                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
                 end
             end
-            push!(steadystates, real(ss))
+            rss = real(ss)
+            if checkss
+                firstviolation = findfirst(x -> (x < 0) || (x > 1), rss)
+                if !isnothing(firstviolation)
+                    @warn f"getting steady states with a component of {firstviolation} which is not between 0 and 1"
+                end
+            end
+            push!(steadystates, rss)
         else
             if checkothers
                 if abs(sum(evec)) > threshold
-                    @warn f"found a non-physical eigenstate the components of which do not sum to 0"
+                    @warn f"found a non-steady eigenstate the components of which do not sum to 0"
                 end
             end
             if Returnothers
-                push!(otherevals, eval)
-                push!(otherevecs, evec)
+                push!(nonss, (eval, evec))
             end
         end
     end
@@ -96,13 +103,75 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     if !Returnothers
         steadystates
     else
-        steadystates, (; evals=otherevals, evecs=otherevecs)
+        if sortothers
+            order = sortperm(real.(nonss.evals); rev=true)
+            nonss = subes(nonss, order)
+        end
+        steadystates, nonss
     end
 end
-export steadystates
+fsteadystates(args...; kwargs...) = steadystates(args...; returnothers=Val(true), kwargs...)
+export steadystates, fsteadystates
 
 supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
 export supersteadystate
+
+function nonss_analysis(gm::AbstractGraphModel{<:AbstractFloat}; kwargs...)
+    steadystates_, es = steadystates(gm; kwargs..., returnothers=Val(true), sortothers=true)
+end
+export nonss_analysis
+
+"""
+Returns list of lists each of which is a group of indices of those eigenvalues/states
+which are degenerate with respect to each other.
+"""
+function degenerate_groups(es::Eigensystem; dthreshold=nothing, onlynontriv=true)
+    if isnothing(dthreshold)
+        dthreshold = 1e-6
+    end
+    evals = es.evals
+    graph = SimpleGraph(length(es))
+    for i in 1:length(evals)
+        for j in i+1:length(evals)
+            if abs(evals[i] - evals[j]) < dthreshold
+                add_edge!(graph, i, j)
+            end
+        end
+    end
+    if edges == []
+        nothing
+    else
+        comp = connected_components(graph)
+        if onlynontriv
+            filter!(x -> length(x) > 1, comp)
+        end
+        comp
+    end
+end
+export degenerate_groups
+
+function degenerate_map_(es::Eigensystem, groups)
+    map = Vector{Union{Nothing,Int}}(undef, length(es))
+    map .= nothing
+    for (group_i, group) in enumerate(groups)
+        for i in group
+            map[i] = group_i
+        end
+    end
+    map
+end
+function degenerate_map(es::Eigensystem, groups=nothing; returngroups=false, kwargs...)
+    if isnothing(groups)
+        groups = degenerate_groups(es; kwargs...)
+    end
+    map = degenerate_map_(es, groups)
+    if !returngroups
+        map
+    else
+        groups, map
+    end
+end
+export degenerate_map
 
 """
 Calculates the current matrix (antisymmetric by definition) from the transition

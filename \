@@ -490,7 +490,7 @@ function plot_ps(gm::AbstractGraphModel{<:AbstractFloat}, pstate; kwargs...)
     end
     pstate = real(pstate)
     rss = pstate / maximum(abs, pstate)
-    plotcgm(gm, pstate; n_ss_colormap=:redsblues, n_ss_colorscale=identity, n_ss_colorrange=(-1.0, 1.0), kwargs...)
+    plotcgm(gm, pstate; n_ss_colormap=:redsblues, n_ss_colorscale=identity, kwargs...)
 end
 export plot_ps
 

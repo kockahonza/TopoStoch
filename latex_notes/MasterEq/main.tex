@@ -13,6 +13,7 @@
 
 \usepackage{stackengine}
 \usepackage{float}
+\usepackage{tcolorbox}
 \usepackage{cleveref}
 \usepackage{lipsum}
 
@@ -37,33 +38,75 @@
 
 \begin{document}
 \begin{center}
-    \LARGE
-    \textbf{Notes on Master Equation Methods}
-    \vspace{1em}
+	\LARGE
+	\textbf{Notes on Master Equation Methods}
+	\vspace{1em}
 \end{center}
 
 \section{Transition and Other Matrices}
 Standard master equation has the form of
-\begin{equation}\label{eq:me}
-    \partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i)
-\end{equation}
+\begin{tcolorbox}
+	\begin{equation}\label{eq:me}
+		\partial_t p_i = \sum_j \qty(R_{ij}p_j - R_{ji}p_i)
+	\end{equation}
+\end{tcolorbox}
 where $R_{ij}$ corresponds to the $j \rightarrow i$ transition.
 For a steady state we must have $\partial_t p_i=0$ and if each term in the sum of \cref{eq:me} is independently 0 we have detailed balance.
 In general however to solve for 0 it is convenient to put the equation in a eigenvalue like form such as
-\begin{equation}
-    \partial_t p_i = \sum_j W_{ij}p_j
+\begin{equation}\label{eq:dp}
+	\partial_t p_i = \sum_j W_{ij}p_j
 \end{equation}
 for some matrix $\du{W}$.
 This matrix can be expressed in terms of $\du{R}$ as
-\begin{equation}
-    W_{ij} = R_{ij}-\delta_{ij}\sum_k R_{ki}
-\end{equation}
+\begin{tcolorbox}
+	\begin{equation}
+		W_{ij} = R_{ij}-\delta_{ij}\sum_k R_{ki}
+	\end{equation}
+\end{tcolorbox}
 as this leads to
 \begin{align}
-    \partial_t p_i &= \sum_j W_{ij}p_j = \sum_j \qty(R_{ij}-\delta_{ij}\sum_k R_{ki}) p_j = \\
-    &= \sum_j R_{ij}p_j - \sum_{j,k}\delta_{ij} R_{ki} p_j = \\
-    &= \sum_j R_{ij}p_j - \sum_{k} R_{ki} p_i = \\
-    &= \sum_j \qty(R_{ij}p_j - R_{ji} p_i) \qq{as required}
+	\partial_t p_i & = \sum_j W_{ij}p_j = \sum_j \qty(R_{ij}-\delta_{ij}\sum_k R_{ki}) p_j = \\
+	               & = \sum_j R_{ij}p_j - \sum_{j,k}\delta_{ij} R_{ki} p_j =                 \\
+	               & = \sum_j R_{ij}p_j - \sum_{k} R_{ki} p_i =                              \\
+	               & = \sum_j \qty(R_{ij}p_j - R_{ji} p_i) \qq{as required}
 \end{align}
+
+\section{Eigensystem of $\du{W}$}
+Without proof, such a matrix will always have 0 as an eigenvalue.
+If the matrix/system is connected this will be associated with one eigenstate.
+Further, all other eigenvalues have negative real parts and their eigenstates' components sum to 0.
+
+From \cref{eq:dp} it's clear that the eigenstate(s) with 0 eigenvalue form the steady state (or space).
+The others are not so clear, consider having at $t=0$ a state $\su{p}(0) = \su{p}_0 + \su{\delta}$ with $\su{p}_0$ being a steady state.
+Then we will have
+\begin{equation}
+	\partial_t \su{p} \eval_{t=0} = \du{W}\cdot\su{\delta} \qq{so that} \su{p}(\delta t) = \su{p}(0) + \delta t \du{W}\cdot\su{\delta} = \su{p}_0 + (\du{1}+\delta t\du{W})\cdot\su{\delta}
+\end{equation}
+This gets particularly interesting when $\su{\delta}$ is itself an eigenvalue of $\du{W}$.
+If $\du{W}\cdot\su{\delta}=\lambda\su{\delta}$ then
+\begin{align}
+	\partial_t \su{p} \eval_{t=0} = \lambda\su{\delta} \qq{and} \su{p}(\delta t) = \su{p}_0 + (1+\delta t\lambda)\su{\delta}
+\end{align}
+which notably is of the same form as $\su{p}(0)$ just with a rescaled $\su{\delta}$.
+Thus we can conclude that for any such starting state we have $\su{p}(t)=\su{p}_0+a(t)\su{\delta}$ for some function $a(t)$.
+Notably here $\su{p}_0$ and $\su{\delta}$ do not have to be mutually orthogonal, if they are not than this is not the only way of writing the functional form of $\su{p}(t)$ but it is still a valid one.
+
+This then leads to
+\begin{equation}
+	\su{p}(t+\delta t) = \su{p}_0 + a(t+\delta t)\su{\delta} = \su{p}(t)+\delta t \pdv{\su{p}}{t}\eval_t = \su{p}_0 + a(t)\su{\delta} + \delta t \lambda a(t) \su{\delta}
+\end{equation}
+after eliminating $\su{p}_0$ we get
+\begin{align}
+	a(t+\delta t)\su{\delta}            & = a(t)\su{\delta} + \delta t \lambda a(t) \su{\delta} \implies \\
+	\frac{a(t+\delta t)-a(t)}{\delta t} & = \lambda a(t)
+\end{align}
+giving the predictable result of $a(t) = a(0)e^{\lambda t}$.
+
+\begin{tcolorbox}
+    So in summary, any non-steady eigenstate $\su{\delta}$ of $\du{W}$ can be seen as a perturbation mode which if superposed over a steady state will decay exponentially with its associated eigenvalue as $e^{\lambda t}$.
+    Naturally if there are degenerate eigenstates with the same eigenvalue we get a perturbation space for that eigenvalue.
+\end{tcolorbox}
+though there remains the question of complex eigenvalues and eigenstates.
+It seems natural that imaginary components of eigenvalues would correspond to oscillations and I mostly just hope that eigenstates do not have imaginary components
 
 \end{document}

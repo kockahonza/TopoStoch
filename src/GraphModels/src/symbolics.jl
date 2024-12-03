@@ -167,6 +167,7 @@ function swcall(cmd, obj; safe=true)
 end
 export swcall
 
+# TODO: This should be updated to use Eigensystem
 function w_eigen(matrix; safe=true)
     matrix, desafe = make_safe(safe, matrix)
     rslt = wcall("Eigensystem", collect(matrix))
