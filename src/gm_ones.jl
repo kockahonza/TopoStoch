@@ -28,8 +28,8 @@ struct OnesGM{S<:Symmetry,F} <: AbstractGraphModel{F}
         metadata=nothing
     ) where {S,F}
         if isnothing(graph)
-            graph = SimpleWeightedDiGraph{Int,F}(numstates(N))
-        elseif nv(graph) != numstates(N)
+            graph = SimpleWeightedDiGraph{Int,F}(numstates_ones(N))
+        elseif nv(graph) != numstates_ones(N)
             throw(ArgumentError("invalid graph passed, does not have the correct number of nodes"))
         end
 

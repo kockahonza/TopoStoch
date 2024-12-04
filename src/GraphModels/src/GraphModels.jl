@@ -28,6 +28,10 @@ Core API:
 - graph
 - numstates
 - allstates
+Fancy plotting API:
+- p_named_layouts
+- p_do_layout
+- plotgm_kwarg_defaults
 Symbolics API (mainly for F <: Num):
 - get_variables
 - ssubstitute
@@ -111,5 +115,6 @@ include("manipulations.jl")
 include("symbolics.jl")     # Has bits of GM API
 include("plots_and_io.jl")            # Has bits of GM API
 include("BasicSim.jl")
+include("GillespieSim.jl")
 
 end # module GraphModels
