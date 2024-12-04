@@ -98,7 +98,12 @@ function p_do_layout(ca::ComplexAllosteryGM, layout=nothing, roffset_devs=nothin
 end
 
 function plotgm_kwarg_defaults(_::ComplexAllosteryGM{S,Num}) where {S}
-    (; fnlabels=:repr)
+    fnlabels = if numstates(gm) < 10
+        :repr
+    else
+        labelstate_NR
+    end
+    (; fnlabels)
 end
 function plotgm_kwarg_defaults(gm::ComplexAllosteryGM{S,<:AbstractFloat}) where {S}
     fnlabels = if numstates(gm) < 10
@@ -106,7 +111,15 @@ function plotgm_kwarg_defaults(gm::ComplexAllosteryGM{S,<:AbstractFloat}) where 
     else
         labelstate_NR
     end
-    (; flabels=true, fnlabels, n_size=15.0, n_ss_size=false, n_ss_colorscale=log10, felabels=false, e_color=:dcurrents)
+    (;
+        flabels=true,
+        fnlabels,
+        n_size=15.0,
+        n_ss_size=false,
+        n_ss_colorscale=log10,
+        felabels=false,
+        e_color=:dcurrents
+    )
 end
 
 # FIX: Everything from now on should be replaced by new stuff in gm_io.jl,

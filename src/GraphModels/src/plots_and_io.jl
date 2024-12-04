@@ -41,29 +41,34 @@ end
 
 function p_make_ax(dim, maybeax, axis_labels=nothing; useaxis3=false)
     if isa(maybeax, Makie.AbstractAxis)
-        ax = maybeax
+        # If it is already an ax then just do checks and return it
+        if isa(maybeax, Axis) && (dim != 2)
+            @warn "in p_make_ax got a prepared Axis but dim is not 2"
+        end
+        return maybeax
     elseif isa(maybeax, GridPosition)
-        ax = maybeax
+        place = maybeax
     elseif isa(maybeax, GridLayout) || isa(maybeax, Figure)
-        ax = maybeax[1, 1]
+        place = maybeax[1, 1]
     else
         throw(ArgumentError(f"maybeax type {typeof(maybeax)} is not recognised, must be Makie.AbstractAxis, GridPosition or GridLayout"))
     end
 
+    # Creates the ax if not already existing
     ax = if dim == 2
-        Axis(ax)
+        Axis(place)
     elseif dim == 3
         if !useaxis3
-            LScene(ax)
+            LScene(place)
         else
-            Axis3(ax)
+            Axis3(place)
         end
     else
         throw(ArgumentError("the layout dimension was not 2 or 3"))
     end
 
     if !isnothing(axis_labels)
-        p_set_axis_labels!(ax, axis_labels)
+        p_set_axis_labels!(place, axis_labels)
     end
 
     ax
@@ -164,6 +169,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     flabels=:auto,          # labeling nodes and edges
     fnlabels=:index,
     felabels=:auto,
+    makwargs=x -> (), # mutating function to apply to auto_kwargs just before plotting
     # the following can only be used for non-symbolics GMs
     ss=:auto,            # calculate steady state?
     ss_curgraph=nothing,
@@ -172,14 +178,14 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     n_color=:snow3,
     n_ss_size=:sqrt,
     n_ss_color=true,
-    n_ss_colormap=:viridis,
+    n_ss_colormap=:Oranges,
     n_ss_colorscale=identity,
     n_ss_colorrange=:auto,
     n_ss_colorbar=:auto,
     n_ss_colorbar_label=:auto,
     # color mappings for edge weights
     e_color=:auto,
-    e_colormap=:dense,
+    e_colormap=:BuPu,
     e_colorscale=:auto,
     e_colorrange=:auto,
     e_colorbar=:auto,
@@ -338,6 +344,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             throw(ArgumentError(f"felabels of {felabels} is not recognised"))
         end
     end
+
+    makwargs(auto_kwargs)
 
     plot = graphplot!(ax, plotgraph;
         layout,
