@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[top=20mm,bottom=30mm,left=20mm,right=20mm]{geometry}
+\usepackage[top=10mm,bottom=10mm,left=20mm,right=20mm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{parskip}
 \usepackage{abstract}
@@ -44,41 +44,57 @@
 \end{center}
 
 \begin{abstract}
-	\small
-    \textit{
-        I know this is too long (${\sim}260$ words), this is somewhat intentional so you can tell me what to cut out, in particular the "results" part is quite long and I don't love it and I need a more "zoomed-out" conclusion at the end.
-        I also have some notes and questions for myself and you at the end which also includes what the format this is meant to be.
-    }
-
-	% General introduction to topology in biology/biophysics - 84 words
+	% General introduction to topology in biology/biophysics - 98 words
 	Stochastic systems are key to many areas of biophysics as much of living matter takes place in a highly noisy environment.
 	However, despite this noisiness, many biological systems show a high degree or robustness.
 	A recent new direction in understanding this apparent paradox is the study of topology of stochastic systems\cite{muruganTopologicallyProtectedModes2017,tangTopologyProtectsChiral2021,soneHermitianNonHermitianTopology2024,zhengTopologicalMechanismRobust2024}.
-	Topological states can effectively reduce the dimensionality of the configurational space and thus can explain robustness without making specific assumptions about the mechanics of a system, while themselves being robust to local changes.
+	Topological states are general features of a class of systems that are modified but persist as parameters of the system are changed or noise alters it.
+	This persistence along with their ability to effectively reduce the dimensionality of the problem makes them a prime candidate for explaining this robustness.
+	% Topological states can effectively reduce the dimensionality of the configurational space and thus can explain robustness without making specific assumptions about the mechanics of a system, while themselves being robust to local changes.
 	% Getting into the project - ~110 words
-	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric assembly where each unit can change conformation and (de)phosphorylate.
-	The system is driven out of equilibrium by the inclusion of two different phosphorylation reactions: a direct reaction by (de)binding a phosphate group and one driven by ATP to ADP conversion.
-	We allow these to couple differently depending on subunit conformation as this is to only way for an isolated subunit to favour undergoing a futile cycle of phosphorylating, changing conformation, dephosphorylating and changing conformation back.
+	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric assembly where each subunit can change conformation and bind ligands.
+	We consider systems where isolated subunits would undergo futile cycles of binding a ligand, changing conformation, debinding and changing conformation back to its original state.
 	Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and give rise to topological currents when imposed artificially\cite{tangTopologyProtectsChiral2021}.
-	% Getting on to results - 83
-	We find that even without explicitly favouring futile cycles in the assembly, adding an energy cost to having a boundary between different conformations results in directed probability currents in the steady state.
-    If both this energy cost and the ATP concentration are large then we get a connected current loop as in \cref{fig:loop} corresponding to the macroscale equivalent of the futile cycle.
-    If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
 
+    % Kinda want to somehow make it clear we don't just aritificially impose them here
+
+	% Getting on to "results" - 83
+	% We find that even without explicitly favouring futile cycles in the assembly, adding an energy cost to having a boundary between different conformations results in directed probability currents in the steady state.
+	% If both this energy cost and the ATP concentration are large then we get a connected current loop as in \cref{fig:onlyfigure} corresponding to the macroscale equivalent of the futile cycle.
+	% If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
 \end{abstract}
 
-\vspace{1em}
-
-\printbibliography
-
+% \begin{abstract}
+% 	% General introduction to topology in biology/biophysics - 84 words
+% 	Stochastic systems are key to many areas of biophysics as much of living matter takes place in a highly noisy environment.
+% 	However, despite this noisiness, many biological systems show a high degree or robustness.
+% 	A recent new direction in understanding this apparent paradox is the study of topology of stochastic systems\cite{muruganTopologicallyProtectedModes2017,tangTopologyProtectsChiral2021,soneHermitianNonHermitianTopology2024,zhengTopologicalMechanismRobust2024}.
+% 	Topological states can effectively reduce the dimensionality of the configurational space and thus can explain robustness without making specific assumptions about the mechanics of a system, while themselves being robust to local changes.
+%
+% 	% Getting into the project - ~110 words
+% 	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric assembly where each unit can change conformation and (de)phosphorylate.
+% 	The system is driven out of equilibrium by the inclusion of two different phosphorylation reactions: a direct reaction by (de)binding a phosphate group and one driven by ATP to ADP conversion.
+% 	We allow these to couple differently depending on subunit conformation as this is to only way for an isolated subunit to favour undergoing a futile cycle of phosphorylating, changing conformation, dephosphorylating and changing conformation back.
+% 	Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and give rise to topological currents when imposed artificially\cite{tangTopologyProtectsChiral2021}.
+%
+% 	% Getting on to "results" - 83
+% 	We find that even without explicitly favouring futile cycles in the assembly, adding an energy cost to having a boundary between different conformations results in directed probability currents in the steady state.
+% 	If both this energy cost and the ATP concentration are large then we get a connected current loop as in \cref{fig:loop} corresponding to the macroscale equivalent of the futile cycle.
+% 	If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
+% \end{abstract}
+%
 \vspace{1em}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{figure.png}
-    \caption{
-    }\label{fig:onlyfigure}
+	\caption{
+	}\label{fig:onlyfigure}
 \end{figure}
+
+\vspace{1em}
+
+\printbibliography
 
 % \begin{figure}[H]
 % 	\centering
@@ -93,7 +109,24 @@
 % \end{figure}
 %
 \newpage
-\section{Notes}
+\section{New Notes}
+\subsection{Questions and things to discuss}
+\begin{itemize}
+	\item Is the title ok? Should it include "thermodynamically consistent"?
+	\item Little Things \begin{itemize}
+		      \item Should I explicitly list what our futile cycle is? It's a bit long and perhaps obvious but I think it's nice to give a concrete, simple thing to visualize.
+              \item I should probably check that using "artificially" where I do is appropriate.
+	      \end{itemize}
+\end{itemize}
+
+\subsection{General}
+\begin{itemize}
+	\item So going for \textbf{Clocks, timers and cell cycle dynamics} topic
+	\item Can I squeeze in "non-Hermitian topology" somewhere (I have some references for it, and it is relevant)?
+\end{itemize}
+
+\newpage
+\section{Old Notes}
 \paragraph{Format}
 For POL2025 (the one due on the 6th) it should be 250 words, include references and up to 1 figure.
 \paragraph{Topic}
@@ -111,8 +144,8 @@ Others that may be relevant:
 \begin{itemize}
 	\item Approach to talk about a project that has only just started?
 	\item Should I be talking about allostery or not so much? It seems relevant and as an interesting topic but it's not really a core ingredient in it.
-    \item I'm a bit worried that the only "result" is a bit obvious once you think about it. If we add a penalty for NN having different conformation then of course the ones with all the same conformation will be preferred. Then if all are in conformation 1 (tense) then they are ATP driven to bind ligands so they do so. After that they are by our choice of parameters not favoured to debind hence the only thing they can do is change conformation. The same sort of reasoning then completes the cycle.
-    \item Is an ArXiV citation admissible here?\cite{soneHermitianNonHermitianTopology2024}
+	\item I'm a bit worried that the only "result" is a bit obvious once you think about it. If we add a penalty for NN having different conformation then of course the ones with all the same conformation will be preferred. Then if all are in conformation 1 (tense) then they are ATP driven to bind ligands so they do so. After that they are by our choice of parameters not favoured to debind hence the only thing they can do is change conformation. The same sort of reasoning then completes the cycle.
+	\item Is an ArXiV citation admissible here?\cite{soneHermitianNonHermitianTopology2024}
 \end{itemize}
 
 \subsection{Key points to cover}
