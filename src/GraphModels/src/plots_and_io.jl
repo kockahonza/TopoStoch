@@ -68,7 +68,7 @@ function p_make_ax(dim, maybeax, axis_labels=nothing; useaxis3=false)
     end
 
     if !isnothing(axis_labels)
-        p_set_axis_labels!(place, axis_labels)
+        p_set_axis_labels!(ax, axis_labels)
     end
 
     ax
