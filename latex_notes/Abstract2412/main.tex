@@ -53,47 +53,12 @@
     % Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and can give rise to topological edge currents\cite{tangTopologyProtectsChiral2021}.
     When the subunits allosterically interact with each other we find global cycles at the scale of the assembly, analogous to topological edge currents in quantum systems.
     We map out the kinetics, energetics, and biochemical interactions necessary to obtain distinct classes of topological behaviour.
-
     % Results-ish ->
-    %     it is a very nice and elegant model
-    %     it shows that complicated biological mechanisms may not always be necessary
-    Our results suggest that topological states provide a more minimal/succinct description of molecular systems showing robust oscillations such as circadian clock (e.g. KaiABC, microt).
-    Our results suggest that topological states provide a more minimal/succinct description of coordination in molecular assemblies such as circadian oscillators (e.g. KaiABC).
+    Our results show that stereotyped dynamics can be a result of non-equilibrium drive only, not necessitating a specific mechanism.
+    In particular, we suggest that topological states can provide a minimal description of coordination in molecular systems such as circadian clocks (e.g. KaiABC) or polymer assembly (e.g. microtubules).
 
-    More generally our framework suggest that stereotyped behaviour may be a result of non-equilibrium drive only.
-    
-    % Upon joining the subunits with a nearest-neighbor interaction however, the small futile cycles fall apart, and we look for open of closed directed currents in the overall assembly dynamics (\cref{fig:onlyfigure}).
-    % Such closed loops in the macroscopic dynamics could help understand highly robust, out-of-equilibrium systems such as the KaiABC molecular clock\cite{zhengTopologicalMechanismRobust2024} or \ldots.
-
-    % Bit of a conclusion
-
-    % Kinda want to somehow make it clear we don't just aritificially impose them here
-
-	% Getting on to "results" - 83
-	% We find that even without explicitly favouring futile cycles in the assembly, adding an energy cost to having a boundary between different conformations results in directed probability currents in the steady state.
-	% If both this energy cost and the ATP concentration are large then we get a connected current loop as in \cref{fig:onlyfigure} corresponding to the macroscale equivalent of the futile cycle.
-	% If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
 \end{abstract}
 
-% \begin{abstract}
-% 	% General introduction to topology in biology/biophysics - 84 words
-% 	Stochastic systems are key to many areas of biophysics as much of living matter takes place in a highly noisy environment.
-% 	However, despite this noisiness, many biological systems show a high degree or robustness.
-% 	A recent new direction in understanding this apparent paradox is the study of topology of stochastic systems\cite{muruganTopologicallyProtectedModes2017,tangTopologyProtectsChiral2021,soneHermitianNonHermitianTopology2024,zhengTopologicalMechanismRobust2024}.
-% 	Topological states can effectively reduce the dimensionality of the configurational space and thus can explain robustness without making specific assumptions about the mechanics of a system, while themselves being robust to local changes.
-%
-% 	% Getting into the project - ~110 words
-% 	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric assembly where each unit can change conformation and (de)phosphorylate.
-% 	The system is driven out of equilibrium by the inclusion of two different phosphorylation reactions: a direct reaction by (de)binding a phosphate group and one driven by ATP to ADP conversion.
-% 	We allow these to couple differently depending on subunit conformation as this is to only way for an isolated subunit to favour undergoing a futile cycle of phosphorylating, changing conformation, dephosphorylating and changing conformation back.
-% 	Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and give rise to topological currents when imposed artificially\cite{tangTopologyProtectsChiral2021}.
-%
-% 	% Getting on to "results" - 83
-% 	We find that even without explicitly favouring futile cycles in the assembly, adding an energy cost to having a boundary between different conformations results in directed probability currents in the steady state.
-% 	If both this energy cost and the ATP concentration are large then we get a connected current loop as in \cref{fig:loop} corresponding to the macroscale equivalent of the futile cycle.
-% 	If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
-% \end{abstract}
-%
 \vfill
 \begin{figure}[H]
 	\centering
@@ -103,18 +68,6 @@
 \newpage
 \printbibliography
 
-% \begin{figure}[H]
-% 	\centering
-% 	\includegraphics[width=\textwidth]{../../plots/aaa_B=1_C=2_N=4_version=2.5.png}
-%     \caption{
-%         Graph visualization of our system for a looped assembly of 4 subunits each of which can be in one of two conformations and bind up to one phosphate group.
-%         Subunits in conformation 1 are driven by ATP to bind a phosphate, subunits in conformation 2 are not and will unbind the phosphate (corresponding to high ATP and low ADP and P concentrations).
-%         Each node corresponds to a different microstate (though many are overlaid), their labels showing the number of bound ligands and the number of subunits in conformation 2.
-%         The node and edge colours correspond to the steady state probabilities of occupying a particular microstate and the corresponding net probability currents between them.
-%         This system is non-allosteric meaning all the substates of each monomer have the same energy, the only energy term in the model is an energy cost of $2\si{k}T$ per boundary between different conformations.
-%     }\label{fig:loop}
-% \end{figure}
-%
 \newpage
 \section{New Notes}
 \subsection{Questions and things to discuss}

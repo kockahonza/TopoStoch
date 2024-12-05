@@ -27,16 +27,16 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1596"
-     inkscape:window-height="972"
+     inkscape:window-height="949"
      id="namedview649"
      showgrid="true"
-     inkscape:zoom="1"
-     inkscape:cx="264"
-     inkscape:cy="161"
+     inkscape:zoom="1.1214629"
+     inkscape:cx="293.36681"
+     inkscape:cy="205.5351"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g42"
+     inkscape:current-layer="layer4"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
@@ -1392,7 +1392,7 @@
          sodipodi:role="line"
          id="tspan73"
          x="221.43347"
-         y="241.2652">Connected Network</tspan></text>
+         y="241.2652">Transition Network</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -1985,10 +1985,17 @@
          transform="rotate(-90)" />
       <circle
          r="4.0007825"
-         cy="588.25757"
-         cx="-239.86333"
+         cy="621.44318"
+         cx="-238.395"
          id="path11069-6-6-6-3-8-3-9-0-8-9"
          style="font-style:normal;font-weight:normal;font-size:12px;font-family:Dialog;opacity:1;color-interpolation:auto;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:0.824963;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto"
+         transform="rotate(-90)" />
+      <circle
+         r="4.0007825"
+         cy="635.41327"
+         cx="-215.41327"
+         id="path11069-6-6-6-3-8-3-9-0-8-9-6"
+         style="font-style:normal;font-weight:normal;font-size:12px;font-family:Dialog;color-interpolation:auto;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:0.824963;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto"
          transform="rotate(-90)" />
     </g>
     <g
