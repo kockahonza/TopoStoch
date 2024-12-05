@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[top=10mm,bottom=10mm,left=20mm,right=20mm]{geometry}
+\usepackage[top=20mm,bottom=30mm,left=20mm,right=20mm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{parskip}
 \usepackage{abstract}
@@ -36,7 +36,7 @@
 \pagenumbering{gobble}
 \begin{center}
 	\LARGE
-	\textbf{Topological States in Out-of-Equilibrium Allosteric Assemblies} \\
+	\textbf{Topological States in Out-of-Equilibrium\\Allosteric Molecular Assemblies} \\
 	\vspace{0.3em}
 	\normalsize
 	\textit{Jan Kocka}
@@ -46,15 +46,24 @@
 \begin{abstract}
 	% General introduction to topology in biology/biophysics - 98 words
 	Stochastic systems are key to many areas of biophysics as much of living matter takes place in a highly noisy environment.
-	However, despite this noisiness, many biological systems show a high degree or robustness.
+	However despite this noisiness, many biological systems show a high degree or robustness.
 	A recent new direction in understanding this apparent paradox is the study of topology of stochastic systems\cite{muruganTopologicallyProtectedModes2017,tangTopologyProtectsChiral2021,soneHermitianNonHermitianTopology2024,zhengTopologicalMechanismRobust2024}.
 	Topological states are general features of a class of systems that are modified but persist as parameters of the system are changed or noise alters it.
 	This persistence along with their ability to effectively reduce the dimensionality of the problem makes them a prime candidate for explaining this robustness.
 	% Topological states can effectively reduce the dimensionality of the configurational space and thus can explain robustness without making specific assumptions about the mechanics of a system, while themselves being robust to local changes.
 	% Getting into the project - ~110 words
-	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric assembly where each subunit can change conformation and bind ligands.
-	We consider systems where isolated subunits would undergo futile cycles of binding a ligand, changing conformation, debinding and changing conformation back to its original state.
-	Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and give rise to topological currents when imposed artificially\cite{tangTopologyProtectsChiral2021}.
+	In this study we look for topological features in a non-equilibrium, thermodynamically consistent stochastic model of an allosteric molecular assembly where each subunit can change conformation and bind ligands.
+    Our master equation model is based on considering multiple chemical reactions, the rates of which depend on chemical concentrations.
+	We then investigate such environments where isolated subunits would undergo futile cycles of binding a ligand, changing conformation, debinding and changing conformation back to its original state.
+	% We then consider those systems where isolated subunits would undergo futile cycles of binding a ligand, changing conformation, debinding and changing conformation back to its original state.
+	% Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and give rise to topological currents when imposed artificially\cite{tangTopologyProtectsChiral2021}.
+	Such futile cycles are common in biological settings\cite{sharmaFutileCyclesEmerging2024,samoilovStochasticAmplificationSignaling2005} and can give rise to topological edge currents\cite{tangTopologyProtectsChiral2021}.
+    % Upon joining the subunits with a nearest-neighbor interaction however, those small futile cycles fall apart.
+    % We look for topological states in the overall assembly dynamics, in particular open or closed edge states similar to those reported before.
+    Upon joining the subunits with a nearest-neighbor interaction however, the small futile cycles fall apart, and we look for open of closed directed currents in the overall assembly dynamics (\cref{fig:onlyfigure}).
+    Such closed loops in the macroscopic dynamics could help understand highly robust, out-of-equilibrium systems such as the KaiABC molecular clock\cite{zhengTopologicalMechanismRobust2024} or \ldots.
+
+    % Bit of a conclusion
 
     % Kinda want to somehow make it clear we don't just aritificially impose them here
 
@@ -83,17 +92,14 @@
 % 	If either is reduced, this loops breaks in one place and the current is transferred along a diffuse network through the gap.
 % \end{abstract}
 %
-\vspace{1em}
-
+\vfill
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{figure.png}
-	\caption{
-	}\label{fig:onlyfigure}
+	\caption{ }\label{fig:onlyfigure}
 \end{figure}
 
-\vspace{1em}
-
+\newpage
 \printbibliography
 
 % \begin{figure}[H]
@@ -112,10 +118,14 @@
 \section{New Notes}
 \subsection{Questions and things to discuss}
 \begin{itemize}
-	\item Is the title ok? Should it include "thermodynamically consistent"?
+	\item Title! Right now it is very clunky. Should it include "thermodynamically consistent"?
+	\item Should I reference the figure from the abstract?
+    \item Conclusion bit! Very much not sure about it as it is -- is it too short? Should I specifically cite the paper I do there as that really proposes a similar but different model for it, or should I instead highlight the locality difference we add to it? Not sure
 	\item Little Things \begin{itemize}
 		      \item Should I explicitly list what our futile cycle is? It's a bit long and perhaps obvious but I think it's nice to give a concrete, simple thing to visualize.
               \item I should probably check that using "artificially" where I do is appropriate.
+              \item "this robustness" $\rightarrow$ "biological robustness"?
+              \item Is "We consider" acceptable language?
 	      \end{itemize}
 \end{itemize}
 
