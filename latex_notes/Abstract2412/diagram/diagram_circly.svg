@@ -27,16 +27,16 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1596"
-     inkscape:window-height="949"
+     inkscape:window-height="972"
      id="namedview649"
      showgrid="true"
-     inkscape:zoom="1.1214629"
-     inkscape:cx="293.36681"
-     inkscape:cy="205.5351"
+     inkscape:zoom="1.585988"
+     inkscape:cx="307.37937"
+     inkscape:cy="226.98784"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer3"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
@@ -1322,13 +1322,6 @@
          style="font-style:normal;font-weight:normal;font-size:12px;font-family:Dialog;color-interpolation:auto;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:0.412482;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto"
          transform="matrix(0,1,1,0,0,0)" />
     </g>
-    <ellipse
-       style="fill:none;fill-opacity:1;stroke:#1a1a1a;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal"
-       id="path57"
-       cx="329.69662"
-       cy="235.35754"
-       rx="175"
-       ry="85" />
     <path
        style="fill:none;fill-opacity:1;stroke:#4d4d4d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:1, 4;stroke-dashoffset:0;stroke-opacity:1;marker-start:url(#marker72);marker-end:url(#marker73);paint-order:normal"
        d="m 342,127 -0.5,30"
@@ -1386,13 +1379,14 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:24px;font-family:Dialog;-inkscape-font-specification:'Dialog, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;color-interpolation:auto;fill:#666666;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto"
-       x="221.43347"
-       y="241.2652"
+       x="185.27922"
+       y="241.65138"
        id="text73"><tspan
          sodipodi:role="line"
          id="tspan73"
-         x="221.43347"
-         y="241.2652">Transition Network</tspan></text>
+         x="185.27922"
+         y="241.65138"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.3333px;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Bulk of the Transition Network</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
