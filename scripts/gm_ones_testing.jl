@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm_ones.jl"))
+using Ones
 
 # Making OneGMs
 function make_big(N)

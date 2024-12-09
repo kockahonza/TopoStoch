@@ -6,9 +6,8 @@ using Reexport
 
 @reexport using PyFormattedStrings
 
-@reexport using DrWatson
 @reexport using StaticArrays, ElasticArrays, SparseArrays
-@reexport using LinearAlgebra: eigen
+@reexport using LinearAlgebra: eigen!
 @reexport using Graphs, SimpleWeightedGraphs, NetworkLayout
 @reexport using Makie, GraphMakie, Colors
 @reexport using Symbolics

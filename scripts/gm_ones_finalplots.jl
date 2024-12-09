@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 
-includet(srcdir("gm_ones.jl"))
+using Ones
 
 function make_c2d_simplecyle_plots()
     for i in 1:4

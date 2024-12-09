@@ -2,7 +2,7 @@
 
 julia_version = "1.10.7"
 manifest_format = "2.0"
-project_hash = "49f2ab15217c67c81c9ce6914570911ee288f6aa"
+project_hash = "fe710c20a3f6078150031e81210a0d6dc642ce78"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "72af59f5b8f09faee36b4ec48e014a79210f2f4f"
@@ -583,7 +583,7 @@ uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
 version = "5.2.2+0"
 
 [[deps.GillespieSim]]
-deps = ["Dates", "GraphModels", "HDF5"]
+deps = ["Dates", "DrWatson", "GraphModels", "HDF5"]
 path = "../src/GillespieSim"
 uuid = "c2240f19-2687-4a3d-b9e4-4041323e7376"
 version = "0.1.0"
@@ -1143,6 +1143,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "887579a3eb005446d514ab7aeac5d1d027658b8f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.5+1"
+
+[[deps.Ones]]
+deps = ["GraphModels", "Reexport"]
+path = "../src/Ones"
+uuid = "bb73fc91-b484-456e-8aad-82f3882d5f42"
+version = "0.1.0"
 
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]

@@ -5,6 +5,8 @@ version = "0.1.0"
 
 [deps]
 ComplexAllostery = "cb963ee1-309c-4455-b8c2-80df2e9615da"
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 GillespieSim = "c2240f19-2687-4a3d-b9e4-4041323e7376"
 GraphModels = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
 LetterCodes = "749c46c1-aae5-4bd8-99a0-1759d7592416"
+Ones = "bb73fc91-b484-456e-8aad-82f3882d5f42"

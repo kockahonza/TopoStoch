@@ -1,0 +1,8 @@
+name = "Ones"
+uuid = "bb73fc91-b484-456e-8aad-82f3882d5f42"
+authors = ["Jan Kocka <kockahonza@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+GraphModels = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"

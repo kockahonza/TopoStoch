@@ -7,6 +7,7 @@ module GillespieSim
 
 using GraphModels
 
+using DrWatson
 using HDF5
 import Dates
 

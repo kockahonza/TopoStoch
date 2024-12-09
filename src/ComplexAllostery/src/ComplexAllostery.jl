@@ -1,8 +1,7 @@
 module ComplexAllostery
 
 using Reexport
-
-@reexport using GraphModels # This reexports many of its dependencies
+@reexport using GraphModels
 
 using PrettyTables
 

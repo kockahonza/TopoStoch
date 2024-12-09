@@ -1,9 +1,7 @@
-using DrWatson
-@quickactivate "TopoStochSim"
+module Ones
 
-using Revise
-
-using GraphModels
+using Reexport
+@reexport using GraphModels
 
 import GraphModels: graph, numstates, allstates
 import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
@@ -16,6 +14,7 @@ abstract type Symmetry end
 struct Chain <: Symmetry end
 struct Loop <: Symmetry end
 broadcastable(s::Symmetry) = Ref(s)
+export Chain, Loop
 
 struct OnesGM{S<:Symmetry,F} <: AbstractGraphModel{F}
     N::Int
@@ -49,14 +48,17 @@ function show(io::IO, mime::MIME"text/plain", ogm::OnesGM{S,F}) where {S,F}
     end
 end
 graph(ogm::OnesGM) = ogm.graph
+export OnesGM
 
 numstates_ones(N) = 2^N
 numstates(ogm::OnesGM) = numstates_ones(ogm.N)
 
 itostate(i, N) = digits(i - 1; base=2, pad=N)
 itostate(i, ogm::OnesGM) = itostate(i, ogm.N)
+export itostate
 
 statetoi(state) = 1 + sum(state[i] * 2^(i - 1) for i in 1:length(state))
+export statetoi
 
 allstates_ones(N) = itostate.(1:numstates_ones(N), N)
 allstates(ogm::OnesGM) = allstates_ones(ogm.N)
@@ -100,6 +102,7 @@ function calc_numboundaries(_::Loop, vect::Vector)
     end
     numboundaries
 end
+export calc_numboundaries
 
 function subin!(vect::Vector, i, subvect::Vector)
     for j in 1:length(subvect)
@@ -196,6 +199,7 @@ function plot_ogm_min(args...; ecutoff=1.1, amin=0.2, amax=1.0, kwargs...)
         kwargs...
     )
 end
+export plot_ogm_min
 
 ################################################################################
 # General edge adding functions
@@ -218,6 +222,7 @@ function add_edges_cycle!(ogm::OnesGM{S}, cycle; weight=1.0) where {S}
         end
     end
 end
+export add_edges_cycle!
 
 function add_edges_wcycle!(ogm::OnesGM{S}, wcycle) where {S}
     for i in 1:numstates(ogm)
@@ -237,6 +242,7 @@ function add_edges_wcycle!(ogm::OnesGM{S}, wcycle) where {S}
         end
     end
 end
+export add_edges_wcycle!
 
 """
 This should really accomplish the same as add_edges_cycle! just scaled
@@ -249,6 +255,7 @@ function add_edges_cycleall!(ogm::OnesGM, cycle; kwargs...)
         add_edges_cycle!(ogm, cycle_; kwargs...)
     end
 end
+export add_edges_cycleall!
 
 ################################################################################
 # Making OnesGMs
@@ -262,6 +269,7 @@ function make_single_cycle(N, cycle, symmetry::Symmetry=Loop(); kwargs...)
     add_edges_cycle!(ogm, cycle; kwargs...)
     ogm
 end
+export make_single_cycle
 
 function make_multi_cycle(N, symmetry::Symmetry, cyclesandweights...; kwargs...)
     ogm = OnesGM(N;
@@ -278,6 +286,7 @@ function make_multi_cycle(N, symmetry::Symmetry, cyclesandweights...; kwargs...)
     end
     ogm
 end
+export make_multi_cycle
 
 # Same but have different rates
 function make_single_wcycle(N, wcycle, symmetry::Symmetry=Loop(); kwargs...)
@@ -288,6 +297,7 @@ function make_single_wcycle(N, wcycle, symmetry::Symmetry=Loop(); kwargs...)
     add_edges_wcycle!(ogm, wcycle; kwargs...)
     ogm
 end
+export make_single_wcycle
 
 """
 Get any of the interesting 2 digit cycles
@@ -301,6 +311,7 @@ function get_c2d_int(i)
     ]
     xx[i]
 end
+export get_c2d_int
 
 ################################################################################
 # Util
@@ -311,3 +322,6 @@ plotgm_save_kwargs() = (;
     flabels=true,
     fnlabels=:repr
 )
+export plotgm_save_kwargs
+
+end # module Ones

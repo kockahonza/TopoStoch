@@ -93,7 +93,7 @@ function vars_simplified(;
 
     if isnothing(energies) || (energies == false)
         energies = base.energies
-    elseif energies == :noall
+    elseif energies == :nocb
         energies = SA[0.0, 0.0, base.energies[end]]
     elseif (isa(energies, AbstractVector) || isa(energies, Tuple))
         if length(energies) == 2
