@@ -1,9 +1,10 @@
-name = "ComplexAllostery"
-uuid = "cb963ee1-309c-4455-b8c2-80df2e9615da"
+name = "WSymbolics"
+uuid = "5e012518-523a-4552-8358-9c786410efff"
 authors = ["Jan Kocka <kockahonza@gmail.com>"]
 version = "0.1.0"
 
 [deps]
 GraphModels = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
-PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+SymbolicsMathLink = "7963cd39-1b62-4514-9cf0-788fb5452611"

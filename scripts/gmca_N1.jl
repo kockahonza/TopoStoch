@@ -8,6 +8,9 @@ using GLMakie
 using ComplexAllostery
 using ComplexAllostery.Model2_5_C2
 
+# Has to be last as it uses Requires
+using WSymbolics
+
 function N1sscur(; dofull=false, symmetry=Loop())
     vars = if dofull
         vars_base()

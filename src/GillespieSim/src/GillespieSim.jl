@@ -4,12 +4,13 @@ output in jld2 files which includes the whole trajectory or observables,
 optionally does some plotting
 """
 module GillespieSim
-using ..GraphModels
+
+using GraphModels
 
 using HDF5
+import Dates
 
 using Base.Threads
-import Dates
 
 import Base: close
 

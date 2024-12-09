@@ -1,17 +1,3 @@
-# Little things
-function tuplevariables(args...)
-    tuple(variables(args...)...)
-end
-# NOTE: These are definitely not type stable!
-function savariables(symbol, args...)
-    lenghts = filter(x -> x != 1, length.(args))
-    SArray{Tuple{lenghts...},Num,length(lenghts)}(variables(symbol, args...)...)
-end
-function listsavariables(symbols...)
-    SVector(variable.(symbols)...)
-end
-export tuplevariables, savariables, listsavariables
-
 ################################################################################
 # Concretizing symbolic objects
 ################################################################################
@@ -119,73 +105,6 @@ end
 export make_factory
 
 ################################################################################
-# Dealing with wolfram
-################################################################################
-include("letter_codes.jl")
-
-function substitute_safenames(obj)
-    terms = Dict{Num,Num}()
-    code = Code()
-    for var in get_variables(obj)
-        terms[var] = Symbolics.variable(repr(code))
-        increment!(code)
-    end
-    rev_terms = map(reverse, collect(terms))
-    ssubstitute(obj, terms), rev_terms
-end
-export substitute_safenames
-
-towolfram = SymbolicsMathLink.expr_to_mathematica
-
-function prep_for_wolfram(obj)
-    sobj, rt = substitute_safenames(obj)
-    towolfram(sobj), rt
-end
-export prep_for_wolfram
-
-function make_safe(safe, obj)
-    if safe
-        sobj, rt = substitute_safenames(obj)
-        sobj, (srlst -> ssubstitute(srlst, rt))
-    else
-        obj, identity
-    end
-end
-
-function w_simplify(obj; full=false, safe=true)
-    obj, desafe = make_safe(safe, obj)
-    cmd = full ? "FullSimplify" : "Simplify"
-    rslt = wcall.(cmd, obj)
-    desafe(rslt)
-end
-export w_simplify
-
-function swcall(cmd, obj; safe=true)
-    obj, desafe = make_safe(safe, obj)
-    rslt = wcall.(cmd, obj)
-    desafe(rslt)
-end
-export swcall
-
-# TODO: This should be updated to use Eigensystem
-function w_eigen(matrix; safe=true)
-    matrix, desafe = make_safe(safe, matrix)
-    rslt = wcall("Eigensystem", collect(matrix))
-    (evals=desafe(rslt[1]), evecs=desafe.(rslt[2]))
-end
-export w_eigen
-
-function w_test_eigen(matrix; eigen_func=w_eigen, safe=false)
-    (evals, evecs) = eigen_func(matrix; safe)
-    residues = []
-    for (eval, evec) in zip(evals, evecs)
-        coeffs = (matrix * evec) ./ evec
-        push!(residues, w_simplify(coeffs .- eval; safe))
-    end
-    residues
-end
-
-################################################################################
 # Util
 ################################################################################
 """
@@ -210,6 +129,18 @@ function safemat_general(matrix)
 end
 export safemat_general
 
+function substitute_safenames(obj)
+    terms = Dict{Num,Num}()
+    code = Code()
+    for var in get_variables(obj)
+        terms[var] = Symbolics.variable(repr(code))
+        increment!(code)
+    end
+    rev_terms = map(reverse, collect(terms))
+    ssubstitute(obj, terms), rev_terms
+end
+export substitute_safenames
+
 function get_rewriter()
     rule_divexp = @rule ~y / exp(~x) => ~y * exp(-~x)
     rules_explog = [
@@ -230,3 +161,17 @@ function convert(::Type{T}, num::Num) where {T<:Number}
     up = Symbolics.unwrap(num)
     convert(T, up)
 end
+
+# Helpers for defining variables
+function tuplevariables(args...)
+    tuple(variables(args...)...)
+end
+# NOTE: These are definitely not type stable!
+function savariables(symbol, args...)
+    lenghts = filter(x -> x != 1, length.(args))
+    SArray{Tuple{lenghts...},Num,length(lenghts)}(variables(symbol, args...)...)
+end
+function listsavariables(symbols...)
+    SVector(variable.(symbols)...)
+end
+export tuplevariables, savariables, listsavariables

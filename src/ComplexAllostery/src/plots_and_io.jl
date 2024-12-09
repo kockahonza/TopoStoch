@@ -97,16 +97,16 @@ function p_do_layout(ca::ComplexAllosteryGM, layout=nothing, roffset_devs=nothin
     invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ca, layout, roffset_devs)
 end
 
-function plotgm_kwarg_defaults(_::ComplexAllosteryGM{S,Num}) where {S}
-    fnlabels = if numstates(gm) < 10
+function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,Num}) where {S}
+    fnlabels = if numstates(ca) < 10
         :repr
     else
         labelstate_NR
     end
     (; fnlabels)
 end
-function plotgm_kwarg_defaults(gm::ComplexAllosteryGM{S,<:AbstractFloat}) where {S}
-    fnlabels = if numstates(gm) < 10
+function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,<:AbstractFloat}) where {S}
+    fnlabels = if numstates(ca) < 10
         :repr
     else
         labelstate_NR

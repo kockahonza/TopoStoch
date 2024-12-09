@@ -1,0 +1,8 @@
+name = "BasicSim"
+uuid = "b515daa7-1388-4553-9d39-5e927a601b9c"
+authors = ["Jan Kocka <kockahonza@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+GraphModels = "3e0d65c3-3d24-474c-94c6-a6307623ad86"

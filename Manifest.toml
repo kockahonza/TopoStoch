@@ -2,7 +2,7 @@
 
 julia_version = "1.10.7"
 manifest_format = "2.0"
-project_hash = "4f2264438c1bacd4c30989b3a20f34bab1ac7b93"
+project_hash = "99654be988fe3d0df9ad8223b46c5cecc2df6f91"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "72af59f5b8f09faee36b4ec48e014a79210f2f4f"
@@ -153,6 +153,12 @@ version = "0.4.7"
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
+[[deps.BasicSim]]
+deps = ["GLMakie", "GraphModels"]
+path = "src/BasicSim"
+uuid = "b515daa7-1388-4553-9d39-5e927a601b9c"
+version = "0.1.0"
+
 [[deps.BenchmarkTools]]
 deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
 git-tree-sha1 = "f1dff6729bc61f4d49e140da1af55dcd1ac97b2f"
@@ -294,7 +300,7 @@ uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.1+0"
 
 [[deps.ComplexAllostery]]
-deps = ["GLMakie", "GraphModels", "PrettyTables", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "Symbolics"]
+deps = ["GraphModels", "PrettyTables", "Reexport"]
 path = "src/ComplexAllostery"
 uuid = "cb963ee1-309c-4455-b8c2-80df2e9615da"
 version = "0.1.0"
@@ -675,6 +681,12 @@ git-tree-sha1 = "0224cce99284d997f6880a42ef715a37c99338d1"
 uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
 version = "5.2.2+0"
 
+[[deps.GillespieSim]]
+deps = ["Dates", "GraphModels", "HDF5"]
+path = "src/GillespieSim"
+uuid = "c2240f19-2687-4a3d-b9e4-4041323e7376"
+version = "0.1.0"
+
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
 git-tree-sha1 = "b36c7e110080ae48fdef61b0c31e6b17ada23b33"
@@ -688,7 +700,7 @@ uuid = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 version = "0.5.12"
 
 [[deps.GraphModels]]
-deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GLMakie", "GraphMakie", "Graphs", "HDF5", "JLD2", "LinearAlgebra", "Makie", "MathLink", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "StatsBase", "SymbolicUtils", "Symbolics", "SymbolicsMathLink"]
+deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GraphMakie", "Graphs", "JLD2", "LetterCodes", "LinearAlgebra", "Makie", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "SymbolicUtils", "Symbolics"]
 path = "src/GraphModels"
 uuid = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
 version = "0.1.0"
@@ -1012,6 +1024,11 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 git-tree-sha1 = "a560dd966b386ac9ae60bdd3a3d3a326062d3c3e"
 uuid = "8cdb02fc-e678-4876-92c5-9defec4f444e"
 version = "0.3.1"
+
+[[deps.LetterCodes]]
+path = "src/LetterCodes"
+uuid = "749c46c1-aae5-4bd8-99a0-1759d7592416"
+version = "0.1.0"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -1942,6 +1959,12 @@ deps = ["ConstructionBase"]
 git-tree-sha1 = "25008b734a03736c41e2a7dc314ecb95bd6bbdb0"
 uuid = "a7c27f48-0311-42f6-a7f8-2c11e75eb415"
 version = "0.1.6"
+
+[[deps.WSymbolics]]
+deps = ["GraphModels", "Reexport", "Requires", "SymbolicsMathLink"]
+path = "src/WSymbolics"
+uuid = "5e012518-523a-4552-8358-9c786410efff"
+version = "0.1.0"
 
 [[deps.Wayland_jll]]
 deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]

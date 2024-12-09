@@ -2,7 +2,7 @@
 Super naive simulation using plotgm and graph only
 """
 module BasicSim
-using ..GraphModels
+using GraphModels
 
 using GLMakie # Needed for making clearing plots on Ctrl-C
 

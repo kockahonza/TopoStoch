@@ -1,0 +1,4 @@
+name = "LetterCodes"
+uuid = "749c46c1-aae5-4bd8-99a0-1759d7592416"
+authors = ["Jan Kocka <kockahonza@gmail.com>"]
+version = "0.1.0"

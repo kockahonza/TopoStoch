@@ -1,19 +1,21 @@
 module GraphModels
 
+using LetterCodes
+
 using Reexport
 
 @reexport using PyFormattedStrings
 
 @reexport using DrWatson
-@reexport using LinearAlgebra, StatsBase, StaticArrays, ElasticArrays, SparseArrays
+@reexport using StaticArrays, ElasticArrays, SparseArrays
+@reexport using LinearAlgebra: eigen
 @reexport using Graphs, SimpleWeightedGraphs, NetworkLayout
 @reexport using Makie, GraphMakie, Colors
-@reexport using Symbolics, MathLink, SymbolicsMathLink
+@reexport using Symbolics
 @reexport using Symbolics: variable, variables
 @reexport using JLD2
-
-import Dates
 @reexport import PlotUtils
+import Dates
 
 import Base: copy, broadcastable, show, display, convert
 import Base: push!, getindex, length, iterate, view
@@ -114,7 +116,5 @@ include("util.jl")     # Has bits of GM API
 include("manipulations.jl")
 include("symbolics.jl")     # Has bits of GM API
 include("plots_and_io.jl")            # Has bits of GM API
-include("BasicSim.jl")
-include("GillespieSim.jl")
 
 end # module GraphModels

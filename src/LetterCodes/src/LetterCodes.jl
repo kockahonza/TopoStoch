@@ -1,4 +1,8 @@
+module LetterCodes
+
 import Base: repr, string
+
+export Code, increment!
 
 mutable struct Code
     first::Char
@@ -24,4 +28,6 @@ function increment!(c::Code)
         c.code[end] = last + 1
     end
     c
+end
+
 end
