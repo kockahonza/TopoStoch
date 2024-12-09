@@ -6,37 +6,143 @@ optionally does some plotting
 module GillespieSim
 using ..GraphModels
 
-mutable struct Gillespie
-    # The model info in a fast, accesible manner
-    graph::AbstractGraph{Int}
-    # Saving data
+using HDF5
+
+using Base.Threads
+import Dates
+
+import Base: close
+
+################################################################################
+# Main, performance-critical Gillespie struct AbstractGillespieSaver API
+################################################################################
+"""
+T and F correspond to some integer and floating point number types.
+Realistically I might have as well made them concrete Int and FLoat64 but
+I guess this is a little more general.
+"""
+mutable struct Gillespie{T,F}
+    graph::SimpleWeightedDiGraph{T,F}
     # Current state
-    cur_time::Float64
-    cur_state::Int
+    cur_time::F
+    cur_state::T
 end
-# export Gillespie
+export Gillespie
 
-function new_gillespie_run(
-    gm::AbstractGraphModel{<:AbstractFloat}
-)
-    Gillespie(graph(gm), 0, rand(1:numstates(gm)))
+"""
+Some saver that will work with `Gillespie{T,F}` types. It has to at least save
+a time series of type `F` and which can be accessed through `times`.
+"""
+abstract type AbstractGillespieSaver{T,F} end
+function save!(saver::AbstractGillespieSaver{T,F}, _::Gillespie{T,F}) where {T,F}
+    throw(ErrorException(f"No method of \"save!\" was provided for type \"{typeof(saver)}\""))
 end
-export new_gillespie_run
+function close(saver::AbstractGillespieSaver)
+    throw(ErrorException(f"No method of \"close\" was provided for type \"{typeof(saver)}\""))
+end
+function times(saver::AbstractGillespieSaver)
+    throw(ErrorException(f"No method of \"times\" was provided for type \"{typeof(saver)}\""))
+end
+function last_saved_time(saver::AbstractGillespieSaver{T,F})::Union{Nothing,F} where {T,F}
+    times_ = times(saver)
+    if length(times_) > 1
+        times_[end]
+    else
+        nothing
+    end
+end
+function valid_saver(saver::AbstractGillespieSaver, gs::Gillespie)
+    last_time = last_saved_time(saver)
+    if isnothing(last_time) || isapprox(gs.cur_time, last_time)
+        true
+    else
+        false
+    end
+end
 
+################################################################################
+# Concrete savers
+################################################################################
+struct SimpleH5Saver{T,F} <: AbstractGillespieSaver{T,F}
+    destination::HDF5.H5DataStore
+    time_dataset::HDF5.Dataset
+    path_dataset::HDF5.Dataset
+
+    function SimpleH5Saver{T,F}(destination) where {T,F}
+        time_dataset = create_dataset(destination, "time", datatype(F), ((0,), (-1,)), chunk=(1,))
+        path_dataset = create_dataset(destination, "path", datatype(T), ((0,), (-1,)), chunk=(1,))
+
+        new{T,F}(destination, time_dataset, path_dataset)
+    end
+end
+function SimpleH5Saver(_::Gillespie{T,F}, destination) where {T,F}
+    SimpleH5Saver{T,F}(destination)
+end
+function SimpleH5Saver(_::SimpleWeightedDiGraph{T,F}, destination) where {T,F}
+    SimpleH5Saver{T,F}(destination)
+end
+function SimpleH5Saver(gm::AbstractGraphModel, destination)
+    SimpleH5Saver(graph(gm), destination)
+end
+export SimpleH5Saver
+function save!(sgs::SimpleH5Saver{T,F}, gs::Gillespie{T,F}) where {T,F}
+    new_length = length(sgs.time_dataset) + 1
+
+    HDF5.set_extent_dims(sgs.time_dataset, (new_length,))
+    sgs.time_dataset[new_length] = gs.cur_time
+
+    HDF5.set_extent_dims(sgs.path_dataset, (new_length,))
+    sgs.path_dataset[new_length] = gs.cur_state
+end
+function close(sgs::SimpleH5Saver)
+    if isa(sgs.destination, HDF5.File)
+        close(sgs.destination)
+        true
+    else
+        false
+    end
+end
+times(sgs::SimpleH5Saver) = sgs.time_dataset
+
+################################################################################
+# Running, contains the actual algorithm
+################################################################################
 """
 Returns the time until next transition and the destination
 """
 function next_step(gs::Gillespie)
     (rand(), rand(neighbors(gs.graph, gs.cur_state)))
 end
-export next_step
 
 function run_gillespie!(gs::Gillespie;
-    exit_time=nothing,
-    exit_steps=nothing
+    saver=nothing,
+    exit_steps=nothing,
+    exit_sim_deltatime=nothing,
+    exit_sim_time=nothing,
+    exit_real_time=nothing
 )
+    # Do some checks
+    if !isnothing(saver)
+        if !valid_saver(saver, gs)
+            throw(ErrorException("The passed saver and Gillespie are not compatible, cannot start run"))
+        end
+    end
+    if isnothing(exit_steps) && isnothing(exit_sim_deltatime) && isnothing(exit_sim_time) && isnothing(exit_real_time)
+        throw(ArgumentError("cannot run `run_gillespie!` without at least one exit condition"))
+    end
+
+    # Prepare exit conditions
     sim_steps = 0
     sim_time = 0.0
+    if !isnothing(exit_real_time)
+        exit_real_time_ = if isa(exit_real_time, Number)
+            Dates.Second(exit_real_time)
+        else
+            exit_real_time
+        end
+        start_real_time = Dates.now()
+    end
+
     exit = false
     while !exit
         # Make a step
@@ -47,23 +153,74 @@ function run_gillespie!(gs::Gillespie;
         sim_time += delta_time
 
         # Do saving/callbacks
-        # @show gs.cur_time, gs.cur_state
+        if !isnothing(saver)
+            save!(saver, gs)
+        end
 
         # Check exit conditions
-        if !isnothing(exit_time)
-            if sim_time >= exit_time
-                # @info "Exited due to max simulation time met"
+        if !isnothing(exit_steps)
+            if sim_steps >= exit_steps
+                @info "Exited due to max simulation number of steps met"
                 exit = true
             end
         end
-        if !isnothing(exit_steps)
-            if sim_steps >= exit_steps
-                # @info "Exited due to max simulation number of steps met"
+        if !isnothing(exit_sim_deltatime)
+            if sim_time >= exit_sim_deltatime
+                @info "Exited due to simulation timepoint reached time met"
+                exit = true
+            end
+        end
+        if !isnothing(exit_sim_time)
+            if gs.cur_time >= exit_sim_time
+                @info "Exited due to max simulation time met"
+                exit = true
+            end
+        end
+        if !isnothing(exit_real_time)
+            if (Dates.now() - start_real_time) >= exit_real_time_
+                @info "Exited due to max real world time met"
                 exit = true
             end
         end
     end
 end
 export run_gillespie!
+
+################################################################################
+# Alternative simpler Gillespie simulation not using so many types...
+################################################################################
+
+"""
+Will run multiple Gillespie simulations, one starting at each possible state
+all the runs are saved independently a newly created directory `save_path`
+errors if path already exists.
+"""
+function run_full_gillespie_ensemblesim(
+    gm::AbstractGraphModel{<:AbstractFloat},
+    save_path::String=datadir("scratch", f"{string(typeof(gm))}_{savename(gm)}");
+    override=false,
+    kwargs...
+)
+    if ispath(save_path)
+        if !override
+            throw(ArgumentError(f"save_path {save_path} already exists"))
+        else
+            rm(save_path; recursive=true)
+        end
+    end
+
+    mkpath(save_path)
+    @info f"Starting gillespie full ensemble run at {save_path}"
+
+    @threads for start_node in 1:numstates(gm)
+        gs = Gillespie(graph(gm), 0.0, start_node)
+        filepath = joinpath(save_path, f"start_{start_node}.h5")
+        saver = SimpleH5Saver(gm, h5open(filepath, "w"))
+        run_gillespie!(gs; saver, kwargs...)
+        close(saver)
+    end
+
+end
+export run_full_gillespie_ensemblesim
 
 end

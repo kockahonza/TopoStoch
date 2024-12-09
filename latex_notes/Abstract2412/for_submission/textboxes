@@ -1,0 +1,8 @@
+title:
+Topological States in Out-of-Equilibrium Allosteric Molecular Assemblies
+
+topic:
+the clock one
+
+abstract:
+Despite noisiness in the cellular environment, molecular systems show a high degree of robustness. A recent new direction in understanding this apparent paradox is the study of topologically protected states in stochastic systems, which robustly confine the dynamics of the system to a lower-dimensional space. However, it is unclear what the minimal biochemical ingredients are for such states to occur. Here, we study topological features in a non-equilibrium, thermodynamically-consistent model of a molecular assembly, made of subunits that undergo futile cycles of conformational change and phosphorylation. When the subunits interact allosterically with each other, we find global, concerted cycles that emerge at the scale of the whole assembly. These involve only a small subset of all possible conformations, analogous to topological edge currents in quantum systems. We map out the kinetics, energetics, and biochemical interactions necessary to obtain distinct classes of topological behaviour. Our results suggest that topological states can provide a minimal description of molecular coordination in protein complexes, such as circadian oscillators (e.g. KaiABC) or polymer assembly and disassembly (e.g. microtubules). More broadly, our results demonstrate that stereotyped dynamics can arise purely from non-equilibrium kinetic effects, without the need for an underlying energy landscape to channel them.
