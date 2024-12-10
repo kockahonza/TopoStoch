@@ -583,7 +583,7 @@ uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
 version = "5.2.2+0"
 
 [[deps.GillespieSim]]
-deps = ["Dates", "DrWatson", "GraphModels", "HDF5"]
+deps = ["Dates", "DrWatson", "GraphModels", "HDF5", "Random", "StatsBase"]
 path = "../src/GillespieSim"
 uuid = "c2240f19-2687-4a3d-b9e4-4041323e7376"
 version = "0.1.0"

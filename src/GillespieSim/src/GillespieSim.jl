@@ -143,8 +143,8 @@ times(sgs::SimpleH5Saver) = sgs.time_dataset
 """
 Returns the time until next transition and the destination
 """
-function next_step(gs::Gillespie)
-    delta_time = randexp(gs.rng) / gs.r0s[gs.cur_state]
+function next_step(gs::Gillespie{T,F}) where {T,F}
+    delta_time = randexp(gs.rng, F) / gs.r0s[gs.cur_state]
     next_state = sample(
         gs.rng,
         gs.cached_neighbors[gs.cur_state],
@@ -156,9 +156,9 @@ end
 """
 Only used for verification of the above. Numerically seems to agree, so good!
 """
-function next_step_direct(gs::Gillespie)
-    r1 = rand(gs.rng)
-    r2 = rand(gs.rng)
+function next_step_direct(gs::Gillespie{T,F}) where {T,F}
+    r1 = rand(gs.rng, F)
+    r2 = rand(gs.rng, F)
 
     delta_time = -log(r1) / gs.r0s[gs.cur_state]
     next_state_i = 1
@@ -290,8 +290,12 @@ function run_full_gillespie_ensemblesim(
         gs = Gillespie(gm, 0.0, start_node; rng)
         filepath = joinpath(save_path, f"start_{start_node}.h5")
         saver = SimpleH5Saver(gm, h5open(filepath, "w"))
+
         run_gillespie!(gs; saver, kwargs...)
-        close(saver)
+
+        if !close(saver)
+            @warn f"Could not close saver from start node {start_node}"
+        end
         @info f"Finished running from start node {start_node}"
         flush(stdout)
     end
