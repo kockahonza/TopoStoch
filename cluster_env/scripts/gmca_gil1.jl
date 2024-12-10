@@ -7,11 +7,12 @@ using GillespieSim
 
 using Dates
 
-function run_extreme(N; test=false)
+function run_extreme(N=4; test=false)
     ca = makeCAGM(N, 1;
         vars=vars_simplified(; newrs=:ss1, energies=:nocb, concentrations=:ss1)
     )
     @show get_variables(ca)
+    # variables should be eb, cATP, cP
     cca = substitute_to_float(ca, [3, 5, 0.0001])
 
     if test

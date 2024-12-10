@@ -6,4 +6,4 @@
 
 echo echo "echo testing ->" $SLURM_CPUS_PER_TASK $SLURM_CPUS_ON_NODE
 
-julia -t $SLURM_CPUS_PER_TASK -L ../../scripts/gmca_gil1.jl -e 'println("A")'
+julia -t $SLURM_CPUS_PER_TASK -L ../../scripts/gmca_gil1.jl -e 'run_extreme()'
