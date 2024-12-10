@@ -144,26 +144,32 @@ times(sgs::SimpleH5Saver) = sgs.time_dataset
 Returns the time until next transition and the destination
 """
 function next_step(gs::Gillespie)
+    delta_time = randexp(gs.rng) / gs.r0s[gs.cur_state]
     next_state = sample(
         gs.rng,
         gs.cached_neighbors[gs.cur_state],
         gs.cached_neighbor_rates[gs.cur_state]
     )
-    delta_time = get_weight(gs.graph, gs.cur_state, next_state) * (randexp(gs.rng) / gs.r0s[gs.cur_state])
     (delta_time, next_state)
 end
 
-function next_step(gs::Gillespie)
+"""
+Only used for verification of the above. Numerically seems to agree, so good!
+"""
+function next_step_direct(gs::Gillespie)
     r1 = rand(gs.rng)
     r2 = rand(gs.rng)
 
     delta_time = -log(r1) / gs.r0s[gs.cur_state]
     next_state_i = 1
-    while true
+    while sum(
+        i -> get_weight(gs.graph, gs.cur_state, i),
+        gs.cached_neighbors[gs.cur_state][begin:next_state_i]
+    ) <= r2 * gs.r0s[gs.cur_state]
         next_state_i += 1
     end
 
-    (delta_time, next_state)
+    (delta_time, gs.cached_neighbors[gs.cur_state][next_state_i])
 end
 
 function run_gillespie!(gs::Gillespie;
