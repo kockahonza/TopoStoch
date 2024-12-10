@@ -190,13 +190,13 @@ function calc_currents(etm::AbstractMatrix, ss::AbstractVector)
 end
 export calc_currents
 
-function make_current_graph(gm::AbstractGraphModel, state::AbstractVector)
+function make_current_graph(gm::AbstractGraphModel{F}, state::AbstractVector; zerothreshold=eps(F)) where {F<:AbstractFloat}
     cmat = calc_currents(transmat(gm), state)
     cadjmat = spzeros(size(cmat))
     for i in axes(cadjmat, 1)
         for j in axes(cadjmat, 2)
             x = cmat[j, i]
-            if x > 0
+            if (x > 0) && !isapprox(x, 0.0; atol=zerothreshold)
                 cadjmat[i, j] = x
             end
         end

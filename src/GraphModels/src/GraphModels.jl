@@ -1,11 +1,10 @@
 module GraphModels
 
+using DrWatson, Reexport
+
 using LetterCodes
 
-using Reexport
-
 @reexport using PyFormattedStrings
-
 @reexport using StaticArrays, ElasticArrays, SparseArrays
 @reexport using LinearAlgebra: eigen!
 @reexport using Graphs, SimpleWeightedGraphs, NetworkLayout

@@ -14,6 +14,7 @@
 \usepackage{stackengine}
 \usepackage{float}
 \usepackage{tcolorbox}
+\usepackage{hyperref}
 \usepackage{cleveref}
 \usepackage{lipsum}
 
@@ -108,5 +109,15 @@ giving the predictable result of $a(t) = a(0)e^{\lambda t}$.
 \end{tcolorbox}
 though there remains the question of complex eigenvalues and eigenstates.
 It seems natural that imaginary components of eigenvalues would correspond to oscillations and I mostly just hope that eigenstates do not have imaginary components
+
+\section{Gillespie Simulations}\label{sec:gillespie}
+Going off of the 2007 paper by Gillespie: \url{https://www.annualreviews.org/content/journals/10.1146/annurev.physchem.58.032806.104637}.
+Alogirthm for realizing trajectories starts above equation 7.
+
+Okay so from what I understand, the algorithm to choose the time and type of process out of a known set of processes each with its rate $r_i$ is as follows.
+Choose a random process with the probability of getting each of proportional to it's rate (in other words equal to $\frac{r_i}{r_0}$).
+Then choose a random number from an exponential distribution of $\text{pdf}(x) = e^{-r_0x}$ with $r_0=\sum_j r_j$ and we have $\tau$ equal to $r_i$ times the random number.
+
+%section Gillespie Simulations (end)
 
 \end{document}

@@ -5,13 +5,15 @@ optionally does some plotting
 """
 module GillespieSim
 
+using DrWatson
+
 using GraphModels
 
-using DrWatson
-using HDF5
-import Dates
-
 using Base.Threads
+using Dates
+using Random
+using StatsBase
+using HDF5
 
 import Base: close
 
@@ -23,12 +25,41 @@ T and F correspond to some integer and floating point number types.
 Realistically I might have as well made them concrete Int and FLoat64 but
 I guess this is a little more general.
 """
-mutable struct Gillespie{T,F}
+mutable struct Gillespie{T,F,R<:AbstractRNG}
+    # General
     graph::SimpleWeightedDiGraph{T,F}
     # Current state
     cur_time::F
     cur_state::T
+    # Internals to make things stable and fast
+    rng::R
+    r0s::Vector{F}
+    cached_neighbors::Vector{Vector{T}}
+    cached_neighbor_rates::Vector{Weights{F,F,Vector{F}}}
+    function Gillespie(g::SimpleWeightedDiGraph{T,F}, start_time=0.0, start_state=1;
+        rng=nothing
+    ) where {T,F}
+        if isnothing(rng)
+            rng = Xoshiro()
+        elseif isa(rng, Number)
+            rng = Xoshiro(rng)
+        elseif !isa(rng, AbstractRNG)
+            throw(ArgumentError(f"kwarg rng must be nothing a number of an AbstractRNG but is a {typeof(rng)}"))
+        end
+
+        r0s = Vector{F}(undef, nv(g))
+        cns = Vector{Vector{T}}(undef, nv(g))
+        cws = Vector{Weights{F,F,Vector{F}}}(undef, nv(g))
+        for i in 1:nv(g)
+            r0s[i] = sum(get_weight.(Ref(g), i, neighbors(g, i)))
+            cns[i] = neighbors(g, i)
+            cws[i] = Weights(get_weight.(Ref(g), i, cns[i]))
+        end
+
+        new{T,F,typeof(rng)}(g, start_time, start_state, rng, r0s, cns, cws)
+    end
 end
+Gillespie(gm::AbstractGraphModel, args...; kwargs...) = Gillespie(graph(gm), args...; kwargs...)
 export Gillespie
 
 """
@@ -113,11 +144,20 @@ times(sgs::SimpleH5Saver) = sgs.time_dataset
 Returns the time until next transition and the destination
 """
 function next_step(gs::Gillespie)
-    (rand(), rand(neighbors(gs.graph, gs.cur_state)))
+    next_state = sample(
+        gs.rng,
+        gs.cached_neighbors[gs.cur_state],
+        gs.cached_neighbor_rates[gs.cur_state]
+    )
+    delta_time = get_weight(gs.graph, gs.cur_state, next_state) * (randexp(gs.rng) / gs.r0s[gs.cur_state])
+    (delta_time, next_state)
 end
 
 function run_gillespie!(gs::Gillespie;
     saver=nothing,
+    callback=nothing,
+    logging=true,
+    # Exit conditions
     exit_steps=nothing,
     exit_sim_deltatime=nothing,
     exit_sim_time=nothing,
@@ -138,11 +178,11 @@ function run_gillespie!(gs::Gillespie;
     sim_time = 0.0
     if !isnothing(exit_real_time)
         exit_real_time_ = if isa(exit_real_time, Number)
-            Dates.Second(exit_real_time)
+            Second(exit_real_time)
         else
             exit_real_time
         end
-        start_real_time = Dates.now()
+        start_real_time = now()
     end
 
     exit = false
@@ -159,28 +199,40 @@ function run_gillespie!(gs::Gillespie;
             save!(saver, gs)
         end
 
+        if !isnothing(callback)
+            callback(gs)
+        end
+
         # Check exit conditions
         if !isnothing(exit_steps)
             if sim_steps >= exit_steps
-                @info "Exited due to max simulation number of steps met"
+                if logging
+                    @info "Exited due to max simulation number of steps met"
+                end
                 exit = true
             end
         end
         if !isnothing(exit_sim_deltatime)
             if sim_time >= exit_sim_deltatime
-                @info "Exited due to simulation timepoint reached time met"
+                if logging
+                    @info "Exited due to simulation timepoint reached time met"
+                end
                 exit = true
             end
         end
         if !isnothing(exit_sim_time)
             if gs.cur_time >= exit_sim_time
-                @info "Exited due to max simulation time met"
+                if logging
+                    @info "Exited due to max simulation time met"
+                end
                 exit = true
             end
         end
         if !isnothing(exit_real_time)
-            if (Dates.now() - start_real_time) >= exit_real_time_
-                @info "Exited due to max real world time met"
+            if (now() - start_real_time) >= exit_real_time_
+                if logging
+                    @info "Exited due to max real world time met"
+                end
                 exit = true
             end
         end
@@ -201,6 +253,7 @@ function run_full_gillespie_ensemblesim(
     gm::AbstractGraphModel{<:AbstractFloat},
     save_path::String=datadir("scratch", f"{string(typeof(gm))}_{savename(gm)}");
     override=false,
+    rng=nothing,
     kwargs...
 )
     if ispath(save_path)
@@ -215,13 +268,14 @@ function run_full_gillespie_ensemblesim(
     @info f"Starting gillespie full ensemble run at {save_path}"
 
     @threads for start_node in 1:numstates(gm)
-        gs = Gillespie(graph(gm), 0.0, start_node)
+        gs = Gillespie(gm, 0.0, start_node; rng)
         filepath = joinpath(save_path, f"start_{start_node}.h5")
         saver = SimpleH5Saver(gm, h5open(filepath, "w"))
         run_gillespie!(gs; saver, kwargs...)
         close(saver)
+        @info f"Finished running from start node {start_node}"
+        flush(stdout)
     end
-
 end
 export run_full_gillespie_ensemblesim
 

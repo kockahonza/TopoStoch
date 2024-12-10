@@ -17,8 +17,9 @@ function run_extreme(N)
     run_full_gillespie_ensemblesim(cca, datadir("gil1_extreme_3_5_1e-4");
         override=true,
         exit_steps=1000000,
-        # exit_real_time=Millisecond(100)
-        exit_real_time=Hour(14)
+        exit_real_time=Millisecond(1000)
+        # exit_real_time=Hour(14)
     )
 end
 run_extreme(4)
+println("A")

@@ -191,6 +191,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     e_colorbar=:auto,
     e_colorbar_label=:auto,
     colorrange_threshold=1e-8,
+    # other possible kwargs to be passed down
+    zerothreshold=nothing,
     kwargs...
 ) where {F}
     auto_kwargs = Dict{Symbol,Any}()
@@ -286,7 +288,15 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             if e_colorbar_label == :auto
                 e_colorbar_label = "Net probability currents"
             end
-            plotgraph = isnothing(ss_curgraph) ? make_current_graph(gm, ss) : ss_curgraph
+            plotgraph = if isnothing(ss_curgraph)
+                if isnothing(zerothreshold)
+                    make_current_graph(gm, ss)
+                else
+                    make_current_graph(gm, ss; zerothreshold)
+                end
+            else
+                ss_curgraph
+            end
             weight.(edges(plotgraph))
         else
             throw(ArgumentError(f"e_color of {e_color} is not recognised"))
