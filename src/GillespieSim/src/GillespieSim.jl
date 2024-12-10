@@ -153,6 +153,19 @@ function next_step(gs::Gillespie)
     (delta_time, next_state)
 end
 
+function next_step(gs::Gillespie)
+    r1 = rand(gs.rng)
+    r2 = rand(gs.rng)
+
+    delta_time = -log(r1) / gs.r0s[gs.cur_state]
+    next_state_i = 1
+    while true
+        next_state_i += 1
+    end
+
+    (delta_time, next_state)
+end
+
 function run_gillespie!(gs::Gillespie;
     saver=nothing,
     callback=nothing,
