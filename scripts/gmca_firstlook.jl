@@ -26,3 +26,13 @@ function m1()
     ca, cca, es, sc1
 end
 # ca, cca, es, sc1 = m1()
+
+# 24-12-12 - Just a helper function to quickly make a ca
+function m2()
+    ca = makeCAGM(4, 1; vars=vars_simplified(; newrs=:ss1, energies=false, concentrations=:ss1))
+    @show get_variables(ca)
+    cca = substitute_to_float(ca, [0, 0, 2, 10, 0.001])
+
+    ca, cca
+end
+# ca, cca = m2()

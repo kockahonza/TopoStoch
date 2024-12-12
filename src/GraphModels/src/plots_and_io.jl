@@ -522,6 +522,7 @@ function plotgm_sim(gm::AbstractGraphModel, times, states; kwargs...)
     end
     fig = Figure()
     controls = GridLayout(fig[1, 1], 2, 5)
+    plotplace = GridLayout(fig[2, 1])
 
     # setup the progress bar
     sg = SliderGrid(controls[2, :],
@@ -587,7 +588,7 @@ function plotgm_sim(gm::AbstractGraphModel, times, states; kwargs...)
     Label(controls[1, end], lift(i -> f"t={times[i]:.2f}", obs_i))
 
     # Make plot itself
-    ax, plot = plotgm!(fig[2, 1], gm; returnax=true, kwargs...)
+    ax, plot = plotgm!(plotplace, gm; returnax=true, axparent=plotplace, kwargs...)
 
     # highlight
     cur_state_pos = lift(obs_i, plot.node_pos) do i, npos
@@ -681,11 +682,10 @@ end
 export save_transmat
 
 """
-Saves any julia object in a jld2 file.
+Saves any julia object in a jld2 file in the data dir with a fancy name.
 """
-function save_ca_obj(gm::AbstractGraphModel; kwargs...)
-    for (name, value) in kwargs
-        save_object(datadir(savename(String(name), gm, "jld2")), value)
-    end
+function save_object_smart(basename::AbstractString, obj, assoc_objs...; subdir="", separator="__")
+    filepath = datadir(subdir, basename * separator * join(savename.([obj; collect(assoc_objs)]), separator) * ".jld2")
+    save_object(filepath, obj)
 end
-export save_ca_obj
+export save_object_smart

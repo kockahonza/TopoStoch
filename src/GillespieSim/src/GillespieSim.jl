@@ -14,6 +14,7 @@ using Dates
 using Random
 using StatsBase
 using HDF5
+using JLD2
 
 import Base: close
 
@@ -260,17 +261,19 @@ end
 export run_gillespie!
 
 ################################################################################
-# Alternative simpler Gillespie simulation not using so many types...
+# Particular usage cases which run gillespie sims and also do other things like
+# save the GraphModel etc. along with loader functions. These should be used
+# primarily.
 ################################################################################
+function _default_gm_datadir(gm::AbstractGraphModel)
+    datadir("scratch", f"{string(typeof(gm))}_{savename(gm)}")
+end
 
-"""
-Will run multiple Gillespie simulations, one starting at each possible state
-all the runs are saved independently a newly created directory `save_path`
-errors if path already exists.
-"""
-function run_full_gillespie_ensemblesim(
+# Running/loading a single sim
+function run_single_gillespie(
     gm::AbstractGraphModel{<:AbstractFloat},
-    save_path::String=datadir("scratch", f"{string(typeof(gm))}_{savename(gm)}");
+    start_node,
+    save_path::String=_default_gm_datadir(gm);
     override=false,
     rng=nothing,
     kwargs...
@@ -282,7 +285,52 @@ function run_full_gillespie_ensemblesim(
             rm(save_path; recursive=true)
         end
     end
+    mkpath(save_path)
+    @info f"Starting gillespie single run at {save_path} starting from {start_node}"
 
+    # Prep the gillespie run
+    gs = Gillespie(gm, 0.0, start_node; rng)
+    # Prep the saver
+    filepath = joinpath(save_path, "gillespie_data.h5")
+    saver = SimpleH5Saver(gm, h5open(filepath, "w"))
+    # Save the gm
+    save_object(joinpath(save_path, "gm.jld2"), gm)
+
+    run_gillespie!(gs; saver, kwargs...)
+
+    if !close(saver)
+        @warn f"Could not close saver"
+    end
+end
+export run_single_gillespie
+function load_single_gillespie(save_path;
+    gm_filename="gm.jld2",
+    gillespie_filename="gillespie_data.h5"
+)
+    load_object(joinpath(save_path, gm_filename)), h5open(joinpath(save_path, gillespie_filename))
+end
+export load_single_gillespie
+
+# Running/loading one sim starting from each node in gm
+"""
+Will run multiple Gillespie simulations, one starting at each possible state
+all the runs are saved independently a newly created directory `save_path`
+errors if path already exists.
+"""
+function run_full_gillespie_ensemblesim(
+    gm::AbstractGraphModel{<:AbstractFloat},
+    save_path::String=_default_gm_datadir(gm);
+    override=false,
+    rng=nothing,
+    kwargs...
+)
+    if ispath(save_path)
+        if !override
+            throw(ArgumentError(f"save_path {save_path} already exists"))
+        else
+            rm(save_path; recursive=true)
+        end
+    end
     mkpath(save_path)
     @info f"Starting gillespie full ensemble run at {save_path}"
 
