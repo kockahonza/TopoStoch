@@ -334,6 +334,9 @@ function run_full_gillespie_ensemblesim(
     mkpath(save_path)
     @info f"Starting gillespie full ensemble run at {save_path}"
 
+    # Save the gm
+    save_object(joinpath(save_path, "gm.jld2"), gm)
+
     @threads for start_node in 1:numstates(gm)
         gs = Gillespie(gm, 0.0, start_node; rng)
         filepath = joinpath(save_path, f"start_{start_node}.h5")
@@ -350,5 +353,21 @@ function run_full_gillespie_ensemblesim(
     end
 end
 export run_full_gillespie_ensemblesim
+function load_full_gillespie_ensemblesim(save_path;
+    gm_filename="gm.jld2",
+    save_prefix="start_"
+)
+    gm = try
+        load_object(joinpath(save_path, gm_filename))
+    catch
+        nothing
+    end
+    loader = function (i::Integer)
+        f = h5open(joinpath(save_path, save_prefix * string(i) * ".h5"))
+        f["time"], f["path"]
+    end
+    gm, loader
+end
+export load_full_gillespie_ensemblesim
 
 end
