@@ -7,7 +7,7 @@ using GillespieSim
 
 using Dates
 
-function run_extreme(N=4; test=false)
+function run_extreme(N=4; test=false, steps=100000)
     ca = makeCAGM(N, 1;
         vars=vars_simplified(; newrs=:ss1, energies=:nocb, concentrations=:ss1)
     )
@@ -23,7 +23,7 @@ function run_extreme(N=4; test=false)
 
     run_full_gillespie_ensemblesim(cca, "./gil1_extreme_3_5_1e-4";
         override=true,
-        exit_steps=100000,
+        exit_steps=steps,
         exit_real_time,
         rng=100
     )

@@ -200,6 +200,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     # Dealing with nodes and steadystate calcs
     if ss == :auto
         if F <: AbstractFloat
+            @info "automatically calculating steady state as graph is concrete"
             ss = supersteadystate(gm)
         else
             ss = nothing
@@ -511,6 +512,92 @@ function plot_ps(gm::AbstractGraphModel{<:AbstractFloat}, pstate; kwargs...)
     plotcgm(gm, pstate; n_ss_colormap=:redsblues, n_ss_colorscale=identity, n_ss_colorrange=(-1.0, 1.0), kwargs...)
 end
 export plot_ps
+
+################################################################################
+# plotgm_sim - interactive visualization of a simulation
+################################################################################
+function plotgm_sim(gm::AbstractGraphModel, times, states; kwargs...)
+    if length(times) != length(states)
+        throw(ArgumentError("`times` and `states` must have the same length"))
+    end
+    fig = Figure()
+    controls = GridLayout(fig[1, 1], 2, 5)
+
+    # setup the progress bar
+    sg = SliderGrid(controls[2, :],
+        (label="index", range=1:length(times), startvalue=1)
+    )
+    slider_i = sg.sliders[1]
+    obs_i = slider_i.value
+
+    # main controls
+    but_prev = Button(controls[1, 1]; label="prev")
+    but_next = Button(controls[1, 3]; label="next")
+    on(but_prev.clicks) do _
+        if obs_i[] > 1
+            set_close_to!(slider_i, obs_i[] - 1)
+        end
+    end
+    on(but_next.clicks) do _
+        if obs_i[] < length(times)
+            set_close_to!(slider_i, obs_i[] + 1)
+        end
+    end
+
+    running = false
+    running_task_channel = nothing
+    but_playpause = Button(controls[1, 2]; label="play")
+    speed_bar = SliderGrid(controls[1, 4],
+        (label="speed", range=0.0:0.01:10.0, startvalue=1.0)
+    )
+    on(but_playpause.clicks) do _
+        running = !running
+        if !isnothing(running_task_channel)
+            if running
+                @warn "killing old runner despite the fact that it should not be running anymore!"
+            end
+            @info "removing runner task"
+            put!(running_task_channel, true)
+            running_task_channel = nothing
+        end
+        if running
+            @info "adding runner task"
+            running_task_channel = Channel(c -> begin
+                exit = false
+                while !exit
+                    if isready(c) && (take!(c) == true)
+                        exit = true
+                    end
+                    if obs_i[] >= length(times)
+                        @info "killing runner as reached end of time series"
+                        exit = true
+                    end
+                    delta_time = times[obs_i[]+1] - times[obs_i[]]
+                    sleep(speed_bar.sliders[1].value[] * delta_time)
+                    set_close_to!(slider_i, obs_i[] + 1)
+                end
+            end)
+            but_playpause.label = "pause"
+        else
+            but_playpause.label = "play"
+        end
+    end
+
+    # shows the time
+    Label(controls[1, end], lift(i -> f"t={times[i]:.2f}", obs_i))
+
+    # Make plot itself
+    ax, plot = plotgm!(fig[2, 1], gm; returnax=true, kwargs...)
+
+    # highlight
+    cur_state_pos = lift(obs_i, plot.node_pos) do i, npos
+        Point2f(npos[states[i]])
+    end
+    scatter!(ax, cur_state_pos; marker='○', markersize=40, color=:green)
+
+    FigureAxisAnything(fig, ax, [plot, but_playpause])
+end
+export plotgm_sim
 
 ################################################################################
 # Plotting util

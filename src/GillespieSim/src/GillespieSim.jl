@@ -298,6 +298,7 @@ function run_full_gillespie_ensemblesim(
         end
         @info f"Finished running from start node {start_node}"
         flush(stdout)
+        GC.gc()
     end
 end
 export run_full_gillespie_ensemblesim

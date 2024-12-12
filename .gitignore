@@ -1,4 +1,4 @@
-cluster_env/runs/**.h5
+cluster_env/runs/**/*.h5
 
 ################################################################################
 #                          DrWatson Project Structure                          #
