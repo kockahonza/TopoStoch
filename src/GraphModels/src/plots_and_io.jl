@@ -402,6 +402,9 @@ end
 plotgm_kwarg_defaults(_::AbstractGraphModel) = (;)
 export plotgm_kwarg_defaults
 
+"""
+Fancy function to plot a graph model with as many convenience features as possible
+"""
 function plotgm!(maybeax, gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
@@ -419,6 +422,7 @@ function plotgm!(maybeax, gm::AbstractGraphModel;
         plot
     end
 end
+@doc (@doc plotgm!)
 function plotgm(gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, kwargs...
 )
@@ -458,6 +462,10 @@ function p_do_clayout(
 end
 export p_do_clayout
 
+"""
+Plots the net probability currents at some particular state of a graph model.
+Uses plotgm!_ and tries to keep as much functionality as possible.
+"""
 function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
     layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
@@ -479,6 +487,7 @@ function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
         plot
     end
 end
+@doc (@doc plotcgm!)
 function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
     layout=nothing, roffset_devs=nothing, kwargs...
 )
@@ -513,9 +522,10 @@ function plot_ps(gm::AbstractGraphModel{<:AbstractFloat}, pstate; kwargs...)
 end
 export plot_ps
 
-################################################################################
-# plotgm_sim - interactive visualization of a simulation
-################################################################################
+"""
+Interactive visualization of a simulation, does a plotgm plot, highlights the
+current node and adds controls.
+"""
 function plotgm_sim(gm::AbstractGraphModel, times, states; kwargs...)
     if length(times) != length(states)
         throw(ArgumentError("`times` and `states` must have the same length"))
@@ -598,10 +608,13 @@ function plotgm_sim(gm::AbstractGraphModel, times, states; kwargs...)
 
     FigureAxisAnything(fig, ax, [plot, but_playpause])
 end
+function plotgm_sim(gm::AbstractGraphModel, h5data::HDF5.H5DataStore; kwargs...)
+    plotgm_sim(gm, h5data["time"], h5data["path"]; kwargs...)
+end
 export plotgm_sim
 
 ################################################################################
-# Plotting util
+# Other plotting util
 ################################################################################
 function make_linalpha_cmap(cmap; amin=0.0, amax=1.0)
     cmap = Makie.to_colormap(cmap)

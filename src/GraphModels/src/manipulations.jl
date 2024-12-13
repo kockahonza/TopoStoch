@@ -190,7 +190,10 @@ function calc_currents(etm::AbstractMatrix, ss::AbstractVector)
 end
 export calc_currents
 
-function make_current_graph(gm::AbstractGraphModel{F}, state::AbstractVector; zerothreshold=eps(F)) where {F<:AbstractFloat}
+function make_current_graph(gm::AbstractGraphModel{F},
+    state::AbstractVector=supersteadystate(gm);
+    zerothreshold=eps(F)
+) where {F<:AbstractFloat}
     cmat = calc_currents(transmat(gm), state)
     cadjmat = spzeros(size(cmat))
     for i in axes(cadjmat, 1)
@@ -206,8 +209,54 @@ end
 export make_current_graph
 
 ################################################################################
-# Editing/filtering edges in concrete GraphModel graphs
+# Stuff that changes the graph like editing/filtering edges
 ################################################################################
+function groupgraph(graph::SimpleWeightedDiGraph, group_array::AbstractVector;
+    groups=unique(group_array)
+)
+    if length(group_array) != nv(graph)
+        throw(ArgumentError("the passed group information does not have the correct length"))
+    end
+    if !allunique(groups)
+        throw(ArgumentError("the passed `groups` list is not valid as it has repeats"))
+    end
+    itogroup = [findfirst(x -> x == i, groups) for i in group_array]
+
+    grouped_graph = SimpleWeightedDiGraph(length(groups))
+    for e in edges(graph)
+        gsrc = itogroup[src(e)]
+        gdst = itogroup[dst(e)]
+        if !isnothing(gsrc) && !isnothing(gdst)
+            inc_edge!(grouped_graph, itogroup[src(e)], itogroup[dst(e)], weight(e))
+        end
+    end
+
+    grouped_graph, groups
+end
+groupgraph(gm::AbstractGraphModel, ga; kwargs...) = groupgraph(graph(gm), ga; kwargs...)
+groupgraph(gm::AbstractGraphModel, f::Function; kwargs...) = groupgraph(gm, f.(allstates(gm)); kwargs...)
+export groupgraph
+
+function groupsum(v::AbstractVector, group_array::AbstractVector;
+    groups=unique(group_array)
+)
+    if length(group_array) != length(v)
+        throw(ArgumentError("the passed group information does not have the correct length"))
+    end
+    if !allunique(groups)
+        throw(ArgumentError("the passed `groups` list is not valid as it has repeats"))
+    end
+    itogroup = [findfirst(x -> x == i, groups) for i in group_array]
+
+    grouped_v = fill(zero(eltype(v)), length(groups))
+    for (i, x) in enumerate(v)
+        grouped_v[itogroup[i]] += x
+    end
+
+    grouped_v, groups
+end
+export groupsum
+
 function filter_edges!(graph::AbstractFloatGraph, threshold)
     for e in edges(graph)
         if weight(e) < threshold

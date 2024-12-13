@@ -353,7 +353,7 @@ function run_full_gillespie_ensemblesim(
     end
 end
 export run_full_gillespie_ensemblesim
-function load_full_gillespie_ensemblesim(save_path;
+function load_full_gillespie_ensemblesim(save_path, i=nothing;
     gm_filename="gm.jld2",
     save_prefix="start_"
 )
@@ -362,11 +362,15 @@ function load_full_gillespie_ensemblesim(save_path;
     catch
         nothing
     end
-    loader = function (i::Integer)
-        f = h5open(joinpath(save_path, save_prefix * string(i) * ".h5"))
-        f["time"], f["path"]
+    loader_or_file = if isnothing(i)
+        function (i::Integer)
+            f = h5open(joinpath(save_path, save_prefix * string(i) * ".h5"))
+            f["time"], f["path"]
+        end
+    else
+        h5open(joinpath(save_path, save_prefix * string(i) * ".h5"))
     end
-    gm, loader
+    gm, loader_or_file
 end
 export load_full_gillespie_ensemblesim
 

@@ -13,6 +13,7 @@ using LetterCodes
 @reexport using Symbolics: variable, variables
 @reexport using JLD2
 @reexport import PlotUtils
+using HDF5
 import Dates
 
 import Base: copy, broadcastable, show, display, convert

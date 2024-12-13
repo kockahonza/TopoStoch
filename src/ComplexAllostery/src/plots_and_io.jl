@@ -1,5 +1,7 @@
+################################################################################
+# Main plotting - add methods to GraphModels functions
+################################################################################
 import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
-# New plotting interface
 function p_named_layouts(ca::ComplexAllosteryGM, layout_name, layout_args)
     try
         invoke(p_named_layouts, Tuple{supertype(typeof(ca)),Any,Any}, ca, layout_name, layout_args)
@@ -122,6 +124,54 @@ function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,<:AbstractFloat}) where 
     )
 end
 
+################################################################################
+# ComplexAllostery specific plots
+################################################################################
+function plotca_macro(
+    ca::ComplexAllosteryGM{S,F},
+    ss=supersteadystate(ca);
+    kwargs...
+) where {S,F<:AbstractFloat}
+    macro_counts = Matrix{F}(undef, ca.N * ca.B + 1, ca.N + 1)
+    macro_counts = fill(0.0, ca.N * ca.B + 1, ca.N + 1)
+    for (i, st) in enumerate(allstates(ca))
+        numlig = calc_numligands(st)
+        numtense = calc_numofconf(st)
+        macro_counts[numlig+1, numtense+1] += ss[i]
+    end
+    macro_counts
+
+    fap = heatmap(0:(ca.N*ca.B), 0:(ca.N), macro_counts)
+
+    fap.axis.xlabel = "#ligands"
+    fap.axis.ylabel = "#tense"
+    fap
+end
+export plotca_macro
+
+function plotca_macro2(
+    ca::ComplexAllosteryGM{S,F},
+    ss=supersteadystate(ca);
+    kwargs...
+) where {S,F<:AbstractFloat}
+    macro_counts = Matrix{F}(undef, ca.N * ca.B + 1, ca.N + 1)
+    macro_counts = fill(0.0, ca.N * ca.B + 1, ca.N + 1)
+    for (i, st) in enumerate(allstates(ca))
+        numlig = calc_numligands(st)
+        numtense = calc_numofconf(st)
+        macro_counts[numlig+1, numtense+1] += ss[i]
+    end
+    macro_counts
+
+    fap = heatmap(0:(ca.N*ca.B), 0:(ca.N), macro_counts)
+
+    fap.axis.xlabel = "#ligands"
+    fap.axis.ylabel = "#tense"
+    fap
+end
+export plotca_macro2
+
+
 # FIX: Everything from now on should be replaced by new stuff in gm_io.jl,
 # keeping for now for observables stuff and interactivity
 ################################################################################
@@ -195,7 +245,9 @@ function int_plot_ca(ca::ComplexAllosteryGM, args...;
     FigureAxisAnything(fig, ax, ca_obs)
 end
 
-# other interactive plots
+################################################################################
+# Other interactive plots -- mostly old stuff but works and interesting!
+################################################################################
 function eq_stats_plot(ca::ComplexAllosteryGM{S,Num}) where {S}
     fig = Figure()
 
