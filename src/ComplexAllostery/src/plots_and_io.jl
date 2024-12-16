@@ -152,21 +152,136 @@ export plotca_macro
 function plotca_macro2(
     ca::ComplexAllosteryGM{S,F},
     ss=supersteadystate(ca);
+    layout=nothing,
+    n_size=20.0,
+    n_ss_size=false,
+    n_ss_colormap=:Oranges,
+    n_ss_colorscale=log10,
+    n_ss_colorrange=:auto,
+    n_ss_colorbar=true,
+    e_color=:dcurrents,
+    e_colormap=:BuPu,
+    e_colorscale=identity,
+    e_colorrange=:auto,
+    e_colorbar=true,
+    interactive=:auto,
     kwargs...
 ) where {S,F<:AbstractFloat}
-    macro_counts = Matrix{F}(undef, ca.N * ca.B + 1, ca.N + 1)
-    macro_counts = fill(0.0, ca.N * ca.B + 1, ca.N + 1)
-    for (i, st) in enumerate(allstates(ca))
-        numlig = calc_numligands(st)
-        numtense = calc_numofconf(st)
-        macro_counts[numlig+1, numtense+1] += ss[i]
+    group_vect = [(calc_numligands(st), calc_numofconf(st)) for st in allstates(ca)]
+    groups = unique(group_vect)
+
+    graph = if e_color == :rates
+        graph(ca)
+    elseif e_color == :dcurrents
+        make_current_graph(ca, ss)
+    else
+        throw(ArgumentError(f"unrecognized e_color of {e_color}"))
     end
-    macro_counts
 
-    fap = heatmap(0:(ca.N*ca.B), 0:(ca.N), macro_counts)
+    macrograph, macrostates = groupgraph(graph, group_vect; groups)
+    macrostate, _ = groupsum(ss, group_vect; groups)
 
-    fap.axis.xlabel = "#ligands"
-    fap.axis.ylabel = "#tense"
+    if isnothing(layout)
+        layout = :NT
+    end
+    if isa(layout, NetworkLayout.AbstractLayout)
+        layout = layout(macrograph)
+    elseif isa(layout, AbstractArray) && (length(layout) == nv(macrograph))
+    else
+        if isa(layout, Symbol)
+            layout = (layout,)
+        end
+        (layout_name, layout_args...) = layout
+        if layout_name == :NT
+            layout = macrostates
+        else
+            throw(ArgumentError(f"layout of name {layout_name} is not recognised"))
+        end
+    end
+
+    auto_kwargs = Dict{Symbol,Any}()
+
+    # node size
+    auto_kwargs[:node_size] = if !(isnothing(n_ss_size) || (n_ss_size == false))
+        n_size *= 4.0
+        if n_ss_size == :lin
+            [n_size * x for x in macrostate]
+        elseif n_ss_size == :log
+            [n_size * log(1 + x) for x in macrostate]
+        elseif n_ss_size == :sqrt
+            [n_size * sqrt(x) for x in macrostate]
+        elseif n_ss_size == :linA
+            [n_size * (x)^(1 / 2) for x in macrostate]
+        elseif n_ss_size == :logA
+            [n_size * (log(1 + x))^(1 / 2) for x in macrostate]
+        elseif n_ss_size == :sqrtA
+            [n_size * sqrt(x)^(1 / 2) for x in macrostate]
+        else
+            throw(ArgumentError(f"n_ss_size of {n_ss_size} is not recognised"))
+        end
+    else
+        [n_size for _ in 1:nv(macrograph)]
+    end
+    # node colors
+    auto_kwargs[:node_color] = macrostate
+    if n_ss_colorrange == :auto
+        max_weight = maximum(macrostate)
+        min_weight = minimum(macrostate)
+        if (max_weight - min_weight) < 1e-8
+            min_weight -= 0.1
+        end
+        n_ss_colorrange = (min_weight, max_weight)
+    end
+    auto_kwargs[:node_attr] = (;
+        colormap=n_ss_colormap,
+        colorrange=n_ss_colorrange,
+        colorscale=n_ss_colorscale
+    )
+    # edge colors
+    auto_kwargs[:edge_color] = colors = weight.(edges(macrograph))
+    if e_colorrange == :auto
+        max_weight = maximum(colors)
+        min_weight = minimum(colors)
+        if (max_weight - min_weight) < 1e-8
+            min_weight -= 0.1
+        end
+        e_colorrange = (min_weight, max_weight)
+    end
+    auto_kwargs[:edge_attr] = auto_kwargs[:arrow_attr] = (;
+        colormap=e_colormap,
+        colorrange=e_colorrange,
+        colorscale=e_colorscale
+    )
+
+    fap = graphplot(macrograph;
+        layout,
+        auto_kwargs...
+    )
+
+    if e_colorbar
+        Colorbar(fap.figure[1, 2];
+            colormap=e_colormap,
+            colorrange=e_colorrange,
+            scale=e_colorscale,
+            label="net probability current"
+        )
+    end
+    if n_ss_colorbar
+        Colorbar(fap.figure[1, 3];
+            colormap=n_ss_colormap,
+            colorrange=n_ss_colorrange,
+            scale=n_ss_colorscale,
+            label="probability"
+        )
+    end
+
+    if interactive == :auto
+        interactive = isa(fap.axis, Axis)
+    end
+    if interactive
+        GraphModels.p_make_interactive(fap.axis, fap.plot)
+    end
+
     fap
 end
 export plotca_macro2

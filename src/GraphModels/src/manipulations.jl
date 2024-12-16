@@ -211,16 +211,16 @@ export make_current_graph
 ################################################################################
 # Stuff that changes the graph like editing/filtering edges
 ################################################################################
-function groupgraph(graph::SimpleWeightedDiGraph, group_array::AbstractVector;
-    groups=unique(group_array)
+function groupgraph(graph::SimpleWeightedDiGraph, group_vect::AbstractVector;
+    groups=unique(group_vect)
 )
-    if length(group_array) != nv(graph)
+    if length(group_vect) != nv(graph)
         throw(ArgumentError("the passed group information does not have the correct length"))
     end
     if !allunique(groups)
         throw(ArgumentError("the passed `groups` list is not valid as it has repeats"))
     end
-    itogroup = [findfirst(x -> x == i, groups) for i in group_array]
+    itogroup = [findfirst(x -> x == i, groups) for i in group_vect]
 
     grouped_graph = SimpleWeightedDiGraph(length(groups))
     for e in edges(graph)
@@ -237,16 +237,16 @@ groupgraph(gm::AbstractGraphModel, ga; kwargs...) = groupgraph(graph(gm), ga; kw
 groupgraph(gm::AbstractGraphModel, f::Function; kwargs...) = groupgraph(gm, f.(allstates(gm)); kwargs...)
 export groupgraph
 
-function groupsum(v::AbstractVector, group_array::AbstractVector;
-    groups=unique(group_array)
+function groupsum(v::AbstractVector, group_vect::AbstractVector;
+    groups=unique(group_vect)
 )
-    if length(group_array) != length(v)
+    if length(group_vect) != length(v)
         throw(ArgumentError("the passed group information does not have the correct length"))
     end
     if !allunique(groups)
         throw(ArgumentError("the passed `groups` list is not valid as it has repeats"))
     end
-    itogroup = [findfirst(x -> x == i, groups) for i in group_array]
+    itogroup = [findfirst(x -> x == i, groups) for i in group_vect]
 
     grouped_v = fill(zero(eltype(v)), length(groups))
     for (i, x) in enumerate(v)
