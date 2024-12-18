@@ -128,7 +128,7 @@ with $\mu$ being the chemical potential of the ligand.
 This is a slightly problematic quantity as I'm not too sure how this fits in with the next section, however I suspect it should be kept as a separate thing as long as possible.
 
 \newpage
-\section{Modified Transition Rates}
+\section{Modified Transition Rates}\label{sec:modtransr}
 We still consider the recipe as in Model 2 where for a reaction
 \begin{equation}
 	\ce{S_1 + S_2 + $\cdots$ <=>[$r_f$][$r_b$] P_1 + P_2 + $\cdots$}
@@ -572,8 +572,6 @@ Such plots can be seen in \cref{fig:N1sscur_plotsnoall,fig:N1sscur_plots2,fig:N1
 	}\label{fig:N1sscur_plots3}
 \end{figure}
 
-
-
 \newpage
 \section{Going beyond $N=1$}
 For an illustration on how the graphs scale see \cref{fig:N2trans} where the corresponding graph is shown for $N=2$ and
@@ -599,6 +597,20 @@ This means some of our single monomer futile cycles get disrupted, unless the en
 	}\label{fig:N2fcs}
 \end{figure}
 
+\newpage
+\section{Modifications for the future}
+After looking at some first numerical systems with $N>1$ we got edge currents but adding $\epsilon_b$ highlighted a bit of an issue.
+This makes many conformational change rates scale with $e^{\beta\epsilon_b}$ which gets very large for $\epsilon_b \sim 1-5$ in which range we see a reasonable edge confinement.
+The only way in Model 2.5 to combat this is to adjust the overall rate scales $r_i$, but that somewhat changes their interpretation if we need significant differences between them to get overall similar transition rates.
+To fix this Jaime suggested adjusting the transition rates, in particular we could divide the rates from \cref{sec:modtransr} by $\exp(\beta(\sum \epsilon_?))$ with some sum of the energies to normalize the transition rates.
+
+Firstly, it is clear that the role of concentrations should be the same, keeping them at the front of only the rates in which they are the substrates not products.
+However, it is not so clear what to do with the intrinsic chemical energies.
+For now, we exclude these from coming into the additional factor we talk of as that keeps our simplification of setting them all to zero when the $\theta_?$ are 1 valid.
+Thus, the $\epsilon_?$ can only be the energies of the microstates of the system and in particular only the part of those that is associated with the affected monomer, keeping things in the same spirit as before.
+I see two obvious choices to choose from.
+
+\subsection{Simple rescaling by reaction type}
 
 \newpage
 \section{Extras}

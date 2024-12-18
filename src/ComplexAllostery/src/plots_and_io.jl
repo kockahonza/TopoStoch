@@ -119,7 +119,6 @@ function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,<:AbstractFloat}) where 
         n_size=15.0,
         n_ss_size=false,
         n_ss_colorscale=log10,
-        felabels=false,
         e_color=:dcurrents
     )
 end
@@ -128,28 +127,6 @@ end
 # ComplexAllostery specific plots
 ################################################################################
 function plotca_macro(
-    ca::ComplexAllosteryGM{S,F},
-    ss=supersteadystate(ca);
-    kwargs...
-) where {S,F<:AbstractFloat}
-    macro_counts = Matrix{F}(undef, ca.N * ca.B + 1, ca.N + 1)
-    macro_counts = fill(0.0, ca.N * ca.B + 1, ca.N + 1)
-    for (i, st) in enumerate(allstates(ca))
-        numlig = calc_numligands(st)
-        numtense = calc_numofconf(st)
-        macro_counts[numlig+1, numtense+1] += ss[i]
-    end
-    macro_counts
-
-    fap = heatmap(0:(ca.N*ca.B), 0:(ca.N), macro_counts)
-
-    fap.axis.xlabel = "#ligands"
-    fap.axis.ylabel = "#tense"
-    fap
-end
-export plotca_macro
-
-function plotca_macro2(
     ca::ComplexAllosteryGM{S,F},
     ss=supersteadystate(ca);
     layout=nothing,
@@ -170,7 +147,7 @@ function plotca_macro2(
     group_vect = [(calc_numligands(st), calc_numofconf(st)) for st in allstates(ca)]
     groups = unique(group_vect)
 
-    graph = if e_color == :rates
+    graph_ = if e_color == :rates
         graph(ca)
     elseif e_color == :dcurrents
         make_current_graph(ca, ss)
@@ -178,7 +155,7 @@ function plotca_macro2(
         throw(ArgumentError(f"unrecognized e_color of {e_color}"))
     end
 
-    macrograph, macrostates = groupgraph(graph, group_vect; groups)
+    macrograph, macrostates = groupgraph(graph_, group_vect; groups)
     macrostate, _ = groupsum(ss, group_vect; groups)
 
     if isnothing(layout)
@@ -284,7 +261,7 @@ function plotca_macro2(
 
     fap
 end
-export plotca_macro2
+export plotca_macro
 
 
 # FIX: Everything from now on should be replaced by new stuff in gm_io.jl,
