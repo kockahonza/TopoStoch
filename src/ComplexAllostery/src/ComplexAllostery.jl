@@ -194,5 +194,7 @@ include("symbolics.jl")
 include("plots_and_io.jl")
 
 include("Model2_5_C2.jl")
+include("Model2_6_C2.jl")
+include("Model3.jl")
 
 end # module ComplexAllostery
