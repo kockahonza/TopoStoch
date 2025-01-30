@@ -199,4 +199,23 @@ where the $S$s are different in each process and denote different microstates of
 	where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
 \end{tcolorbox}
 
+\section{Simplified Model}
+Much as before to reduce the complexity we make some choices.
+Firstly, we set all $\theta_?$ to 1, this makes the degrees of freedom of the chemical concentrations and energies redundant in the model and so we can set all chemical energies to 0 and only keep the concentrations in the model.
+However these concentrations should then be interpreted as $\exp(\beta \mu_\text{chem})$ instead of just the concentrations.
+
+Then as before we make the reactions 1 and 2 couple to both conformations equally and make reaction 2 (the ATP one) couple mainly to the tense conformation.
+Specifically, let $r_2(1) = r_2$ and $r_2(2) = \alpha r_2$ with the extreme case being $\alpha = 0$.
+
+Further, we focus on the less energetically driven case where the only non-zero energy is $\epsilon_b$, this in addition to having the thetas greatly simplifies the rates and in particular we get
+\begin{align}
+    & r_{1f} = r_1 \frac{c_P}{c_P + 1} \\
+    & r_{1b} = r_1 \frac{1}{c_P + 1} \\
+    & r_{2f}(c_i) = r_2 \frac{c_{ATP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{c_R}{c_R + 1} \{\times \alpha \quad\text{if}\enspace c_i =2\} \\
+    & r_{2b}(c_i) = r_2 \frac{c_{ADP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{1}{c_R + 1} \{\times \alpha \quad\text{if}\enspace c_i =2\} \\
+    & r_{3f} = r_3 \frac{\exp(\beta\Delta\epsilon)}{\exp(\beta\Delta\epsilon) + 1} \\
+    & r_{3b} = r_3 \frac{1}{\exp(\beta\Delta\epsilon) + 1}
+\end{align}
+with $c_R = \frac{c_{ATP}}{c_{ADP}}$ and $c_P$ being the only relevant degrees of freedom for phosphorylation reactions and $\Delta\epsilon=\epsilon_i^S-\epsilon_i^{S'}$.
+
 \end{document}

@@ -51,6 +51,7 @@ symvars = (;
     rs=(savariables(:r, 1, 1:2), savariables(:r, 2, 1:2), variable(:r, 3)),
     chem_energies=listsavariables(:εP, :εATP, :εADP),
     concentrations=listsavariables(:cP, :cATP, :cADP),
+    redconcentration=variable(:cR),
     thetas=savariables(:θ, 1:3, 1:2),
     # Simplifed model vars
     sim_rs=SVector(variables(:r, 1:3)..., variable(:α))
@@ -105,14 +106,11 @@ function vars_simplified(;
         throw(ArgumentError(f"invalid energies of {energies}"))
     end
 
-    if isnothing(concentrations)
-        concentrations = base.concentrations
-    elseif concentrations == :ss1 # cADP -> 0
-        concentrations = setindex(base.concentrations, 0.0, 3)
-    elseif concentrations == :ss2 # cADP -> 0, cP -> 0
-        concentrations = setindex(base.concentrations, 0.0, 3)
-        concentrations = setindex(concentrations, 0.0, 1)
-    else
+    concentrations_ = setindex(base.concentrations, 1.0, 3)
+    concentrations_ = setindex(concentrations_, symvars.redconcentration, 2)
+    if concentrations == :ss # cP -> 0
+        concentrations_ = setindex(concentrations_, 0.0, 1)
+    elseif !isnothing(concentrations)
         throw(ArgumentError(f"invalid concentrations of {concentrations}"))
     end
 
@@ -128,7 +126,7 @@ function vars_simplified(;
         energies,
         newrs,
         (@SVector fill(Num(0.0), 3)),
-        concentrations,
+        concentrations_,
         (@SMatrix fill(Num(1.0), 3, 2)),
         kT
     )
