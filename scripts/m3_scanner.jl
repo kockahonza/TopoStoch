@@ -1,8 +1,6 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-using Revise
-
 using JLD2
 
 using ComplexAllostery
@@ -79,9 +77,7 @@ function (tap::ObsTotalAreaProbability)(cca, ss)
     sum(@view ss[tap.area_indices])
 end
 
-################################################################################
-# Some very elementary first runs
-################################################################################
+# Some really basic observables
 function make_allligs_obs(N, C=2, B=1)
     ai = Int[]
     for (i, st) in enumerate(ComplexAllostery.allstates_complexallostery(N, C, B))
@@ -132,35 +128,4 @@ function make_onboundary_obs(N, C=2, B=1)
         end
     end
     ObsTotalAreaProbability(ai)
-end
-
-function bigrun1(N=4; testrun=false)
-    observables = [make_allligs_obs(N), make_noligs_obs(N), make_alltense_obs(N), make_notense_obs(N), make_onboundary_obs(N)]
-    obs_names = ["allligs", "noligs", "alltense", "notense", "onboundary"]
-
-    fname = datadir(f"scans/bigrun1_N{N}.jld2")
-    if ispath(fname)
-        @error f"Path {fname} already exists, exiting so that it is not overriden"
-    end
-    if !isdir(dirname(fname))
-        mkpath(dirname(fname))
-    end
-
-    if !testrun
-        general_m3_scan(N, observables, fname, obs_names;
-            r1s=10 .^ LinRange(-5, 3, 15),
-            r2s=10 .^ LinRange(-5, 3, 15),
-            r3s=10 .^ LinRange(-5, 3, 15),
-            alphas=[0, 0.5],
-            ebs=LinRange(0, 6, 5),
-            cPs=10 .^ LinRange(-5, 1, 15),
-            cRs=10 .^ LinRange(-1, 2, 15)
-        )
-    else
-        general_m3_scan(N, observables, fname, obs_names;
-            r1s=10 .^ LinRange(-5, 3, 15),
-            alphas=[0, 0.5],
-            ebs=LinRange(0, 6, 5),
-        )
-    end
 end

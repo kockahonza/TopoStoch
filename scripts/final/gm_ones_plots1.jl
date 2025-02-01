@@ -1,8 +1,6 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-using Revise
-
 using Ones
 
 function make_c2d_simplecyle_plots()

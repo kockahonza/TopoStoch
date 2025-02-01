@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.7"
+julia_version = "1.10.8"
 manifest_format = "2.0"
-project_hash = "fe710c20a3f6078150031e81210a0d6dc642ce78"
+project_hash = "7148d75760abcae4670a1236e77f720ce1e91973"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "72af59f5b8f09faee36b4ec48e014a79210f2f4f"
@@ -583,7 +583,7 @@ uuid = "59f7168a-df46-5410-90c8-f2779963d0ec"
 version = "5.2.2+0"
 
 [[deps.GillespieSim]]
-deps = ["Dates", "DrWatson", "GraphModels", "HDF5", "Random", "StatsBase"]
+deps = ["Dates", "DrWatson", "GraphModels", "HDF5", "JLD2", "Random", "StatsBase"]
 path = "../src/GillespieSim"
 uuid = "c2240f19-2687-4a3d-b9e4-4041323e7376"
 version = "0.1.0"
@@ -601,7 +601,7 @@ uuid = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 version = "0.5.12"
 
 [[deps.GraphModels]]
-deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GraphMakie", "Graphs", "JLD2", "LetterCodes", "LinearAlgebra", "Makie", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "SymbolicUtils", "Symbolics"]
+deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GraphMakie", "Graphs", "HDF5", "JLD2", "LetterCodes", "LinearAlgebra", "Makie", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "SymbolicUtils", "Symbolics"]
 path = "../src/GraphModels"
 uuid = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
 version = "0.1.0"
@@ -803,9 +803,9 @@ version = "1.0.0"
 
 [[deps.JLD2]]
 deps = ["FileIO", "MacroTools", "Mmap", "OrderedCollections", "PrecompileTools", "Requires", "TranscodingStreams"]
-git-tree-sha1 = "f1a1c1037af2a4541ea186b26b0c0e7eeaad232b"
+git-tree-sha1 = "91d501cb908df6f134352ad73cde5efc50138279"
 uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-version = "0.5.10"
+version = "0.5.11"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]

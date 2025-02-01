@@ -1,8 +1,6 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-using Revise
-
 using GLMakie
 
 using ComplexAllostery

@@ -1,8 +1,6 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-using Revise
-
 using CairoMakie
 using GLMakie
 using ColorBrewer # For single colors
