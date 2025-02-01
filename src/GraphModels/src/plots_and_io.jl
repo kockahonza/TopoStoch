@@ -201,7 +201,11 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     if ss == :auto
         if F <: AbstractFloat
             @info "automatically calculating steady state as graph is concrete"
-            ss = supersteadystate(gm)
+            try
+                ss = supersteadystate(gm)
+            catch e
+                @warn f"steady state calculation failed, error was {e}"
+            end
         else
             ss = nothing
         end
@@ -266,42 +270,48 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         e_color = nothing
     end
     if !isnothing(e_color)
-        auto_kwargs[:edge_color] = colors = if e_color == :rates
+        if e_color == :currents
+            if isnothing(ss)
+                @warn "cannot use e_color of {e_color} as there is no ss, falling back to rates"
+                e_color = :rates
+            else
+                if e_colorbar_label == :auto
+                    e_colorbar_label = "Probability currents"
+                end
+                colors = [e.weight * ss[e.src] for e in edges(plotgraph)]
+            end
+        elseif e_color == :dcurrents
+            if isnothing(ss)
+                @warn "cannot use e_color of {e_color} as there is no ss, falling back to rates"
+                e_color = :rates
+            else
+                if e_colorbar_label == :auto
+                    e_colorbar_label = "Net probability currents"
+                end
+                plotgraph = if isnothing(ss_curgraph)
+                    if isnothing(zerothreshold)
+                        make_current_graph(gm, ss)
+                    else
+                        make_current_graph(gm, ss; zerothreshold)
+                    end
+                else
+                    ss_curgraph
+                end
+                colors = weight.(edges(plotgraph))
+            end
+        elseif e_color != :rates
+            throw(ArgumentError(f"e_color of {e_color} is not recognised"))
+        end
+        if e_color == :rates
             if e_colorscale == :auto
                 e_colorscale = :pseudolog
             end
             if e_colorbar_label == :auto
                 e_colorbar_label = "Transition rates"
             end
-            weight.(edges(plotgraph))
-        elseif e_color == :currents
-            if isnothing(ss)
-                throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
-            end
-            if e_colorbar_label == :auto
-                e_colorbar_label = "Probability currents"
-            end
-            [e.weight * ss[e.src] for e in edges(plotgraph)]
-        elseif e_color == :dcurrents
-            if isnothing(ss)
-                throw(ArgumentError(f"cannot use e_color of {e_color} without ss"))
-            end
-            if e_colorbar_label == :auto
-                e_colorbar_label = "Net probability currents"
-            end
-            plotgraph = if isnothing(ss_curgraph)
-                if isnothing(zerothreshold)
-                    make_current_graph(gm, ss)
-                else
-                    make_current_graph(gm, ss; zerothreshold)
-                end
-            else
-                ss_curgraph
-            end
-            weight.(edges(plotgraph))
-        else
-            throw(ArgumentError(f"e_color of {e_color} is not recognised"))
+            colors = weight.(edges(plotgraph))
         end
+        auto_kwargs[:edge_color] = colors
 
         if e_colorrange == :auto
             max_weight = maximum(colors)

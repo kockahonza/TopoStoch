@@ -103,7 +103,7 @@ function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,Num}) where {S}
     fnlabels = if numstates(ca) < 10
         :repr
     else
-        labelstate_NR
+        labelstate_NT
     end
     (; fnlabels)
 end
@@ -112,7 +112,7 @@ function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,<:AbstractFloat}) where 
         fnlabels = :repr
         felabels = :auto
     else
-        fnlabels = labelstate_NR
+        fnlabels = labelstate_NT
         felabels = false
     end
     (;

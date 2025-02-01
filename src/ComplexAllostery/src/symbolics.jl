@@ -63,25 +63,29 @@ function make_factory(em::EnergyMatrices, variables=get_variables(em); kwargs...
     mono_fact = make_factory(em.monomer, variables; kwargs...)
     int_fact = make_factory(em.interactions, variables; kwargs...)
 
-    function (args...)
-        fargs = convert.(Float64, args)
-        EnergyMatrices(
-            Matrix{Float64}(mono_fact(fargs...)),
-            Matrix{Float64}(int_fact(fargs...))
-        )
+    let mono_fact = mono_fact, int_fact = int_fact
+        function (args...)
+            fargs = convert.(Float64, args)
+            EnergyMatrices(
+                Matrix{Float64}(mono_fact(fargs...)),
+                Matrix{Float64}(int_fact(fargs...))
+            )
+        end
     end
 end
 function make_factory(ca::ComplexAllosteryGM{S}, variables=get_variables(ca); kwargs...) where {S}
     em_fact = make_factory(ca.energy_matrices, variables; kwargs...)
     adjmat_fact = make_factory(adjacency_matrix(ca.graph), variables; kwargs...)
 
-    function (args...)
-        fargs = convert.(Float64, args)
-        ComplexAllosteryGM(ca.N, ca.C, ca.B;
-            symmetry=S(),
-            numtype=Val(Float64),
-            energy_matrices=em_fact(fargs...),
-            graph=SimpleWeightedDiGraph(adjmat_fact(fargs...))
-        )
+    let em_fact = em_fact, adjmat_fact = adjmat_fact, N = ca.N, C = ca.C, B = ca.B
+        function (args...)
+            fargs = convert.(Float64, args)
+            ComplexAllosteryGM(N, C, B;
+                symmetry=S(),
+                numtype=Val(Float64),
+                energy_matrices=em_fact(fargs...),
+                graph=SimpleWeightedDiGraph(adjmat_fact(fargs...))
+            )
+        end
     end
 end

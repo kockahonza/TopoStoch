@@ -92,11 +92,13 @@ function make_factory(obj, variables=get_variables(obj); kwargs...)
         throw(ArgumentError(f"not all variables were provided, concrete factory cannot be made"))
     end
 
-    function (args...)
-        if length(args) != num_vars
-            throw(ArgumentError(f"closure expected {num_vars} arguments but received {length(args)}"))
+    let num_vars = num_vars, bfunc = bfunc
+        function (args...)
+            if length(args) != num_vars
+                throw(ArgumentError(f"closure expected {num_vars} arguments but received {length(args)}"))
+            end
+            bfunc(SVector(convert.(Float64, args)))
         end
-        bfunc(SVector(convert.(Float64, args)))
     end
 end
 function make_factory(gm::AbstractGraphModel{<:Num}, variables=get_variables(arr))

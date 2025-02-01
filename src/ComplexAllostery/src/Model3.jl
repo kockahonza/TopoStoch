@@ -45,7 +45,7 @@ end
 export SystemVars, smart_vars
 
 # The major symbolic variables so that I don't have to keep redefining them
-symvars = (;
+const symvars = (;
     # The base model 2.5 variables
     energies=listsavariables(:ε_t, :Δε_r, :ε_b),
     rs=(savariables(:r, 1, 1:2), savariables(:r, 2, 1:2), variable(:r, 3)),
