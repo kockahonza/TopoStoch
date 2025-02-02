@@ -59,14 +59,14 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     checkimag=checks,
     checkss=checks,
     checkothers=checks,
-    returnothers::Val{Returnothers}=Val(false),
+    returnnonss::Val{Returnonss}=Val(false),
     sortothers=true
-) where {Returnothers}
+) where {Returnonss}
     esys = eigen!(etransmat(gm; mat=true))
     n = length(esys.values)
 
     steadystates = Vector{Vector{Float64}}(undef, 0)
-    if Returnothers
+    if Returnonss
         nonss = Eigensystem(numstates(gm); numtype=Val(ComplexF64))
     end
     for i in 1:n
@@ -95,13 +95,13 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
                     @warn f"found a non-steady eigenstate the components of which do not sum to 0"
                 end
             end
-            if Returnothers
+            if Returnonss
                 push!(nonss, (eval, evec))
             end
         end
     end
 
-    if !Returnothers
+    if !Returnonss
         steadystates
     else
         if sortothers
@@ -111,16 +111,11 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
         steadystates, nonss
     end
 end
-fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnothers=Val(true), kwargs...)
+fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnnonss=Val(true), kwargs...)
 export steadystates, fulleigenanalysis
 
-supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
+supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnnonss=Val(false)))
 export supersteadystate
-
-function nonss_analysis(gm::AbstractGraphModel{<:AbstractFloat}; kwargs...)
-    steadystates_, es = steadystates(gm; kwargs..., returnothers=Val(true), sortothers=true)
-end
-export nonss_analysis
 
 """
 Returns list of lists each of which is a group of indices of those eigenvalues/states
