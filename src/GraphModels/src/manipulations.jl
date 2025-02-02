@@ -55,9 +55,10 @@ export etransmat_safe
 ################################################################################
 function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     threshold=1e-8,
-    checkimag=true,
-    checkss=true,
-    checkothers=true,
+    checks=true,
+    checkimag=checks,
+    checkss=checks,
+    checkothers=checks,
     returnothers::Val{Returnothers}=Val(false),
     sortothers=true
 ) where {Returnothers}
@@ -82,9 +83,9 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
             end
             rss = real(ss)
             if checkss
-                firstviolation = findfirst(x -> (x < 0) || (x > 1), rss)
+                firstviolation = findfirst(x -> (x < 0.0) || (x > 1.0), rss)
                 if !isnothing(firstviolation)
-                    @warn f"getting steady states with a component of {firstviolation} which is not between 0 and 1"
+                    @warn f"getting steady states with a component of {rss[firstviolation]} which is not between 0 and 1"
                 end
             end
             push!(steadystates, rss)
