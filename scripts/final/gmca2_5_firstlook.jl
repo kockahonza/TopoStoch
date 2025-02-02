@@ -17,7 +17,7 @@ function m1()
     sc1 = GLMakie.Screen()
     display(sc1, plotcgm(cca; layout=:NTc))
 
-    es = fsteadystates(cca)[2]
+    es = fulleigenanalysis(cca)[2]
     @show findall(isnothing, degenerate_map(es))
 
     display(plot_ps(cca, evec(es, 1); layout=:NTc))

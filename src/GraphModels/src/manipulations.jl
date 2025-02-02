@@ -111,8 +111,8 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
         steadystates, nonss
     end
 end
-fsteadystates(args...; kwargs...) = steadystates(args...; returnothers=Val(true), kwargs...)
-export steadystates, fsteadystates
+fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnothers=Val(true), kwargs...)
+export steadystates, fulleigenanalysis
 
 supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnothers=Val(false)))
 export supersteadystate
