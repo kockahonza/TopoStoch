@@ -1,5 +1,5 @@
 ################################################################################
-# Concretizing symbolic objects
+# Substitutions and concretizing symbolic objects
 ################################################################################
 get_variables(::Nothing) = Num[]
 get_variables(term) = unique(Num.(Symbolics.get_variables(term)))

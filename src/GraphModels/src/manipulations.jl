@@ -114,7 +114,13 @@ end
 fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnnonss=Val(true), kwargs...)
 export steadystates, fulleigenanalysis
 
-supersteadystate(args...; kwargs...) = sum(steadystates(args...; kwargs..., returnnonss=Val(false)))
+function supersteadystate(args...; norm=false, kwargs...)
+    if !norm
+        sum(steadystates(args...; kwargs..., returnnonss=Val(false)))
+    else
+        mean(steadystates(args...; kwargs..., returnnonss=Val(false)))
+    end
+end
 export supersteadystate
 
 """

@@ -1,6 +1,6 @@
 module LetterCodes
 
-import Base: repr, string
+import Base: repr, string, +
 
 export Code, increment!
 

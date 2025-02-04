@@ -661,6 +661,28 @@ function prep_sliders(variables; ranges=nothing, startvalues=nothing)
 end
 export prep_sliders
 
+function ntogridsize1(n)
+    best_score = n
+    best_ncols = 0
+    best_nrows = 0
+    ncols = ceil(Int, sqrt(n))
+    nrows = ceil(Int, n / ncols)
+    while nrows >= div(ncols, 2)
+        score = ncols * nrows - n
+
+        if score < best_score
+            best_score = score
+            best_ncols = ncols
+            best_nrows = nrows
+        end
+
+        ncols += 1
+        nrows = ceil(Int, n / ncols)
+    end
+    (best_nrows, best_ncols)
+end
+export ntogridsize1
+
 ################################################################################
 # Saving
 ################################################################################

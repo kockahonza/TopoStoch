@@ -7,6 +7,7 @@ using LetterCodes
 @reexport using PyFormattedStrings
 @reexport using StaticArrays, ElasticArrays, SparseArrays
 @reexport using LinearAlgebra: eigen!
+@reexport using StatsBase
 @reexport using Graphs, SimpleWeightedGraphs, NetworkLayout
 @reexport using Makie, GraphMakie, Colors
 @reexport using Symbolics

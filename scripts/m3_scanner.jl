@@ -57,9 +57,11 @@ function general_m3_scan(N, observables, save_fname=nothing,
     BLAS.set_num_threads(prev_blas_num_threads)
 
     if !isnothing(save_fname)
+        range_names = ["r1s", "r2s", "r3s", "alphas", "ebs", "cPs", "cRs"]
         obs_kwargs = Symbol.(obs_names) .=> data
         jldsave(save_fname; ca, r1s, r2s, r3s, alphas, ebs, cPs, cRs,
-            observable_names=obs_names, obs_kwargs..., save_metadata...
+            range_names, observable_names=obs_names,
+            obs_kwargs..., save_metadata...
         )
     end
 
