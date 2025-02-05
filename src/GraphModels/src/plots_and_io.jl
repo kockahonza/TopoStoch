@@ -626,6 +626,9 @@ export plotgm_sim
 ################################################################################
 # Other plotting util
 ################################################################################
+const colors_tab20 = [get(cgrad(:tab20, 20), i / 20) for i in 0:19]
+export colors_tab20
+
 function make_linalpha_cmap(cmap; amin=0.0, amax=1.0)
     cmap = Makie.to_colormap(cmap)
     acmap = [coloralpha(color(c), a) for (c, a) in zip(cmap, LinRange(amin, amax, length(cmap)))]

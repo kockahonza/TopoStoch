@@ -163,7 +163,7 @@ This is both for convenient theory so that comparable $r$ lead to comparable rat
 		 & r_f = \frac{r}{d} c_1 \exp(\beta(\theta_f(\epsilon+\epsilon_1)-(1-\theta_b)(\epsilon'+\epsilon_2))) \\
 		 & r_b = \frac{r}{d} c_2 \exp(\beta(\theta_b(\epsilon'+\epsilon_2)-(1-\theta_f)(\epsilon+\epsilon_1))) \\
 	\end{align}
-    where
+	where
 	\begin{equation}
 		d = c_1 \exp(\beta(\theta_f(\epsilon+\epsilon_1)-(1-\theta_b)(\epsilon'+\epsilon_2))) + c_2 \exp(\beta(\theta_b(\epsilon'+\epsilon_2)-(1-\theta_f)(\epsilon+\epsilon_1)))
 	\end{equation}
@@ -185,16 +185,16 @@ where the $S$s are different in each process and denote different microstates of
 	That means these energies will always be just an element of the $E_M$ matrix along with an interaction contribution of 0, $\epsilon_b$ or $2\epsilon_b$.
 	Additionally, we allow the overall reaction rates $r_?$ for the phosphorylation reactions to depend on the conformation of the affected monomer.
 
-    Finally, for the new divisors added in this model we don't explicitly write them out as they are very large but just denote them as $d(\cdots)$
+	Finally, for the new divisors added in this model we don't explicitly write them out as they are very large but just denote them as $d_i(\cdots)$
 
 	Thus we arrive at
 	\begin{align}
-        & r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) / d(\cdots) \label{eq:rate1f}                          \\
-         & r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) / d(\cdots) \label{eq:rate1b}                             \\
-         & r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) / d(\cdots) \label{eq:rate2f} \\
-         & r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) / d(\cdots) \label{eq:rate2b} \\
-         & r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) / d(\cdots) \label{eq:rate3f}                                                    \\
-         & r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) / d(\cdots) \label{eq:rate3b}
+		 & r_{1f}(c_i) = r_1(c_i)c_P\exp(\beta(\theta_{1f}(\epsilon_i^S+\epsilon_P)-(1-\theta_{1b})\epsilon_i^{S'})) / d_1(\cdots) \label{eq:rate1f}                          \\
+		 & r_{1b}(c_i) = r_1(c_i)\exp(\beta(\theta_{1b}\epsilon_i^{S'}-(1-\theta_{1f})(\epsilon_i^S+\epsilon_P))) / d_1(\cdots) \label{eq:rate1b}                             \\
+		 & r_{2f}(c_i) = r_2(c_i)c_{ATP}\exp(\beta(\theta_{2f}(\epsilon_i^S+\epsilon_{ATP})-(1-\theta_{2b})(\epsilon_i^{S'}+\epsilon_{ADP}))) / d_2(\cdots) \label{eq:rate2f} \\
+		 & r_{2b}(c_i) = r_2(c_i)c_{ADP}\exp(\beta(\theta_{2b}(\epsilon_i^{S'}+\epsilon_{ADP})-(1-\theta_{2f})(\epsilon_i^S+\epsilon_{ATP}))) / d_2(\cdots) \label{eq:rate2b} \\
+		 & r_{3f} = r_3\exp(\beta(\theta_{3f}\epsilon_i^S-(1-\theta_{3b})\epsilon_i^{S'})) / d_3(\cdots) \label{eq:rate3f}                                                    \\
+		 & r_{3b} = r_3\exp(\beta(\theta_{3b}\epsilon_i^{S'}-(1-\theta_{3f})\epsilon_i^S)) / d_3(\cdots) \label{eq:rate3b}
 	\end{align}
 	where the $r_?,c_?,\epsilon_P,\epsilon_{ATP},\epsilon_{ADP}$ and $\theta_?$ are parameters.
 \end{tcolorbox}
@@ -209,12 +209,12 @@ Specifically, let $r_2(1) = r_2$ and $r_2(2) = \alpha r_2$ with the extreme case
 
 Further, we focus on the less energetically driven case where the only non-zero energy is $\epsilon_b$, this in addition to having the thetas greatly simplifies the rates and in particular we get
 \begin{align}
-    & r_{1f} = r_1 \frac{c_P}{c_P + 1} \\
-    & r_{1b} = r_1 \frac{1}{c_P + 1} \\
-    & r_{2f}(c_i) = r_2 \frac{c_{ATP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{c_R}{c_R + 1} \{\times \alpha \quad\text{if}\enspace c_i =2\} \\
-    & r_{2b}(c_i) = r_2 \frac{c_{ADP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{1}{c_R + 1} \{\times \alpha \quad\text{if}\enspace c_i =2\} \\
-    & r_{3f} = r_3 \frac{\exp(\beta\Delta\epsilon)}{\exp(\beta\Delta\epsilon) + 1} \\
-    & r_{3b} = r_3 \frac{1}{\exp(\beta\Delta\epsilon) + 1}
+	 & r_{1f} = r_1 \frac{c_P}{c_P + 1} = r_1 \chi_P                                                                                                                                    \\
+	 & r_{1b} = r_1 \frac{1}{c_P + 1} = r_1 (1-\chi_P)                                                                                                                                  \\
+	 & r_{2f}(c_i) = r_2 \frac{c_{ATP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{c_R}{c_R + 1} \{\times \alpha\} = r_2 \chi_R \{\times \alpha\}   \\
+	 & r_{2b}(c_i) = r_2 \frac{c_{ADP}}{c_{ATP} + c_{ADP}} \{\times \alpha \quad\text{if}\enspace c_i =2\} = r_2 \frac{1}{c_R + 1} \{\times \alpha\} = r_2 (1-\chi_R) \{\times \alpha\} \\
+	 & r_{3f} = r_3 \frac{\exp(\beta\Delta\epsilon)}{\exp(\beta\Delta\epsilon) + 1} = r_3 \chi_b                                                                                        \\
+	 & r_{3b} = r_3 \frac{1}{\exp(\beta\Delta\epsilon) + 1} = r_3 (1-\chi_b)
 \end{align}
 with $c_R = \frac{c_{ATP}}{c_{ADP}}$ and $c_P$ being the only relevant degrees of freedom for phosphorylation reactions and $\Delta\epsilon=\epsilon_i^S-\epsilon_i^{S'}$.
 

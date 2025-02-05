@@ -65,8 +65,25 @@ function uniqtmheatmap(halfplane=true)
         end
     end
 
-    fap = heatmap(tm; colormap=Makie.Categorical(:tab20), colorrange=(1, 20), axis=(; aspect=1))
-    Colorbar(fap.figure[1, 2], fap.plot)
+    colormap = cgrad(colors_tab20[begin:begin+6], 7; categorical=true)
+    fap = heatmap(tm; colormap, axis=(; aspect=1))
+    cb = Colorbar(fap.figure[1, 2], fap.plot)
+
+    # adjust the colorbar to be fake categorical
+    cb.axis.attributes.limits = (0.5, 7.5)
+    color_labels = [
+        "1 - +P,tense",
+        "2 - -P,tense",
+        "3 - +P,relaxed",
+        "4 - -P,relaxed",
+        "5 - C,out of bulk",
+        "6 - C,into bulk",
+        "7 - C,within bulk",
+    ]
+    println(color_labels)
+    cb.ticks = (1:7, color_labels)
+
     fap
+    # To test the colors are working correctly
     # scatter(1:10, 1:10; color=1:10, colormap=:tab20, colorrange=(1,20))
 end
