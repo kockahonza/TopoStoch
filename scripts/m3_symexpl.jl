@@ -87,3 +87,15 @@ function uniqtmheatmap(halfplane=true)
     # To test the colors are working correctly
     # scatter(1:10, 1:10; color=1:10, colormap=:tab20, colorrange=(1,20))
 end
+
+################################################################################
+# 25-02-05 - just basic exploration
+function getcaandfact(N=4)
+    ca = makeCAGM(N, vars_simplified())
+    @show get_variables(ca)
+
+    ordered_vars = [symvars.sim_rs; symvars.energies[3]; symvars.concentrations[1]; symvars.redconcentration]
+    @show ordered_vars
+
+    ca, make_factory(ca, ordered_vars)
+end

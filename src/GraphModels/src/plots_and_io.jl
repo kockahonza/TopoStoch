@@ -314,8 +314,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         auto_kwargs[:edge_color] = colors
 
         if e_colorrange == :auto
-            max_weight = maximum(colors)
-            min_weight = minimum(colors)
+            max_weight = maximum(colors; init=0)
+            min_weight = minimum(colors; init=0)
             if (max_weight - min_weight) < colorrange_threshold
                 min_weight -= 0.1
             end
