@@ -76,7 +76,7 @@ export calc_energy
 calc_numligands(st::CAState) = sum(st.occupations)
 export calc_numligands
 
-calc_numofconf(st::CAState, conf_state=1) = count(x -> x == conf_state, st.conformations)
+calc_numofconf(st::CAState, conf_state::Int=1) = count(x -> x == conf_state, st.conformations)
 export calc_numofconf
 
 function calc_numboundaries(st::CAState, args...)
