@@ -601,7 +601,7 @@ uuid = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 version = "0.5.12"
 
 [[deps.GraphModels]]
-deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GraphMakie", "Graphs", "HDF5", "JLD2", "LetterCodes", "LinearAlgebra", "Makie", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "SymbolicUtils", "Symbolics"]
+deps = ["Colors", "Dates", "DrWatson", "ElasticArrays", "GraphMakie", "Graphs", "HDF5", "JLD2", "LetterCodes", "LinearAlgebra", "Makie", "NetworkLayout", "PlotUtils", "PyFormattedStrings", "Reexport", "SimpleWeightedGraphs", "SparseArrays", "StaticArrays", "StatsBase", "SymbolicUtils", "Symbolics"]
 path = "../src/GraphModels"
 uuid = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
 version = "0.1.0"
