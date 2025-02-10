@@ -237,7 +237,9 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
                 max_weight = maximum(ss)
                 min_weight = minimum(ss)
                 if (max_weight - min_weight) < colorrange_threshold
-                    min_weight -= 0.1
+                    mm = (max_weight + min_weight) / 2.0
+                    min_weight = mm - colorrange_threshold / 2.0
+                    max_weight = mm + colorrange_threshold / 2.0
                 end
                 n_ss_colorrange = (min_weight, max_weight)
             end
@@ -317,7 +319,9 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             max_weight = maximum(colors; init=0)
             min_weight = minimum(colors; init=0)
             if (max_weight - min_weight) < colorrange_threshold
-                min_weight -= 0.1
+                mm = (max_weight + min_weight) / 2.0
+                min_weight = mm - colorrange_threshold / 2.0
+                max_weight = mm + colorrange_threshold / 2.0
             end
             e_colorrange = (min_weight, max_weight)
         end
