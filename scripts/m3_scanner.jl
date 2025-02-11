@@ -297,7 +297,7 @@ function calc_rtl(rtl::ObsGoingRoundTheLoop, cca)
         for b in bs
             s -= get_weight(graph(cca), st_i, b)
         end
-        s /= sum(get_weight.(Ref(graph(cca)), st_i, outneighbors(graph(cca), st_i)))
+        s /= sum(on -> get_weight(graph(cca), st_i, on), outneighbors(graph(cca), st_i))
         vals[(pos .+ (1, 1))...] += s
     end
     vals

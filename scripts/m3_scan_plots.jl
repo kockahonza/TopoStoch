@@ -4,6 +4,7 @@ using DrWatson
 using JLD2
 using GLMakie
 using Printf
+using MappedArrays
 
 using GraphModels # not needed, just here to help the LSP
 using ComplexAllostery
@@ -19,16 +20,32 @@ end
 scansummary(fn::AbstractString) = scansummary(jldopen(fn))
 
 function _handle_observable(observable_names, obs)
+    if isa(obs, Tuple)
+        if length(obs) == 2
+            obs, func = obs
+            label = nothing
+        elseif length(obs) == 3
+            obs, func, label = obs
+        else
+            throw(ArgumentError(""))
+        end
+    else
+        func = nothing
+        label = nothing
+    end
     if !isa(obs, Integer)
         maybe_obs = findfirst(x -> x == obs, observable_names)
         if !isnothing(maybe_obs)
             obs = maybe_obs
         else
-            throw(ArgumentError(@sprintf "spec %s has unrecognised observable name" string(spec)))
+            throw(ArgumentError(@sprintf "%s is an unrecognised observable name" string(obs)))
         end
     end
     obs = observable_names[obs]
-    obs
+    if isnothing(label)
+        label = obs
+    end
+    (obs, label, func)
 end
 
 function _handle_rangei(range_names, i)
@@ -58,7 +75,7 @@ function _centres_to_edges_clipped(range)
     edges
 end
 
-function scanheatmaps(f, xi, yi, observables; xscale=identity, yscale=identity)
+function scanheatmaps(f, xi, yi, observables; xscale=identity, yscale=identity, kwargs...)
     # prep and handle inputs
     range_names = f["range_names"]
     observable_names = f["observable_names"]
@@ -104,15 +121,39 @@ function scanheatmaps(f, xi, yi, observables; xscale=identity, yscale=identity)
     ys = _centres_to_edges_clipped(f[range_names[yi]])
     cis = CartesianIndices((ncols, nrows))
     axs = []
-    for (obs_name, ci) in zip(observables, cis)
+    hms = []
+    for ((obs_name, obs_label, func), ci) in zip(observables, cis)
         ax = Axis(fig[1+ci[2], ci[1]*2-1]; xscale, yscale)
         push!(axs, ax)
-        hm = heatmap!(ax, xs, ys, make_data_obs(f[obs_name]))
+
+        data_obs = if isnothing(func)
+            make_data_obs(f[obs_name])
+        else
+            make_data_obs(mappedarray(func, f[obs_name]))
+        end
+
+        hm = heatmap!(ax, xs, ys, data_obs; kwargs...)
+        push!(hms, hm)
         Colorbar(fig[1+ci[2], ci[1]*2], hm)
-        ax.title = obs_name
+
+        ax.title = obs_label
         ax.xlabel = range_names[xi]
         ax.ylabel = range_names[yi]
     end
 
-    return FigureAxisAnything(fig, axs, nothing)
+    return FigureAxisAnything(fig, axs, hms)
+end
+
+################################################################################
+# Specific plots for cluster data
+################################################################################
+obs_rtlmat_bl = ("rtl_mats", x -> x[1, 1], "rtl_bl")
+obs_rtlmat_tl = ("rtl_mats", x -> x[1, 5], "rtl_tl")
+obs_rtlmat_tr = ("rtl_mats", x -> x[5, 5], "rtl_tr")
+obs_rtlmat_br = ("rtl_mats", x -> x[5, 1], "rtl_br")
+function br2p1()
+    f = jldopen("cluster_env/runs/m3_bigscan2/bigrun2_N4.jld2")
+    fap = scanheatmaps(f, "cPs", "cRs", ["rtl_means"]; yscale=log10, xscale=log10, colorrange=(0.0, 0.55), colormap=:Blues)
+
+    fap
 end
