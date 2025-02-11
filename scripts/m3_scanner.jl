@@ -162,12 +162,15 @@ struct Mean <: GRTLReturnType end
 struct MatrixAndMean <: GRTLReturnType end
 struct List <: GRTLReturnType end
 
-struct ObsGoingRoundTheLoop{RT<:GRTLReturnType}
+struct ObsGoingRoundTheLoop{RT<:GRTLReturnType,SS}
     start_nodes::Vector{Int}
     forwards::Vector{Vector{Int}}
     backwards::Vector{Vector{Int}}
     macro_positions::Vector{NTuple{2,Int}}
-    function ObsGoingRoundTheLoop{RT}(N, B=1) where {RT}
+    function ObsGoingRoundTheLoop{RT,SS}(N, B=1) where {RT,SS}
+        if !isa(SS, Bool)
+            throw(ArgumentError("SS must be a Bool"))
+        end
         start_nodes = []
         forwards = []
         backwards = []
@@ -284,21 +287,36 @@ struct ObsGoingRoundTheLoop{RT<:GRTLReturnType}
                 push!(backwards, backward)
             end
         end
-        new{RT}(start_nodes, forwards, backwards, macro_positions)
+        new{RT,SS}(start_nodes, forwards, backwards, macro_positions)
     end
 end
-function calc_rtl(rtl::ObsGoingRoundTheLoop, cca)
+function calc_rtl(rtl::ObsGoingRoundTheLoop{RT,false}, cca) where {RT}
     vals = fill(0.0, 1 + cca.N * cca.B, 1 + cca.N)
     for (st_i, fs, bs, pos) in zip(rtl.start_nodes, rtl.forwards, rtl.backwards, rtl.macro_positions)
-        s = 0.0
+        net_prop_rate = 0.0
         for f in fs
-            s += get_weight(graph(cca), st_i, f)
+            net_prop_rate += get_weight(graph(cca), st_i, f)
         end
         for b in bs
-            s -= get_weight(graph(cca), st_i, b)
+            net_prop_rate -= get_weight(graph(cca), st_i, b)
         end
-        s /= sum(on -> get_weight(graph(cca), st_i, on), outneighbors(graph(cca), st_i))
-        vals[(pos .+ (1, 1))...] += s
+        net_prop_rate /= sum(on -> get_weight(graph(cca), st_i, on), outneighbors(graph(cca), st_i))
+        vals[(pos .+ (1, 1))...] += net_prop_rate
+    end
+    vals
+end
+function calc_rtl(rtl::ObsGoingRoundTheLoop{RT,true}, cca, ss) where {RT}
+    vals = fill(0.0, 1 + cca.N * cca.B, 1 + cca.N)
+    for (st_i, fs, bs, pos) in zip(rtl.start_nodes, rtl.forwards, rtl.backwards, rtl.macro_positions)
+        net_prop_rate = 0.0
+        for f in fs
+            net_prop_rate += get_weight(graph(cca), st_i, f)
+        end
+        for b in bs
+            net_prop_rate -= get_weight(graph(cca), st_i, b)
+        end
+        net_prop_rate /= sum(on -> get_weight(graph(cca), st_i, on), outneighbors(graph(cca), st_i))
+        vals[(pos .+ (1, 1))...] += ss[st_i] * net_prop_rate
     end
     vals
 end
