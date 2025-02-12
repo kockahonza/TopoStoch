@@ -28,7 +28,7 @@ function get_neighbors(st::CAState, i, ::Loop)
     end
 
     if i == 1
-        (st.conformations[N], st.conformations[i+1],)
+        (st.conformations[N], st.conformations[i+1])
     elseif i == N
         (st.conformations[N-1], st.conformations[1])
     else

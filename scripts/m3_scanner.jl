@@ -1,5 +1,7 @@
 using DrWatson
-@quickactivate "TopoStochSim"
+if isnothing(projectname())
+    @quickactivate "TopoStochSim"
+end
 
 using JLD2
 using StatsBase
@@ -342,6 +344,28 @@ function (rtl::ObsGoingRoundTheLoop{List})(cca)
     vals
 end
 
+function obs_ssavgnumlig(cca, ss)
+    avgnumlig = 0.0
+    for (st, p) in zip(allstates(cca), ss)
+        avgnumlig += calc_numligands(st) * p
+    end
+    avgnumlig
+end
+function obs_ssavgnumofconf(cca, ss, args...)
+    avgnumofconf = 0.0
+    for (st, p) in zip(allstates(cca), ss)
+        avgnumofconf += calc_numofconf(st, args...) * p
+    end
+    avgnumofconf
+end
+function obs_ssavgnumboundaries(cca, ss)
+    avgnumboundaries = 0.0
+    for (st, p) in zip(allstates(cca), ss)
+        avgnumboundaries += calc_numboundaries(st, cca) * p
+    end
+    avgnumboundaries
+end
+
 ################################################################################
 # Local testing
 ################################################################################
@@ -357,7 +381,7 @@ function scantest1()
 end
 
 function rtltest(N=4)
-    observables = [ObsGoingRoundTheLoop{Matrix}(N), ObsGoingRoundTheLoop{Mean}(N)]
+    observables = [ObsGoingRoundTheLoop{Matrix,false}(N), ObsGoingRoundTheLoop{Mean,false}(N)]
 
     general_m3_scan(N, observables;
         r1s=10 .^ LinRange(-5, 3, 15),

@@ -147,6 +147,7 @@ end
 ################################################################################
 # Specific plots for cluster data
 ################################################################################
+# FIX: There may be something wrong with either this data or plots
 obs_rtlmat_bl = ("rtl_mats", x -> x[1, 1], "rtl_bl")
 obs_rtlmat_tl = ("rtl_mats", x -> x[1, 5], "rtl_tl")
 obs_rtlmat_tr = ("rtl_mats", x -> x[5, 5], "rtl_tr")
@@ -154,6 +155,12 @@ obs_rtlmat_br = ("rtl_mats", x -> x[5, 1], "rtl_br")
 function br2p1()
     f = jldopen("cluster_env/runs/m3_bigscan2/bigrun2_N4.jld2")
     fap = scanheatmaps(f, "cPs", "cRs", ["rtl_means"]; yscale=log10, xscale=log10, colorrange=(0.0, 0.55), colormap=:Blues)
+
+    fap
+end
+function br2p2(; kwargs...)
+    f = jldopen("cluster_env/runs/m3_bigscan2/bigrun2_N4.jld2")
+    fap = scanheatmaps(f, "cPs", "cRs", [obs_rtlmat_tl, obs_rtlmat_tr, obs_rtlmat_bl, obs_rtlmat_br]; yscale=log10, xscale=log10, colorrange=(-6.0, 6.0), colormap=:RdBu, colorscale=Makie.Symlog10(1e-9), kwargs...)
 
     fap
 end
