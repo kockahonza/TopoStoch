@@ -1,0 +1,9 @@
+name = "NonEqDigits"
+uuid = "b54bc958-a1aa-42b9-8f67-21320138491b"
+authors = ["Jan Kocka <kockahonza@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+GraphModels = "3e0d65c3-3d24-474c-94c6-a6307623ad86"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
