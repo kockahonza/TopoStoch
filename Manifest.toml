@@ -2,7 +2,7 @@
 
 julia_version = "1.10.8"
 manifest_format = "2.0"
-project_hash = "9c419cb5bee32cce8c11e555284cdbb2206ce778"
+project_hash = "15fbc947f29e98d4022e6c3a9b550f3eb5f5f754"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "72af59f5b8f09faee36b4ec48e014a79210f2f4f"
@@ -1370,6 +1370,12 @@ weakdeps = ["Graphs"]
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[deps.NonEqDigits]]
+deps = ["GraphModels", "Printf", "Reexport"]
+path = "src/NonEqDigits"
+uuid = "b54bc958-a1aa-42b9-8f67-21320138491b"
+version = "0.1.0"
 
 [[deps.Observables]]
 git-tree-sha1 = "7438a59546cf62428fc9d1bc94729146d37a7225"

@@ -1,7 +1,6 @@
 ################################################################################
 # Main plotting - add methods to GraphModels functions
 ################################################################################
-import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
 function p_named_layouts(ca::ComplexAllosteryGM, layout_name, layout_args)
     try
         invoke(p_named_layouts, Tuple{supertype(typeof(ca)),Any,Any}, ca, layout_name, layout_args)

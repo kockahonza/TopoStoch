@@ -3,6 +3,7 @@ module Ones
 using Reexport
 @reexport using GraphModels
 
+# These are intended to be extended
 import GraphModels: graph, numstates, allstates
 import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
 import Base: copy, broadcastable, show

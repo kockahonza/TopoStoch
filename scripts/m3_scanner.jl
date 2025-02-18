@@ -164,6 +164,19 @@ struct Mean <: GRTLReturnType end
 struct MatrixAndMean <: GRTLReturnType end
 struct List <: GRTLReturnType end
 
+"""
+Weird observable that tries to measure how much the system goes along the
+boundary loop. Comes in two variants either using the ss or not. Either way
+what is calculated at each microstate on the edge is the sum of all rates
+that go forward along the loop minus the sum of all the rates that go along
+the loop in the opposite direction and the resulting value is divided by the
+sum of all rates out of that microstate. If the ss mode is enabled then this
+value is also multiplied by the ss prob of that microstate. Two output modes
+are available as well, Mean just being the mean of all the values along the
+edge and Matrix being the sum of the values of all the microstates that
+belong to each of the so called macro states, the resulting matrix having
+one entry fo each macrostates with the bulk being all 0.
+"""
 struct ObsGoingRoundTheLoop{RT<:GRTLReturnType,SS}
     start_nodes::Vector{Int}
     forwards::Vector{Vector{Int}}
