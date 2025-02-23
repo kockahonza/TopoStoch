@@ -53,6 +53,17 @@ export etransmat_safe
 ################################################################################
 # Dealing with etransmat and its eigensystem
 ################################################################################
+"""
+The main function do to steadystate/eigen analysis of GraphModels. It is not
+fully failsafe but does print warning whenever any reasonable issues have
+occured. Returns a list of steadystates which have been scaled to have a
+component sum of 1 and only returns the real parts of those! This can lead
+to issues, but there is a warning in place. If returnnonss os Val(true) then
+also returns an Eigensystem object with all the other unmodified eigenvalues
+and eigenstates (these should have component sums of 0 and correspond to
+pertrubations).
+WARN: This absolutely is not guaranteed to work if there are more than 1 ss!!
+"""
 function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     threshold=1e-8,
     checks=true,
@@ -60,7 +71,7 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
     checkss=checks,
     checkothers=checks,
     returnnonss::Val{Returnonss}=Val(false),
-    sortothers=true
+    sortothers=true,
 ) where {Returnonss}
     esys = eigen!(etransmat(gm; mat=true))
     n = length(esys.values)
@@ -73,7 +84,7 @@ function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
         eval = esys.values[i]
         evec = (@view esys.vectors[:, i])
 
-        if abs(eval) < threshold
+        if abs(eval) < threshold # then its a steady state
             ss = evec / sum(evec)
             if checkimag
                 maximag = maximum(x -> abs(imag(x)), ss)
@@ -114,6 +125,7 @@ end
 fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnnonss=Val(true), kwargs...)
 export steadystates, fulleigenanalysis
 
+"""Returns a superposition of all steadystates of a system"""
 function supersteadystate(args...; norm=false, kwargs...)
     if !norm
         sum(steadystates(args...; kwargs..., returnnonss=Val(false)))
@@ -122,6 +134,78 @@ function supersteadystate(args...; norm=false, kwargs...)
     end
 end
 export supersteadystate
+
+function fallback_steadystates(gm::AbstractGraphModel{<:AbstractFloat};
+    threshold=1e-8,
+    checks=true,
+    checkimag=checks,
+    checkss=checks,
+)
+    esys = eigen!(etransmat(gm; mat=true))
+
+    steadystates = Vector{Vector{ComplexF64}}(undef, 0)
+    for i in 1:length(esys.values)
+        eval = esys.values[i]
+        evec = (@view esys.vectors[:, i])
+
+        if abs(eval) < threshold # then its a steady state
+            ss = evec / sum(evec)
+            if checkimag
+                maximag = maximum(x -> abs(imag(x)), ss)
+                if maximag > threshold
+                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
+                end
+            end
+            if checkss
+                firstviolation = findfirst(x -> let ax = abs(x)
+                        (ax < 0.0) || (ax > 1.0)
+                    end, ss)
+                if !isnothing(firstviolation)
+                    @warn f"getting steady states with a component of {ss[firstviolation]} which is not between 0 and 1"
+                end
+            end
+            push!(steadystates, ss)
+        end
+    end
+
+    steadystates
+end
+function fallback_steadystates_plot(sss, range=nothing)
+    f = Figure()
+    ax = Axis(f[1, 1])
+
+    if !isnothing(range)
+        sss = sss[range]
+    end
+
+    for (i, ss) in enumerate(sss)
+        scatter!(ax, real.(ss), imag.(ss); label=string(i))
+    end
+    axislegend(ax)
+
+    FigureAxisAnything(f, ax, sss)
+end
+function fallback_steadystates_plot(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
+    fallback_steadystates_plot(fallback_steadystates(gm), args...; kwargs...)
+end
+export fallback_steadystates, fallback_steadystates_plot
+
+function plot_nullspace(e)
+    f = Figure()
+    ax = Axis(f[1, 1])
+
+    ns = nullspace(e)
+
+    for i in 1:size(ns)[2]
+        ss = @view ns[:, i]
+        scatter!(ax, real.(ss), imag.(ss); label=string(i))
+    end
+    axislegend(ax)
+
+    FigureAxisAnything(f, ax, ns)
+end
+plot_nullspace(gm::AbstractGraphModel{<:AbstractFloat}) = plot_nullspace(etransmat(gm; mat=true))
+export plot_nullspace
 
 """
 Returns list of lists each of which is a group of indices of those eigenvalues/states

@@ -170,6 +170,9 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     fnlabels=:index,
     felabels=:auto,
     makwargs=x -> (), # mutating function to apply to auto_kwargs just before plotting
+    # plotgraph is provided so that one can modify the graph like selecting only
+    # some edges etc. It can also be changed in a "smart" manner within this function.
+    plotgraph=graph(gm),
     # the following can only be used for non-symbolics GMs
     ss=:auto,            # calculate steady state?
     ss_curgraph=nothing,
@@ -209,6 +212,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         else
             ss = nothing
         end
+    elseif ss == false
+        ss = nothing
     end
     if !isnothing(ss)
         # do node sizes which can only be based on ss
@@ -257,9 +262,6 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     if !haskey(auto_kwargs, :node_color)
         auto_kwargs[:node_color] = [n_color for _ in 1:numstates(gm)]
     end
-
-    # The graph that will eventually be plotted, this can be modified!
-    plotgraph = graph(gm)
 
     # Color edges
     if e_color == :auto
@@ -419,14 +421,16 @@ export plotgm_kwarg_defaults
 """
 Fancy function to plot a graph model with as many convenience features as possible
 """
-function plotgm!(maybeax, gm::AbstractGraphModel;
+function plotgm!(maybeax, gm::AbstractGraphModel; kwargs...)
+    plotgm_pd_!(maybeax, gm; plotgm_kwarg_defaults(gm)..., kwargs...)
+end
+function plotgm_pd_!(maybeax, gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
     do_layout_rslt = p_do_layout(gm, layout, roffset_devs)
     ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
-        plotgm_kwarg_defaults(gm)...,
         kwargs...
     )
 
@@ -437,7 +441,10 @@ function plotgm!(maybeax, gm::AbstractGraphModel;
     end
 end
 @doc (@doc plotgm!)
-function plotgm(gm::AbstractGraphModel;
+function plotgm(gm::AbstractGraphModel; kwargs...)
+    plotgm_pd_(gm; plotgm_kwarg_defaults(gm)..., kwargs...)
+end
+function plotgm_pd_(gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing, kwargs...
 )
     fig = Figure()
@@ -446,7 +453,6 @@ function plotgm(gm::AbstractGraphModel;
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
         axparent=fig,
-        plotgm_kwarg_defaults(gm)...,
         kwargs...
     )
 
@@ -480,7 +486,10 @@ export p_do_clayout
 Plots the net probability currents at some particular state of a graph model.
 Uses plotgm!_ and tries to keep as much functionality as possible.
 """
-function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
+function plotcgm!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
+    plotcgm_pd_!(maybeax, gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
+end
+function plotcgm_pd_!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
     layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
 )
     curgraph = make_current_graph(gm, state)
@@ -489,10 +498,9 @@ function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
     ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
-        ss=state,
         ss_curgraph=curgraph,
-        plotgm_kwarg_defaults(gm)...,
-        kwargs...
+        kwargs...,
+        ss=state
     )
 
     if returnax
@@ -502,7 +510,10 @@ function plotcgm!(maybeax, gm::AbstractGraphModel, state=supersteadystate(gm);
     end
 end
 @doc (@doc plotcgm!)
-function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
+function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
+    plotcgm_pd_(gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
+end
+function plotcgm_pd_(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
     layout=nothing, roffset_devs=nothing, kwargs...
 )
     curgraph = make_current_graph(gm, state)
@@ -513,10 +524,9 @@ function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
         axparent=fig,
-        ss=state,
         ss_curgraph=curgraph,
-        plotgm_kwarg_defaults(gm)...,
-        kwargs...
+        kwargs...,
+        ss=state
     )
 
     Makie.FigureAxisPlot(fig, ax, plot)

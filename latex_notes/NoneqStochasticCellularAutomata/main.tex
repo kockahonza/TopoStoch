@@ -44,7 +44,7 @@
 \begin{document}
 \begin{center}
 	\LARGE
-	\textbf{Non-equilibrium, Stochastic Cellular Automata Model v1}
+	\textbf{Non-equilibrium Digits Model}
 	\vspace{1em}
 \end{center}
 Considering a string of digits/letters etc. with each such string (potentially up to some symmetries) being considered a microstate of the system.
@@ -688,6 +688,13 @@ $\mu$ essentially biases a mechanism towards turning 0s to 1s or otherwise, if i
 	\caption{Summary of all the possible $K$s for N=3 and a single mechanism with a unique behaviour.}\label{tab:KsN31M}
 \end{table}
 
-\subsection{Two maximally driven oposing mechanisms}
+\subsection{Connection to cellular automata}
+Since this is model does seem similar to cellular automata it is worth investigating the connection.
+Classic CE are deterministic and so for each possible transition of $a$ to $b$ with neighbours $i$ and $j$ the transition is either always going to happen or never.
+This largely corresponds to the $\mu \rightarrow \pm\inf$ limits.
+Note however that for a single mechanism all such transitions would have to point in the same direction and hence we can not achieve all the systems corresponding to all difference CEs using only a single mechanism.
+However, given that we can tune individually the rates (or in the simpler case enable/disable them) based on each neighbour combination using $K$, we can achieve all CE corresponding systems in our model using two mechanisms each biased in the opposite direction.
+For a simple sanity check note that as dicussed before if we only consider entries of 0 or 1 then there are a total of $2^4$ possible $K$s hence $2^4\times2^4$ total different combinations of 2 $K$ matrices.
+This agrees with the $2^8$ different basic CE rules.
 
 \end{document}
