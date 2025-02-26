@@ -12,11 +12,13 @@ function cecode_to_2Ks(code)
 end
 export cecode_to_2Ks
 
-function make_ce_ned(L, code)
+function make_ce_ned(L, code; show=true)
     ned = NonEqDigitsGM(2, L)
     K01, K10 = cecode_to_2Ks(code)
-    @show K01
-    @show K10
+    if show
+        @show K01
+        @show K10
+    end
     add_mech_BNN!(ned, Inf, K01)
     add_mech_BNN!(ned, -Inf, K10)
     ned

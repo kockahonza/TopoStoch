@@ -30,19 +30,48 @@ function gsummary1(g)
 end
 gsummary1(gm::AbstractGraphModel) = gsummary1(graph(gm))
 
-function makeruledf(N=3)
+function makeruledf(N=2:6)
     if !isa(N, AbstractVector)
         N = [N]
     end
-    df = DataFrame(numscc=Int[], numac=Int[], numss=Int[])
-    for code in 1:255
+    df = DataFrame(code=Int[], N=Int[], numscc=Int[], numac=Int[], numss=Int[])
+    for code in 0:255
         for n in N
-            ned = make_ce_ned(n, code)
+            ned = make_ce_ned(n, code; show=false)
             numscc = length(strongly_connected_components(graph(ned)))
             numac = length(attracting_components(graph(ned)))
-            numss = length(steadystates2(ned))
-            push!(df, (numscc, numac, numss))
+            numss = length(steadystates(ned))
+            push!(df, (code, n, numscc, numac, numss))
         end
+    end
+    df
+end
+
+function plotvsN_forallcodes(var, df=makeruledf(); colormap=:viridis, roffset=0.1)
+    fig = Figure()
+    ax = Axis(fig[1, 1])
+    cmap = cgrad(colormap)
+    for code in 0:255
+        subdf = df[df.code.==code, :]
+        Ns = subdf[!, :N]
+        vars = subdf[!, var]
+        Noffsets = roffset .* rand(length(Ns))
+        varoffsets = roffset .* rand(length(Ns))
+        lines!(ax, Ns .+ Noffsets, vars .+ varoffsets; color=get(cmap, code / 255.0))
+    end
+    Colorbar(fig[1, 2]; colorrange=(0.0, 255.0), colormap=cmap)
+    fig
+end
+
+function makeNdf(code, Ns=2:10)
+    df = DataFrame(N=Int[], numscc=Int[], numac=Int[], numss=Int[])
+    for N in Ns
+        println(N)
+        ned = make_ce_ned(N, code; show=false)
+        numscc = length(strongly_connected_components(graph(ned)))
+        numac = length(attracting_components(graph(ned)))
+        numss = length(steadystates(ned))
+        push!(df, (N, numscc, numac, numss))
     end
     df
 end
