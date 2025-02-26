@@ -1,0 +1,8 @@
+Consider a scc C and a node x which has an node coming from C to it.
+Then clearly in any steady state the 
+
+If a graph has a strongly connected component C which has no connections between itself and notitself, then clearly there will be a steady state which has non-zero probabilities only on vertices within C. Pretty sure that it will also be unique.
+
+For any two sccs C and C' between which there is a unidirectional path, say from C to C', then there cannot be any steady state which has non-zero probabilities of occupying any state in C.
+    Proof is in essence by contradiction, say there is such a state in C. Then as time advances this probability would move along the states in C and will inevitably pass along the state or states from which there is an edge towards C' and so bit by bit drain all this probability.
+
