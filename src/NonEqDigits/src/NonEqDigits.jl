@@ -69,7 +69,6 @@ function itostate_safe(i, D, L)
         throw(ArgumentError(@sprintf "i=%d is not valid for D=%d and L=%d" i D L))
     end
 end
-export itostate_unsafe, itostate_safe
 function itostate(i, _::NonEqDigitsGM{S,D,L,F,Safe}) where {S,D,L,F,Safe}
     if Safe
         itostate_safe(i, D, L)
@@ -77,6 +76,7 @@ function itostate(i, _::NonEqDigitsGM{S,D,L,F,Safe}) where {S,D,L,F,Safe}
         itostate_unsafe(i, D, L)
     end
 end
+export itostate
 
 function statetoi_unsafe(dstring, D)
     i = 1
@@ -94,7 +94,6 @@ function statetoi_safe(dstring, D, L)
         throw(ArgumentError(@sprintf "dstring=%s is not valid for D=%d and L=%d" string(dstring) D L))
     end
 end
-export statetoi_unsafe, statetoi_safe
 function statetoi(st, _::NonEqDigitsGM{S,D,L,F,Safe}) where {S,D,L,F,Safe}
     if Safe
         statetoi_safe(st, D, L)
@@ -102,6 +101,7 @@ function statetoi(st, _::NonEqDigitsGM{S,D,L,F,Safe}) where {S,D,L,F,Safe}
         statetoi_unsafe(st, D)
     end
 end
+export statetoi
 
 allstates_ned(D, L) = itostate_unsafe.(1:numstates(D, L), D, L)
 allstates(_::NonEqDigitsGM{S,D,L}) where {S,D,L} = allstates_ned(D, L)

@@ -51,162 +51,55 @@ end
 export etransmat_safe
 
 ################################################################################
-# Dealing with etransmat and its eigensystem
+# Dealing with steady states
 ################################################################################
-"""
-The main function do to steadystate/eigen analysis of GraphModels. It is not
-fully failsafe but does print warning whenever any reasonable issues have
-occured. Returns a list of steadystates which have been scaled to have a
-component sum of 1 and only returns the real parts of those! This can lead
-to issues, but there is a warning in place. If returnnonss os Val(true) then
-also returns an Eigensystem object with all the other unmodified eigenvalues
-and eigenstates (these should have component sums of 0 and correspond to
-pertrubations).
-WARN: This absolutely is not guaranteed to work if there are more than 1 ss!!
-"""
-function steadystates(gm::AbstractGraphModel{<:AbstractFloat};
-    threshold=1e-8,
-    checks=true,
-    checkimag=checks,
-    checkss=checks,
-    checkothers=checks,
-    returnnonss::Val{Returnonss}=Val(false),
-    sortothers=true,
-) where {Returnonss}
-    esys = eigen!(etransmat(gm; mat=true))
-    n = length(esys.values)
-
+function steadystates(g; kwargs...)
+    etm = etransmat(g; mat=true)
+    acs = attracting_components(g)
     steadystates = Vector{Vector{Float64}}(undef, 0)
-    if Returnonss
-        nonss = Eigensystem(numstates(gm); numtype=Val(ComplexF64))
-    end
-    for i in 1:n
-        eval = esys.values[i]
-        evec = (@view esys.vectors[:, i])
 
-        if abs(eval) < threshold # then its a steady state
-            ss = evec / sum(evec)
-            if checkimag
-                maximag = maximum(x -> abs(imag(x)), ss)
-                if maximag > threshold
-                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
-                end
+    for ac in acs
+        subetm = etm[ac, ac]
+        ns = nullspace(subetm; kwargs...)
+        for i in size(ns)[2]
+            newss = fill(0.0, nv(g))
+            subss = ns[:, i] ./ sum(@view ns[:, i])
+            for (v, ssp) in zip(ac, subss)
+                newss[v] = ssp
             end
-            rss = real(ss)
-            if checkss
-                firstviolation = findfirst(x -> (x < 0.0) || (x > 1.0), rss)
-                if !isnothing(firstviolation)
-                    @warn f"getting steady states with a component of {rss[firstviolation]} which is not between 0 and 1"
-                end
-            end
-            push!(steadystates, rss)
-        else
-            if checkothers
-                if abs(sum(evec)) > threshold
-                    @warn f"found a non-steady eigenstate the components of which do not sum to 0"
-                end
-            end
-            if Returnonss
-                push!(nonss, (eval, evec))
-            end
-        end
-    end
-
-    if !Returnonss
-        steadystates
-    else
-        if sortothers
-            order = sortperm(real.(nonss.evals); rev=true)
-            nonss = subes(nonss, order)
-        end
-        steadystates, nonss
-    end
-end
-fulleigenanalysis(args...; kwargs...) = steadystates(args...; returnnonss=Val(true), kwargs...)
-export steadystates, fulleigenanalysis
-
-"""Returns a superposition of all steadystates of a system"""
-function supersteadystate(args...; norm=false, kwargs...)
-    if !norm
-        sum(steadystates(args...; kwargs..., returnnonss=Val(false)))
-    else
-        mean(steadystates(args...; kwargs..., returnnonss=Val(false)))
-    end
-end
-export supersteadystate
-
-function fallback_steadystates(gm::AbstractGraphModel{<:AbstractFloat};
-    threshold=1e-8,
-    checks=true,
-    checkimag=checks,
-    checkss=checks,
-)
-    esys = eigen!(etransmat(gm; mat=true))
-
-    steadystates = Vector{Vector{ComplexF64}}(undef, 0)
-    for i in 1:length(esys.values)
-        eval = esys.values[i]
-        evec = (@view esys.vectors[:, i])
-
-        if abs(eval) < threshold # then its a steady state
-            ss = evec / sum(evec)
-            if checkimag
-                maximag = maximum(x -> abs(imag(x)), ss)
-                if maximag > threshold
-                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
-                end
-            end
-            if checkss
-                firstviolation = findfirst(x -> let ax = abs(x)
-                        (ax < 0.0) || (ax > 1.0)
-                    end, ss)
-                if !isnothing(firstviolation)
-                    @warn f"getting steady states with a component of {ss[firstviolation]} which is not between 0 and 1"
-                end
-            end
-            push!(steadystates, ss)
+            push!(steadystates, newss)
         end
     end
 
     steadystates
 end
-function fallback_steadystates_plot(sss, range=nothing)
-    f = Figure()
-    ax = Axis(f[1, 1])
+steadystates(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...) = steadystates(graph(gm), args...; kwargs...)
+export steadystates
 
-    if !isnothing(range)
-        sss = sss[range]
+"""Returns a superposition of all steadystates of a system"""
+function supersteadystate(args...; norm=false, kwargs...)
+    if !norm
+        sum(steadystates(args...; kwargs...))
+    else
+        mean(steadystates(args...; kwargs...))
     end
+end
+export supersteadystate
 
-    for (i, ss) in enumerate(sss)
-        scatter!(ax, real.(ss), imag.(ss); label=string(i))
+
+function teststeadystates(gorgm)
+    ss = steadystates(gorgm)
+    ns = nullspace(etransmat(gorgm; mat=true))
+    if size(ns)[2] != length(ss)
+        size(ns)[2], length(ss)
     end
-    axislegend(ax)
-
-    FigureAxisAnything(f, ax, sss)
+    true
 end
-function fallback_steadystates_plot(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
-    fallback_steadystates_plot(fallback_steadystates(gm), args...; kwargs...)
-end
-export fallback_steadystates, fallback_steadystates_plot
+export teststeadystates
 
-function plot_nullspace(e)
-    f = Figure()
-    ax = Axis(f[1, 1])
-
-    ns = nullspace(e)
-
-    for i in 1:size(ns)[2]
-        ss = @view ns[:, i]
-        scatter!(ax, real.(ss), imag.(ss); label=string(i))
-    end
-    axislegend(ax)
-
-    FigureAxisAnything(f, ax, ns)
-end
-plot_nullspace(gm::AbstractGraphModel{<:AbstractFloat}) = plot_nullspace(etransmat(gm; mat=true))
-export plot_nullspace
-
+################################################################################
+# Other things based off of steady states
+################################################################################
 """
 Returns list of lists each of which is a group of indices of those eigenvalues/states
 which are degenerate with respect to each other.
@@ -293,6 +186,151 @@ function make_current_graph(gm::AbstractGraphModel{F},
     SimpleWeightedDiGraph(cadjmat)
 end
 export make_current_graph
+
+################################################################################
+# DEPRECATED: Old steadystate cals which are NOT correct for not scc graphs!!!!!
+################################################################################
+"""
+DEPRECATED: It is not failsafe or correct!
+Finds steady and perturbation states by directly inspecting the eigen system.
+"""
+function old_steadystates(gm::AbstractGraphModel{<:AbstractFloat};
+    threshold=1e-8,
+    checks=true,
+    checknumss=checks,
+    checkimag=checks,
+    checkss=checks,
+    checkothers=checks,
+    returnnonss::Val{Returnonss}=Val(false),
+    sortothers=true,
+) where {Returnonss}
+    esys = eigen!(etransmat(gm; mat=true))
+    n = length(esys.values)
+
+    steadystates = Vector{Vector{Float64}}(undef, 0)
+    if Returnonss
+        nonss = Eigensystem(numstates(gm); numtype=Val(ComplexF64))
+    end
+    for i in 1:n
+        eval = esys.values[i]
+        evec = (@view esys.vectors[:, i])
+
+        if abs(eval) < threshold # then its a steady state
+            ss = evec / sum(evec)
+            if checkimag
+                maximag = maximum(x -> abs(imag(x)), ss)
+                if maximag > threshold
+                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
+                end
+            end
+            rss = real(ss)
+            if checkss
+                firstviolation = findfirst(x -> (x < 0.0) || (x > 1.0), rss)
+                if !isnothing(firstviolation)
+                    @warn f"getting steady states with a component of {rss[firstviolation]} which is not between 0 and 1"
+                end
+            end
+            push!(steadystates, rss)
+        else
+            if checkothers
+                if abs(sum(evec)) > threshold
+                    @warn f"found a non-steady eigenstate the components of which do not sum to 0"
+                end
+            end
+            if Returnonss
+                push!(nonss, (eval, evec))
+            end
+        end
+    end
+
+    if checknumss && (length(steadystates) != 1)
+        @warn f"getting {length(steadystates)} steady states for a GraphModel which likely means invalid results"
+    end
+
+    if !Returnonss
+        steadystates
+    else
+        if sortothers
+            order = sortperm(real.(nonss.evals); rev=true)
+            nonss = subes(nonss, order)
+        end
+        steadystates, nonss
+    end
+end
+fulleigenanalysis(args...; kwargs...) = old_steadystates(args...; returnnonss=Val(true), kwargs...)
+export steadystates, fulleigenanalysis
+
+function fallback_steadystates(gm::AbstractGraphModel{<:AbstractFloat};
+    threshold=1e-8,
+    checks=true,
+    checkimag=checks,
+    checkss=checks,
+)
+    esys = eigen!(etransmat(gm; mat=true))
+
+    steadystates = Vector{Vector{ComplexF64}}(undef, 0)
+    for i in 1:length(esys.values)
+        eval = esys.values[i]
+        evec = (@view esys.vectors[:, i])
+
+        if abs(eval) < threshold # then its a steady state
+            ss = evec / sum(evec)
+            if checkimag
+                maximag = maximum(x -> abs(imag(x)), ss)
+                if maximag > threshold
+                    @warn f"when aligning steady state eigenvector encountered imag part of {maximag} which is over {threshold}"
+                end
+            end
+            if checkss
+                firstviolation = findfirst(x -> let ax = abs(x)
+                        (ax < 0.0) || (ax > 1.0)
+                    end, ss)
+                if !isnothing(firstviolation)
+                    @warn f"getting steady states with a component of {ss[firstviolation]} which is not between 0 and 1"
+                end
+            end
+            push!(steadystates, ss)
+        end
+    end
+
+    steadystates
+end
+function fallback_steadystates_plot(sss, range=nothing)
+    f = Figure()
+    ax = Axis(f[1, 1])
+
+    if !isnothing(range)
+        sss = sss[range]
+    end
+
+    for (i, ss) in enumerate(sss)
+        scatter!(ax, real.(ss), imag.(ss); label=string(i))
+    end
+    axislegend(ax)
+
+    FigureAxisAnything(f, ax, sss)
+end
+function fallback_steadystates_plot(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
+    fallback_steadystates_plot(fallback_steadystates(gm), args...; kwargs...)
+end
+export fallback_steadystates, fallback_steadystates_plot
+
+function plot_nullspace(e)
+    f = Figure()
+    ax = Axis(f[1, 1])
+
+    ns = nullspace(e)
+
+    for i in 1:size(ns)[2]
+        ss = @view ns[:, i]
+        scatter!(ax, real.(ss), imag.(ss); label=string(i))
+    end
+    axislegend(ax)
+
+    FigureAxisAnything(f, ax, ns)
+end
+plot_nullspace(gm::AbstractGraphModel{<:AbstractFloat}) = plot_nullspace(etransmat(gm; mat=true))
+export plot_nullspace
 
 ################################################################################
 # Stuff that changes the graph like editing/filtering edges
