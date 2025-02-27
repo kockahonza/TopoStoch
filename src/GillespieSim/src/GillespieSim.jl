@@ -5,8 +5,6 @@ optionally does some plotting
 """
 module GillespieSim
 
-using DrWatson
-
 using GraphModels
 
 using Base.Threads

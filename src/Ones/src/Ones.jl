@@ -5,7 +5,7 @@ using Reexport
 
 # These are intended to be extended
 import GraphModels: graph, numstates, allstates
-import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
+import GraphModels: p_named_layouts, plotgm_layout_default, plotgm_kwarg_defaults
 import Base: copy, broadcastable, show
 
 ################################################################################
@@ -175,13 +175,7 @@ function p_named_layouts(ogm::OnesGM{S}, layout_name, layout_args) where {S}
         dim, layout, def_roffsets, axis_labels
     end
 end
-function p_do_layout(ogm::OnesGM, layout=nothing, roffset_devs=nothing)
-    if isnothing(layout)
-        layout = :tree
-    end
-    invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ogm, layout, roffset_devs)
-end
-
+plotgm_layout_default(_::OnesGM) = :tree
 plotgm_kwarg_defaults(_::OnesGM) = (;
     fnlabels=:repr,
     felabels=false,

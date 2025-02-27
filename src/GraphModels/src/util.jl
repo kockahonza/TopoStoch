@@ -4,12 +4,20 @@ export timestamp
 function roundrepr(x)
     f"{x:.3g}"
 end
+roundrepr(x::Num) = repr(x)
 export roundrepr
 
 function inc_edge!(g, u, v, w)
     add_edge!(g, u, v, get_weight(g, u, v) + w)
 end
 export inc_edge!
+
+function add_edge_ifnotself!(g, v, w)
+    if v != w
+        add_edge!(g, v, w)
+    end
+end
+export add_edge_ifnotself!
 
 # NOTE: This would definitely be better as a macro but idk how to write them
 """

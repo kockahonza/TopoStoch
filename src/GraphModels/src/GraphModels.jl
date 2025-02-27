@@ -1,9 +1,10 @@
 module GraphModels
 
-using DrWatson, Reexport
+using Reexport
 
 using LetterCodes
 
+@reexport using DrWatson
 @reexport using PyFormattedStrings
 @reexport using StaticArrays, ElasticArrays, SparseArrays
 @reexport using LinearAlgebra
@@ -33,6 +34,7 @@ Core API:
 Fancy plotting API:
 - p_named_layouts
 - p_do_layout
+- plotgm_layout_default
 - plotgm_kwarg_defaults
 Symbolics API (mainly for F <: Num):
 - get_variables

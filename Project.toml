@@ -5,6 +5,7 @@ authors = ["Jan Kocka"]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 BasicSim = "b515daa7-1388-4553-9d39-5e927a601b9c"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ColorBrewer = "a2cac450-b92f-5266-8821-25eda20663c8"
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"

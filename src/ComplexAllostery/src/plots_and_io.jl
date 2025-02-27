@@ -91,13 +91,7 @@ function p_named_layouts(ca::ComplexAllosteryGM, layout_name, layout_args)
         dim, layout, def_roffsets, axis_labels
     end
 end
-function p_do_layout(ca::ComplexAllosteryGM, layout=nothing, roffset_devs=nothing)
-    if isnothing(layout)
-        layout = :NTc
-    end
-    invoke(p_do_layout, Tuple{AbstractGraphModel,Any,Any}, ca, layout, roffset_devs)
-end
-
+plotgm_layout_default(_::ComplexAllosteryGM) = :NTc
 function plotgm_kwarg_defaults(ca::ComplexAllosteryGM{S,Num}) where {S}
     fnlabels = if numstates(ca) < 10
         :repr

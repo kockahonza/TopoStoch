@@ -4,10 +4,11 @@ using Reexport
 @reexport using GraphModels
 
 using Printf
+using DataFrames, CSV
 
 # These are intended to be extended
 import GraphModels: graph, numstates, allstates
-import GraphModels: p_named_layouts, p_do_layout, plotgm_kwarg_defaults
+import GraphModels: p_named_layouts, plotgm_layout_default, plotgm_kwarg_defaults
 import Base: copy, broadcastable, show, display
 
 ################################################################################
@@ -177,6 +178,7 @@ neg_int(x::Int) = iszero(x) ? 1 : 0
 # Adding other bits
 ################################################################################
 include("plots_and_io.jl")
+include("analysis.jl")
 include("cellular_automata.jl")
 
 end # module NonEqDigits

@@ -1,6 +1,7 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
+using Printf
 using DataFrames
 using GLMakie
 
@@ -30,24 +31,69 @@ function gsummary1(g)
 end
 gsummary1(gm::AbstractGraphModel) = gsummary1(graph(gm))
 
-function makeruledf(N=2:6)
+function makedfbycodes(N=2:6, codes=ce_ucodes_bydeg();
+    add_classes=true,
+)
     if !isa(N, AbstractVector)
         N = [N]
     end
-    df = DataFrame(code=Int[], N=Int[], numscc=Int[], numac=Int[], numss=Int[])
-    for code in 0:255
+
+    df = DataFrame(
+        code_i=Int[],
+        code=Int[],
+        N=Int[],
+        numscc=Int[],
+        numac=Int[],
+        numnontrivac=Int[],
+        numss=Int[]
+    )
+    for (code_i, code) in enumerate(codes)
         for n in N
             ned = make_ce_ned(n, code; show=false)
             numscc = length(strongly_connected_components(graph(ned)))
-            numac = length(attracting_components(graph(ned)))
+            acs = attracting_components(graph(ned))
+            numac = length(acs)
+            numnontrivac = count(x -> length(x) > 1, acs)
             numss = length(steadystates(ned))
-            push!(df, (code, n, numscc, numac, numss))
+            push!(df, (
+                code_i,
+                code,
+                n,
+                numscc,
+                numac,
+                numnontrivac,
+                numss
+            ))
         end
     end
+
+    if add_classes
+        cl_df = ce_load_classes_df()
+        df.class = cl_df.class[df.code.+1]
+        df.subclass_i = cl_df.subclass_i[df.code.+1]
+        df.csc_i = cl_df.csc_i[df.code.+1]
+    end
+
     df
 end
 
-function plotvsN_forallcodes(var, df=makeruledf(); colormap=:viridis, roffset=0.1)
+function plotvsN_forcodes(var, df; colormap=:managua, roffset=0.1)
+    fig = Figure()
+    ax = Axis(fig[1, 1])
+    cmap = cgrad(colormap)
+    num_codes = maximum(df.code_i)
+    for code in unique(df.code)
+        subdf = df[df.code.==code, :]
+        Ns = subdf[!, :N]
+        vars = subdf[!, var]
+        varoffsets = roffset .* rand()
+        lines!(ax, Ns, vars .+ varoffsets; color=get(cmap, subdf[1, :code_i] / num_codes))
+    end
+    Colorbar(fig[1, 2]; colorrange=(0.0, num_codes), colormap=cmap)
+    fig
+end
+
+function plotvsN_forallcodes(var, df; colormap=:managua, roffset=0.1)
     fig = Figure()
     ax = Axis(fig[1, 1])
     cmap = cgrad(colormap)
@@ -61,17 +107,4 @@ function plotvsN_forallcodes(var, df=makeruledf(); colormap=:viridis, roffset=0.
     end
     Colorbar(fig[1, 2]; colorrange=(0.0, 255.0), colormap=cmap)
     fig
-end
-
-function makeNdf(code, Ns=2:10)
-    df = DataFrame(N=Int[], numscc=Int[], numac=Int[], numss=Int[])
-    for N in Ns
-        println(N)
-        ned = make_ce_ned(N, code; show=false)
-        numscc = length(strongly_connected_components(graph(ned)))
-        numac = length(attracting_components(graph(ned)))
-        numss = length(steadystates(ned))
-        push!(df, (N, numscc, numac, numss))
-    end
-    df
 end

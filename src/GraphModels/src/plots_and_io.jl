@@ -95,6 +95,11 @@ p_make_interactive((_, ax, plot)) = p_make_interactive(ax, plot)
 ################################################################################
 # Main plotgm stuff
 ################################################################################
+# defaults which should be overriden!
+plotgm_layout_default(_::AbstractGraphModel) = Spring()
+plotgm_kwarg_defaults(_::AbstractGraphModel) = (;)
+export plotgm_layout_default, plotgm_kwarg_defaults
+
 # layout setup
 function p_named_layouts(gm::AbstractGraphModel, layout_name, layout_args)
     def_roffsets = false
@@ -111,7 +116,7 @@ function p_named_layouts(gm::AbstractGraphModel, layout_name, layout_args)
 end
 function p_do_layout(gm::AbstractGraphModel, layout=nothing, roffset_devs=nothing)
     if isnothing(layout)
-        layout = Spring()
+        layout = plotgm_layout_default(gm)
     end
     if isnothing(roffset_devs)
         roffset_devs = :auto
@@ -170,9 +175,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     fnlabels=:index,
     felabels=:auto,
     makwargs=x -> (), # mutating function to apply to auto_kwargs just before plotting
-    # plotgraph is provided so that one can modify the graph like selecting only
-    # some edges etc. It can also be changed in a "smart" manner within this function.
-    plotgraph=graph(gm),
+    # the graph to actually plot, will be set to graph(gm) by default
+    plotgraph=nothing,
     # the following can only be used for non-symbolics GMs
     ss=:auto,            # calculate steady state?
     ss_curgraph=nothing,
@@ -263,10 +267,20 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         auto_kwargs[:node_color] = [n_color for _ in 1:numstates(gm)]
     end
 
-    # Color edges
+    # Color edges, from here we may need plotgraph
+    if isnothing(plotgraph)
+        plotgraph = graph(gm)
+        if e_color == :auto
+            if F <: AbstractFloat
+                e_color = :rates
+            else
+                e_color = nothing
+            end
+        end
+    end
     if e_color == :auto
         if F <: AbstractFloat
-            e_color = :rates
+            e_color = :weights
         else
             e_color = nothing
         end
@@ -276,8 +290,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     if !isnothing(e_color)
         if e_color == :currents
             if isnothing(ss)
-                @warn "cannot use e_color of {e_color} as there is no ss, falling back to rates"
-                e_color = :rates
+                @warn f"cannot use e_color of {e_color} as there is no ss, falling back to weights"
+                e_color = :weights
             else
                 if e_colorbar_label == :auto
                     e_colorbar_label = "Probability currents"
@@ -286,8 +300,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             end
         elseif e_color == :dcurrents
             if isnothing(ss)
-                @warn "cannot use e_color of {e_color} as there is no ss, falling back to rates"
-                e_color = :rates
+                @warn f"cannot use e_color of {e_color} as there is no ss, falling back to weights"
+                e_color = :weights
             else
                 if e_colorbar_label == :auto
                     e_colorbar_label = "Net probability currents"
@@ -303,15 +317,23 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
                 end
                 colors = weight.(edges(plotgraph))
             end
-        elseif e_color != :rates
-            throw(ArgumentError(f"e_color of {e_color} is not recognised"))
-        end
-        if e_color == :rates
+        elseif e_color == :rates
             if e_colorscale == :auto
                 e_colorscale = :pseudolog
             end
             if e_colorbar_label == :auto
                 e_colorbar_label = "Transition rates"
+            end
+            colors = weight.(edges(plotgraph))
+        elseif e_color != :weights
+            throw(ArgumentError(f"e_color of {e_color} is not recognised"))
+        end
+        if e_color == :weights
+            if e_colorscale == :auto
+                e_colorscale = :pseudolog
+            end
+            if e_colorbar_label == :auto
+                e_colorbar_label = "Plot edge weights"
             end
             colors = weight.(edges(plotgraph))
         end
@@ -359,13 +381,15 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
                 felabels = :repr
             elseif !isnothing(e_color)
                 felabels = :e_color
+            else
+                felabels = nothing
             end
         end
         if felabels == :e_color
             auto_kwargs[:elabels] = roundrepr.(auto_kwargs[:edge_color])
             auto_kwargs[:elabels_shift] = 0.4
         elseif felabels == :repr
-            auto_kwargs[:elabels] = repr.(weight.(edges(plotgraph)))
+            auto_kwargs[:elabels] = roundrepr.(weight.(edges(plotgraph)))
             auto_kwargs[:elabels_shift] = 0.4
         elseif !(isnothing(felabels) || (felabels == false))
             throw(ArgumentError(f"felabels of {felabels} is not recognised"))
@@ -414,9 +438,6 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
 
     plot
 end
-
-plotgm_kwarg_defaults(_::AbstractGraphModel) = (;)
-export plotgm_kwarg_defaults
 
 """
 Fancy function to plot a graph model with as many convenience features as possible
@@ -498,8 +519,8 @@ function plotcgm_pd_!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, state=su
     ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
-        ss_curgraph=curgraph,
         kwargs...,
+        ss_curgraph=curgraph,
         ss=state
     )
 
@@ -524,8 +545,8 @@ function plotcgm_pd_(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadys
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
         axparent=fig,
-        ss_curgraph=curgraph,
         kwargs...,
+        ss_curgraph=curgraph,
         ss=state
     )
 
