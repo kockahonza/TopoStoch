@@ -114,7 +114,7 @@ function p_named_layouts(gm::AbstractGraphModel, layout_name, layout_args)
 
     dim, layout, def_roffsets, axis_labels
 end
-function p_do_layout(gm::AbstractGraphModel, layout=nothing, roffset_devs=nothing)
+function p_do_layout(gm::AbstractGraphModel, layout=nothing, roffset_devs=nothing, layout_graph=graph(gm))
     if isnothing(layout)
         layout = plotgm_layout_default(gm)
     end
@@ -126,7 +126,7 @@ function p_do_layout(gm::AbstractGraphModel, layout=nothing, roffset_devs=nothin
     axis_labels = nothing
 
     if isa(layout, NetworkLayout.AbstractLayout)
-        layout = layout(p_safe_adjmat(gm))
+        layout = layout(p_safe_adjmat(layout_graph))
         dim = length(layout[1])
     elseif isa(layout, Function)
         layout = layout(gm)
@@ -272,7 +272,11 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         plotgraph = graph(gm)
         if e_color == :auto
             if F <: AbstractFloat
-                e_color = :rates
+                if isnothing(ss)
+                    e_color = :rates
+                else
+                    e_color = :dcurrents
+                end
             else
                 e_color = nothing
             end
@@ -442,16 +446,29 @@ end
 """
 Fancy function to plot a graph model with as many convenience features as possible
 """
-function plotgm!(maybeax, gm::AbstractGraphModel; kwargs...)
-    plotgm_pd_!(maybeax, gm; plotgm_kwarg_defaults(gm)..., kwargs...)
+function plotgm!(maybeax, gm::AbstractGraphModel, args...; kwargs...)
+    plotgm_pd_!(maybeax, gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
 end
 function plotgm_pd_!(maybeax, gm::AbstractGraphModel;
-    layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
+    layout=nothing, roffset_devs=nothing, returnax=false,
+    lgraph=nothing, plotgraph=nothing, kwargs...
 )
-    do_layout_rslt = p_do_layout(gm, layout, roffset_devs)
+    if lgraph == false
+        lgraph = graph(gm)
+    end
+    if isnothing(lgraph)
+        lgraph = if !isnothing(plotgraph)
+            plotgraph
+        else
+            graph(gm)
+        end
+    end
+
+    do_layout_rslt = p_do_layout(gm, layout, roffset_devs, lgraph)
     ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
+        plotgraph,
         kwargs...
     )
 
@@ -462,18 +479,31 @@ function plotgm_pd_!(maybeax, gm::AbstractGraphModel;
     end
 end
 @doc (@doc plotgm!)
-function plotgm(gm::AbstractGraphModel; kwargs...)
-    plotgm_pd_(gm; plotgm_kwarg_defaults(gm)..., kwargs...)
+function plotgm(gm::AbstractGraphModel, args...; kwargs...)
+    plotgm_pd_(gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
 end
 function plotgm_pd_(gm::AbstractGraphModel;
-    layout=nothing, roffset_devs=nothing, kwargs...
+    layout=nothing, roffset_devs=nothing,
+    lgraph=nothing, plotgraph=nothing, kwargs...
 )
+    if lgraph == false
+        lgraph = graph(gm)
+    end
+    if isnothing(lgraph)
+        lgraph = if !isnothing(plotgraph)
+            plotgraph
+        else
+            graph(gm)
+        end
+    end
+
     fig = Figure()
-    do_layout_rslt = p_do_layout(gm, layout, roffset_devs)
+    do_layout_rslt = p_do_layout(gm, layout, roffset_devs, lgraph)
     ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
         axparent=fig,
+        plotgraph,
         kwargs...
     )
 
@@ -507,50 +537,29 @@ export p_do_clayout
 Plots the net probability currents at some particular state of a graph model.
 Uses plotgm!_ and tries to keep as much functionality as possible.
 """
-function plotcgm!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
-    plotcgm_pd_!(maybeax, gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
-end
-function plotcgm_pd_!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
-    layout=nothing, roffset_devs=nothing, returnax=false, kwargs...
-)
+function plotcgm!(maybeax, gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm); kwargs...)
     curgraph = make_current_graph(gm, state)
 
-    do_layout_rslt = p_do_clayout(gm, curgraph, layout, roffset_devs)
-    ax = p_make_ax(do_layout_rslt.dim, maybeax, do_layout_rslt.axis_labels)
-
-    plot = plotgm_!(ax, gm, do_layout_rslt;
-        kwargs...,
+    plotgm!(maybeax, gm;
+        plotgm_kwarg_defaults(gm)...,
+        ss=state,
+        lgraph=curgraph,
         ss_curgraph=curgraph,
-        ss=state
+        kwargs...
     )
-
-    if returnax
-        ax, plot
-    else
-        plot
-    end
 end
 @doc (@doc plotcgm!)
-function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, args...; kwargs...)
-    plotcgm_pd_(gm, args...; plotgm_kwarg_defaults(gm)..., kwargs...)
-end
-function plotcgm_pd_(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm);
-    layout=nothing, roffset_devs=nothing, kwargs...
+function plotcgm(gm::AbstractGraphModel{<:AbstractFloat}, state=supersteadystate(gm); kwargs...
 )
     curgraph = make_current_graph(gm, state)
 
-    fig = Figure()
-    do_layout_rslt = p_do_clayout(gm, curgraph, layout, roffset_devs)
-    ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels)
-
-    plot = plotgm_!(ax, gm, do_layout_rslt;
-        axparent=fig,
-        kwargs...,
+    plotgm(gm;
+        plotgm_kwarg_defaults(gm)...,
+        ss=state,
+        lgraph=curgraph,
         ss_curgraph=curgraph,
-        ss=state
+        kwargs...
     )
-
-    Makie.FigureAxisPlot(fig, ax, plot)
 end
 export plotcgm!, plotcgm
 

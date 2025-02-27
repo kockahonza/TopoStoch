@@ -381,6 +381,12 @@ function groupsum(v::AbstractVector, group_vect::AbstractVector;
 end
 export groupsum
 
+function transred(g)
+    SimpleWeightedDiGraph(transitivereduction(g))
+end
+transred(gm::AbstractGraphModel{<:AbstractFloat}) = transred(graph(gm))
+export transred
+
 function filter_edges!(graph::AbstractFloatGraph, threshold)
     for e in edges(graph)
         if weight(e) < threshold
