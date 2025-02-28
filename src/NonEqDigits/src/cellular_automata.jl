@@ -1,7 +1,7 @@
 ################################################################################
-# Basics of relating our Ks to CE numerical codes
+# Basics of relating our Ks to CA numerical codes
 ################################################################################
-function cecode_to_Ks(code)
+function cacode_to_Ks(code)
     if !(0 <= code < 2^8)
         throw(ArgumentError("code must be between 0 and 2^8-1 inclusive"))
     end
@@ -13,7 +13,7 @@ function cecode_to_Ks(code)
 
     K01, K10
 end
-function Ks_to_cecode(K01, K10)
+function Ks_to_cacode(K01, K10)
     cd = fill(0, 8)
 
     cd[1] = K01[1, 1]
@@ -28,11 +28,11 @@ function Ks_to_cecode(K01, K10)
 
     sum(cd .* 2 .^ (0:7))
 end
-export cecode_to_Ks, Ks_to_cecode
+export cacode_to_Ks, Ks_to_cacode
 
-function make_ce_ned(L, code; show=true)
+function make_ca_ned(L, code; show=true)
     ned = NonEqDigitsGM(2, L)
-    K01, K10 = cecode_to_Ks(code)
+    K01, K10 = cacode_to_Ks(code)
     if show
         @show K01
         @show K10
@@ -41,49 +41,66 @@ function make_ce_ned(L, code; show=true)
     add_mech_BNN!(ned, -Inf, K10)
     ned
 end
-export make_ce_ned
+export make_ca_ned
 
 ################################################################################
 # Simple calculations, stats, properties etc.
 ################################################################################
-function ce_calc_numarrows(K01, K10)
+function ca_calc_numarrows(K01, K10)
     count(!iszero, K01) + count(!iszero, K10)
 end
-ce_calc_numarrows(code) = ce_calc_numarrows(cecode_to_Ks(code)...)
-export ce_calc_numarrows
+ca_calc_numarrows(code) = ca_calc_numarrows(cacode_to_Ks(code)...)
+export ca_calc_numarrows
 
 ################################################################################
 # Dealing with symmetries and enumerating all codes
 ################################################################################
-function cesym_01(K01, K10)
+function caKssym_01(K01, K10)
     [K10[2, 2] K10[2, 1]; K10[1, 2] K10[1, 1]], [K01[2, 2] K01[2, 1]; K01[1, 2] K01[1, 1]]
 end
-function cesym_LR(K01, K10)
+function caKssym_LR(K01, K10)
     transpose(K01), transpose(K10)
 end
-export cesym_01, cesym_LR
+export caKssym_01, caKssym_LR
 
-function ce_ned_sym_graph(; noselfsyms=true)
+function ca_has01sym(args...)
+    args == caKssym_01(args...)
+end
+ca_has01sym(code) = ca_has01sym(cacode_to_Ks(code)...)
+function ca_hasLRsym(args...)
+    args == caKssym_LR(args...)
+end
+ca_hasLRsym(code) = ca_hasLRsym(cacode_to_Ks(code)...)
+function ca_hasFsym(args...)
+    args == caKssym_LR(caKssym_01(args...)...)
+end
+ca_hasFsym(code) = ca_hasFsym(cacode_to_Ks(code)...)
+export ca_has01sym, ca_hasLRsym, ca_hasFsym
+
+function ca_ned_sym_graph(; noselfsyms=true)
     g = SimpleGraph(2^8)
     for code in 0:2^8-1
-        baseKs = cecode_to_Ks(code)
-        Ksafter01 = cesym_01(baseKs...)
-        KsafterLR = cesym_LR(baseKs...)
+        baseKs = cacode_to_Ks(code)
+        Ksafter01 = caKssym_01(baseKs...)
+        KsafterLR = caKssym_LR(baseKs...)
         if noselfsyms
-            add_edge_ifnotself!(g, code + 1, Ks_to_cecode(Ksafter01...) + 1)
-            add_edge_ifnotself!(g, code + 1, Ks_to_cecode(KsafterLR...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
         else
-            add_edge!(g, code + 1, Ks_to_cecode(Ksafter01...) + 1)
-            add_edge!(g, code + 1, Ks_to_cecode(KsafterLR...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
         end
     end
     g
 end
-ce_ned_sym_graphplot(g=ce_ned_sym_graph(); kwargs...) = graphplot(g; nlabels=string.(0:255), kwargs...)
-export ce_ned_sym_graph, ce_ned_sym_graphplot
+ca_ned_sym_graphplot(g=ca_ned_sym_graph(); kwargs...) = graphplot(g; nlabels=string.(0:255), kwargs...)
+export ca_ned_sym_graph, ca_ned_sym_graphplot
 
-function ce_ucodes_bydeg(by=ce_calc_numarrows)
-    comps_by_len = sort(connected_components(ce_ned_sym_graph()); by=length)
+function ca_ucodes_sorted(by=identity)
+    sort(minimum.(connected_components(ca_ned_sym_graph())) .- 1; by)
+end
+function ca_ucodes_bydeg(by=ca_calc_numarrows)
+    comps_by_len = sort(connected_components(ca_ned_sym_graph()); by=length)
 
     uniques = []
 
@@ -96,30 +113,61 @@ function ce_ucodes_bydeg(by=ce_calc_numarrows)
             codes_of_this_len = []
             cur_len = length(cc)
         end
-        push!(codes_of_this_len, cc[1] + 1)
+        # always take the smallest code from each symmetry component
+        push!(codes_of_this_len, minimum(cc) - 1)
     end
     append!(uniques, codes_of_this_len)
 
     uniques
 end
-export ce_ucodes_bydeg
+export ca_ucodes_sorted, ca_ucodes_bydeg
 
-################################################################################
-# Reading and dealing with the standard CE classifications
-################################################################################
-const ce_subclasses = ["1", "LP", "HP", "T", "U", "C"]
-const ce_class_subclass_pairs = [1 => "1", 2 => "LP", 2 => "HP", 2 => "T", 3 => "C", 3 => "U", 4 => "T", 4 => "C"]
-export ce_subclasses, ce_class_subclass_pairs
+module CANEDSymGroup
+using ..NonEqDigits
 
-function ce_load_classes_df()
-    DataFrame(CSV.File(datadir("simplececlasses.csv")))
+function sm01()
+    mat = fill(0, 8, 8)
+    mat[1, 1] = 1
+    mat[2, 3] = 1
+    mat[3, 2] = 1
+    mat[4, 4] = 1
+    mat[5, 5] = 1
+    mat[6, 7] = 1
+    mat[7, 6] = 1
+    mat[8, 8] = 1
+    mat
 end
-export ce_load_classes_df
+function smLR()
+    mat = fill(0, 8, 8)
+    for i in 1:8
+        mat[i, 9-i] = 1
+    end
+    mat
+end
+export sm01, smLR
+
+# Can confirm by making a multiplication table that this is in fact what
+# I thought it was, aka a finite abelian group with 3 non-identity elements
+# each with rank 2. (didn't check associativity tbf)
+
+end
+
+################################################################################
+# Reading and dealing with the standard CA classifications
+################################################################################
+const ca_subclasses = ["1", "LP", "HP", "T", "U", "C"]
+const ca_class_subclass_pairs = [1 => "1", 2 => "LP", 2 => "HP", 2 => "T", 3 => "C", 3 => "U", 4 => "T", 4 => "C"]
+export ca_subclasses, ca_class_subclass_pairs
+
+function ca_load_classes_df()
+    DataFrame(CSV.File(datadir("simplecaclasses.csv")))
+end
+export ca_load_classes_df
 
 ################################################################################
 # Plots
 ################################################################################
-function plot_percecode_vsN(codes, Ns, funcs;
+function plot_percacode_vsN(codes, Ns, funcs;
     color=nothing,
     colormap=:managua,
     colorrange=nothing,
@@ -179,7 +227,7 @@ function plot_percecode_vsN(codes, Ns, funcs;
     for code in codes
         valss = [[] for _ in 1:length(namedfuncs)]
         for N in Ns
-            ned = make_ce_ned(N, code; show=false)
+            ned = make_ca_ned(N, code; show=false)
             for ((_, func), vals) in zip(namedfuncs, valss)
                 push!(vals, func(ned))
             end
@@ -209,4 +257,4 @@ function plot_percecode_vsN(codes, Ns, funcs;
 
     fig
 end
-export plot_percecode_vsN
+export plot_percacode_vsN

@@ -115,6 +115,7 @@ export subes
 ################################################################################
 
 include("util.jl")     # Has bits of GM API
+include("graphs_extra.jl")     # Has more custom pure graph related functions
 include("manipulations.jl")
 include("symbolics.jl")     # Has bits of GM API
 include("plots_and_io.jl")            # Has bits of GM API
