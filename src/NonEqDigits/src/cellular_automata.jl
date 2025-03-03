@@ -61,7 +61,10 @@ end
 function caKssym_LR(K01, K10)
     transpose(K01), transpose(K10)
 end
-export caKssym_01, caKssym_LR
+function caKssym_F(K01, K10)
+    caKssym_LR(caKssym_01(K01, K10)...)
+end
+export caKssym_01, caKssym_LR, caKssym_F
 
 function ca_has01sym(args...)
     args == caKssym_01(args...)
@@ -72,10 +75,11 @@ function ca_hasLRsym(args...)
 end
 ca_hasLRsym(code) = ca_hasLRsym(cacode_to_Ks(code)...)
 function ca_hasFsym(args...)
-    args == caKssym_LR(caKssym_01(args...)...)
+    args == caKssym_F(args...)
 end
 ca_hasFsym(code) = ca_hasFsym(cacode_to_Ks(code)...)
-export ca_has01sym, ca_hasLRsym, ca_hasFsym
+ca_hasallsyms(args...) = ca_hasLRsym(args...) && ca_has01sym(args...)
+export ca_has01sym, ca_hasLRsym, ca_hasFsym, ca_hasallsyms
 
 function ca_ned_sym_graph(; noselfsyms=true)
     g = SimpleGraph(2^8)
@@ -83,12 +87,15 @@ function ca_ned_sym_graph(; noselfsyms=true)
         baseKs = cacode_to_Ks(code)
         Ksafter01 = caKssym_01(baseKs...)
         KsafterLR = caKssym_LR(baseKs...)
+        KsafterF = caKssym_F(baseKs...)
         if noselfsyms
             add_edge_ifnotself!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
             add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterF...) + 1)
         else
             add_edge!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
             add_edge!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterF...) + 1)
         end
     end
     g

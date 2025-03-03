@@ -31,6 +31,8 @@
 \newcommand\textbff[1]{\textbf{\boldmath #1}}
 \newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
 
+\newcommand{\tbtmat}[4]{\ensuremath{\begin{pmatrix} #1 & #2 \\ #3 & #4 \end{pmatrix}}}
+
 \stackMath
 \newcommand{\suf}[2]{\stackunder[0.5pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
 \newcommand{\duf}[2]{\stackunder[0.5pt]{\stackunder[0.8pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
@@ -74,7 +76,7 @@ Also note that in this binary model any forward rate always corresponds to a $0\
 	So in summary each mechanism has its $\mu$ (originating either from energetics or effects on the outside environment) which sets the balance of 0 to 1 and 1 to 0 rates.
 	And a $K$ which sets the overall rates depending on neighbours of the affected digit.
 	The total rate of a particular transition is then a sum over all the mechanisms rates which are given by \cref{eq:rfmech,eq:rbmech}.
-    Also, worth noting is the case of a mechanism being maximally driven, this results in that given mechanism only facilitating 0 to 1 or 1 to 0 transitions and is perhaps the most intuitive unit to start looking at.
+	Also, worth noting is the case of a mechanism being maximally driven, this results in that given mechanism only facilitating 0 to 1 or 1 to 0 transitions and is perhaps the most intuitive unit to start looking at.
 \end{tcolorbox}
 
 \subsection{Symmetries and $K$}
@@ -696,5 +698,106 @@ Note however that for a single mechanism all such transitions would have to poin
 However, given that we can tune individually the rates (or in the simpler case enable/disable them) based on each neighbour combination using $K$, we can achieve all CE corresponding systems in our model using two mechanisms each biased in the opposite direction.
 For a simple sanity check note that as dicussed before if we only consider entries of 0 or 1 then there are a total of $2^4$ possible $K$s hence $2^4\times2^4$ total different combinations of 2 $K$ matrices.
 This agrees with the $2^8$ different basic CE rules.
+
+\newpage
+\section{Binary, NN, Cellular Automata like Systems}
+These are a type of the models discussed above where as discussed before we have two mechanisms, one biased towards 0 to 1 transitions with its matrix $K_{01}=U$ and the other biased towards 1 to 0 transitions with its matrix $K_{10}=D$.
+
+\subsection{Symmetries of the CA system}
+As discussed before we have two main symmetry operations we consider, exchanging all 0s to 1s and vice-versa (01) and reversing the string (LR).
+Naturally then we can also do both, veiwing this as a symmetry group I label these operations as $g, h$ and $f=gh=hg$ as verified by making a multiplication table.
+These operations then transform the two matrices $U$ and $D$ as
+\begin{align}
+	 & g \leftrightarrow \begin{pmatrix} a & b \\ c & d \\ \end{pmatrix} \begin{pmatrix} e & f \\ g & h \\ \end{pmatrix} \rightarrow \begin{pmatrix} h & g \\ f & e \\ \end{pmatrix} \begin{pmatrix} d & c \\ b & a \\ \end{pmatrix} \\
+	 & h \leftrightarrow \begin{pmatrix} a & b \\ c & d \\ \end{pmatrix} \begin{pmatrix} e & f \\ g & h \\ \end{pmatrix} \rightarrow \begin{pmatrix} a & c \\ b & d \\ \end{pmatrix} \begin{pmatrix} e & g \\ f & h \\ \end{pmatrix} \\
+	 & f \leftrightarrow \begin{pmatrix} a & b \\ c & d \\ \end{pmatrix} \begin{pmatrix} e & g \\ f & h \\ \end{pmatrix} \rightarrow \begin{pmatrix} h & f \\ g & e \\ \end{pmatrix} \begin{pmatrix} d & b \\ c & a \\ \end{pmatrix}
+\end{align}
+The symmetry group as Abelian with $g^2=h^2=f^2=e$ and combining any of the two gives the third.
+
+These symmetries are useful for two things, firstly narrowing down many different CA rules to only those which show distinctive behaviour.
+In practice this means that if two rules are related by a symmetry operation then only one is worth investigating.
+Numerically, I have checked there are 88 rule classes based on these symmetries, each having between 1 and 4 different rules.
+Secondly, we can then look for those rules that are invariant under some or all of these operations.
+
+\subsection{Symmetry and equilibrium classes}
+Any particular CA like rule can be classified according to the discussed symmetries in one of 5 classes.
+Either a rule is not symmetric under any of the operations, or it is symmetric under precisely one of $g, h$ and $f$, or it is symmetric under all of them.
+In addition to this it is also worth classifying according to whether a rule is an equilibrium one or not, this is the case iff $U=D$.
+See \cref{tab:caruleclasses}.
+
+\begin{table}[h]
+	\centering
+	\small
+	\begin{tabular}{ c | c | c | c | c }
+		Symmetries & General form of $K$s plus conditions                                                    & d.o.f. & \#rules & $K$s at eq. plus conditions        \\
+		\hline
+
+		All        & \tbtmat{a}{b}{b}{c}\tbtmat{c}{b}{b}{a} always                                           & 3      & 8/8     & \tbtmat{a}{b}{b}{a} always         \\
+		\hline
+
+		$h$ only   & \tbtmat{a}{b}{b}{c}\tbtmat{e}{f}{f}{g} iff $(a \neq e) \vee (b \neq f) \vee (c \neq g)$ & 6      & 56/28   & \tbtmat{a}{b}{b}{c} iff $a \neq c$ \\
+		\hline
+
+		$g$ only   & \tbtmat{a}{b}{c}{d}\tbtmat{d}{c}{b}{a} iff $b \neq c$                                   & 4      & 8/4     & \tbtmat{a}{b}{b}{a} so never       \\
+		\hline
+
+		$f$ only   & \tbtmat{a}{b}{c}{d}\tbtmat{d}{b}{c}{a} iff $ \neq c$                                    & 4      & 8/4     & \tbtmat{a}{b}{c}{a} ff $a \neq c$  \\
+		\hline
+
+		None       & \tbtmat{a}{b}{c}{d}\tbtmat{e}{f}{g}{h} \ldots                                           & 8      & 176/44  & \tbtmat{a}{b}{c}{d} \ldots         \\
+		\hline
+	\end{tabular}
+	\caption{
+		Symmetry classes of the CA type systems along with some of their properties.
+		All columns except the last do not distinguish between in and out of equilibrium.
+		The rules column is the number of rules in the class before accounting for other symmetries and after.
+	}\label{tab:caruleclasses}
+\end{table}
+
+\subsubsection{Fully symmetric rules}
+From \cref{tab:caruleclasses} we can start looking at the particular rules in some of the classes, the most symmetric begin the natural first choice.
+Note that all of these are fully symmetric and so have no other rules that are similar to them, hence all are worth looking at.
+These rules are summarized in
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{ c | c | c | c | c }
+		Code & $K$s                                   & \# trans. & is at eq. & is interesting/notes \\
+		\hline
+
+		77   & \tbtmat{1}{0}{0}{0}\tbtmat{0}{0}{0}{1} & 2         & no        &                      \\
+		\hline
+
+
+		232  & \tbtmat{0}{0}{0}{1}\tbtmat{1}{0}{0}{0} & 2         & no        &                      \\
+		\hline
+		\hline
+
+		150  & \tbtmat{0}{1}{1}{0}\tbtmat{0}{1}{1}{0} & 4         & yes       &                      \\
+		\hline
+
+		105  & \tbtmat{1}{0}{0}{1}\tbtmat{1}{0}{0}{1} & 4         & yes       &                      \\
+		\hline
+		\hline
+
+		178  & \tbtmat{0}{1}{1}{1}\tbtmat{1}{1}{1}{0} & 6         & no        &                      \\
+		\hline
+
+		23   & \tbtmat{1}{1}{1}{0}\tbtmat{0}{1}{1}{1} & 6         & no        &                      \\
+		\hline
+		\hline
+
+		204  & \tbtmat{0}{0}{0}{0}\tbtmat{0}{0}{0}{0} & 0         & yes       & trivial              \\
+		\hline
+
+		51   & \tbtmat{1}{1}{1}{1}\tbtmat{1}{1}{1}{1} & 8         & yes       & trivial              \\
+		\hline
+	\end{tabular}
+	\caption{
+		Summary of all of the fully symmetric CA rule systems.
+		\#tran. refers to the number of elementary transitions.
+	}
+\end{table}
+
 
 \end{document}
