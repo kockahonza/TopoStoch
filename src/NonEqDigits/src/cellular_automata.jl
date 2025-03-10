@@ -174,7 +174,7 @@ export ca_load_classes_df
 ################################################################################
 # Plots
 ################################################################################
-function plot_percacode_vsN(codes, Ns, funcs;
+function plot_eachcode_vsN(codes, Ns, funcs;
     color=nothing,
     colormap=:managua,
     colorrange=nothing,
@@ -264,4 +264,54 @@ function plot_percacode_vsN(codes, Ns, funcs;
 
     fig
 end
-export plot_percacode_vsN
+export plot_eachcode_vsN
+
+function plot_eachcode_vsN2(codes, Ns, funcs;
+    yoffset_dev=0.0,
+    xoffset_dev=0.0,
+)
+    # Name unnamed funcs
+    namedfuncs = Tuple{String,Function}[]
+    func_i = 1
+    for func in funcs
+        if isa(func, Tuple)
+            push!(namedfuncs, func)
+        elseif isa(func, Pair)
+            push!(namedfuncs, (func[1], func[2]))
+        else
+            push!(namedfuncs, ((@sprintf "Unnamed %d" func_i), func))
+            func_i += 1
+        end
+    end
+
+    # Prep axes
+    (nrows, ncols) = ntogridsize1(length(funcs))
+    cis = CartesianIndices((ncols, nrows))
+    fig = Figure()
+    axs = []
+    for ((name, _), ci) in zip(namedfuncs, cis)
+        ax = Axis(fig[ci[2], ci[1]])
+        ax.title = name
+        push!(axs, ax)
+    end
+
+    plots = []
+    for code in codes
+        valss = [[] for _ in 1:length(namedfuncs)]
+        for N in Ns
+            ned = make_ca_ned(N, code; show=false)
+            for ((_, func), vals) in zip(namedfuncs, valss)
+                push!(vals, func(ned))
+            end
+        end
+        for (ax, vals) in zip(axs, valss)
+            ls = lines!(ax, Ns .+ xoffset_dev * rand(), vals .+ yoffset_dev * rand(); label=f"{code}")
+            push!(plots, ls)
+        end
+    end
+
+    Legend(fig[:, ncols+1], axs[1], "Rules")
+
+    fig
+end
+export plot_eachcode_vsN2

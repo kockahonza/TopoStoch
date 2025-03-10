@@ -762,35 +762,35 @@ These rules are summarized in
 \begin{table}[h]
 	\centering
 	\begin{tabular}{ c | c | c | c | c }
-		Code & $K$s                                   & \# trans. & is at eq. & is interesting/notes \\
+		Code & $K$s                                   & \# trans. & is at eq. & is interesting/notes              \\
 		\hline
 
-		77   & \tbtmat{1}{0}{0}{0}\tbtmat{0}{0}{0}{1} & 2         & no        &                      \\
+		77   & \tbtmat{1}{0}{0}{0}\tbtmat{0}{0}{0}{1} & 2         & no        &                                   \\
 		\hline
 
 
-		232  & \tbtmat{0}{0}{0}{1}\tbtmat{1}{0}{0}{0} & 2         & no        &                      \\
-		\hline
-		\hline
-
-		150  & \tbtmat{0}{1}{1}{0}\tbtmat{0}{1}{1}{0} & 4         & yes       &                      \\
-		\hline
-
-		105  & \tbtmat{1}{0}{0}{1}\tbtmat{1}{0}{0}{1} & 4         & yes       &                      \\
+		232  & \tbtmat{0}{0}{0}{1}\tbtmat{1}{0}{0}{0} & 2         & no        &                                   \\
 		\hline
 		\hline
 
-		178  & \tbtmat{0}{1}{1}{1}\tbtmat{1}{1}{1}{0} & 6         & no        &                      \\
+		150  & \tbtmat{0}{1}{1}{0}\tbtmat{0}{1}{1}{0} & 4         & yes       &                                   \\
 		\hline
 
-		23   & \tbtmat{1}{1}{1}{0}\tbtmat{0}{1}{1}{1} & 6         & no        &                      \\
+		105  & \tbtmat{1}{0}{0}{1}\tbtmat{1}{0}{0}{1} & 4         & yes       & switches between loops and planes \\
 		\hline
 		\hline
 
-		204  & \tbtmat{0}{0}{0}{0}\tbtmat{0}{0}{0}{0} & 0         & yes       & trivial              \\
+		178  & \tbtmat{0}{1}{1}{1}\tbtmat{1}{1}{1}{0} & 6         & no        &                                   \\
 		\hline
 
-		51   & \tbtmat{1}{1}{1}{1}\tbtmat{1}{1}{1}{1} & 8         & yes       & trivial              \\
+		23   & \tbtmat{1}{1}{1}{0}\tbtmat{0}{1}{1}{1} & 6         & no        &                                   \\
+		\hline
+		\hline
+
+		204  & \tbtmat{0}{0}{0}{0}\tbtmat{0}{0}{0}{0} & 0         & yes       & trivial                           \\
+		\hline
+
+		51   & \tbtmat{1}{1}{1}{1}\tbtmat{1}{1}{1}{1} & 8         & yes       & trivial                           \\
 		\hline
 	\end{tabular}
 	\caption{
@@ -798,6 +798,22 @@ These rules are summarized in
 		\#tran. refers to the number of elementary transitions.
 	}
 \end{table}
+
+\paragraph{Rule 150}
+This always gives a couple of isolated strongly connected (attracting) components which are "wide" loops, meaning it is not a single loop but branched, however very clearly with a hole in the middle.
+There's also some trivial sccs around which always include all 0s and all 1s and if $N$ is even there are also some other ones.
+At odd $N$, one of the loop isolated sccs is actually a single state loop.
+
+\paragraph{Rule 105}
+Is somewhat similar to rule 150, however with markedly different graphs at even and odd $N$.
+With even $N$ we get the same loop isolated sccs, however it seems further divided into $N$ that are a multiple of 4 and those which are not.
+If $N$ is divisible by 4, there are no single state loops and there seem to always be 4 trivial sccs which do not include the all 0s or all 1s but rather they seem to be repeats of the $0011$ segment which notably is of length 4.
+If $N$ is not divisible by 4 we get no trivial sccs and of the isolated loop sccs there always seem to be 2 single state ones.
+
+At odd $N$ we get even more interesting graphs, though simpler to summarize.
+No matter the $N$ as long as it is odd we seem to always get no trivial sccs and precisely two isolated sccs which form plane like structures.
+They do not seem to be periodic and definitely do have boundaries.
+In addition the planar structure isn't perfect, at some places the plane seems to double up those these seem very local and not throughout the structure.
 
 
 \end{document}
