@@ -296,7 +296,7 @@ function plot_eachcode_vsN2(codes, Ns, funcs;
     end
 
     plots = []
-    for code in codes
+    for (code_i, code) in enumerate(codes)
         valss = [[] for _ in 1:length(namedfuncs)]
         for N in Ns
             ned = make_ca_ned(N, code; show=false)
@@ -305,7 +305,7 @@ function plot_eachcode_vsN2(codes, Ns, funcs;
             end
         end
         for (ax, vals) in zip(axs, valss)
-            ls = lines!(ax, Ns .+ xoffset_dev * rand(), vals .+ yoffset_dev * rand(); label=f"{code}")
+            ls = lines!(ax, Ns .+ xoffset_dev * (code_i - 1), vals .+ yoffset_dev * (code_i - 1); label=f"{code}")
             push!(plots, ls)
         end
     end

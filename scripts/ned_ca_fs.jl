@@ -1,7 +1,6 @@
 using DrWatson
 @quickactivate "TopoStochSim"
 
-using Printf
 using DataFrames
 using GLMakie
 

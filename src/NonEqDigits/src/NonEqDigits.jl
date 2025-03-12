@@ -3,7 +3,6 @@ module NonEqDigits
 using Reexport
 @reexport using GraphModels
 
-using Printf
 using DataFrames, CSV
 
 # These are intended to be extended

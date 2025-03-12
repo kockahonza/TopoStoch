@@ -730,6 +730,16 @@ function ntogridsize1(n)
 end
 export ntogridsize1
 
+function mattranscis(nrows, ncols)
+    cis = CartesianIndices((ncols, nrows))
+    mat = Matrix{CartesianIndex{2}}(undef, size(cis))
+    for ci in cis
+        mat[ci] = CartesianIndex(reverse(ci.I))
+    end
+    mat
+end
+export mattranscis
+
 ################################################################################
 # Saving
 ################################################################################

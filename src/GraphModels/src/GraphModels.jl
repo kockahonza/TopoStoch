@@ -5,7 +5,7 @@ using Reexport
 using LetterCodes
 
 @reexport using DrWatson
-@reexport using PyFormattedStrings
+@reexport using PyFormattedStrings, Printf
 @reexport using StaticArrays, ElasticArrays, SparseArrays
 @reexport using LinearAlgebra
 @reexport using StatsBase
@@ -117,6 +117,7 @@ export subes
 include("util.jl")     # Has bits of GM API
 include("graphs_extra.jl")     # Has more custom pure graph related functions
 include("manipulations.jl")
+include("manipulations_sccs.jl")
 include("symbolics.jl")     # Has bits of GM API
 include("plots_and_io.jl")            # Has bits of GM API
 

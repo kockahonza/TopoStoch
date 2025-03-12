@@ -2,6 +2,7 @@ name = "TopoStochSim"
 authors = ["Jan Kocka"]
 
 [deps]
+AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 BasicSim = "b515daa7-1388-4553-9d39-5e927a601b9c"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -44,8 +45,10 @@ SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+TableView = "40c74d1a-b44c-5b06-a7c1-6cbea58ea978"
 Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 WSymbolics = "5e012518-523a-4552-8358-9c786410efff"
 
 [compat]
