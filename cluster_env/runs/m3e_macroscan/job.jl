@@ -10,6 +10,7 @@ function macroscan(N=4; testrun=false)
     fname = f"./macroscan_N{N}.jld2"
     if ispath(fname)
         @error f"Path {fname} already exists, exiting so that it is not overriden"
+        return
     end
     if !isdir(dirname(fname))
         mkpath(dirname(fname))
@@ -17,13 +18,15 @@ function macroscan(N=4; testrun=false)
 
     if !testrun
         general_m3e_scan(N, observables, fname, obs_names;
-            r1s=10 .^ LinRange(-5, 3, 15),
-            r2s=10 .^ LinRange(-5, 3, 15),
-            r3s=10 .^ LinRange(-5, 3, 15),
+            r1s=vcat(0.0, 10 .^ LinRange(-3, 3, 5)),
+            r2s=vcat(0.0, 10 .^ LinRange(-3, 3, 5)),
+            r3s=vcat(0.0, 10 .^ LinRange(-3, 3, 5)),
+            ets=LinRange(0.0, 6.0, 8),
+            ders=LinRange(0.0, 6.0, 8),
             alphas=[0, 0.5],
-            ebs=LinRange(0, 6, 5),
-            cPs=10 .^ LinRange(-5, 1, 15),
-            cRs=10 .^ LinRange(-1, 2, 15),
+            ebs=LinRange(0, 6, 3),
+            cPs=10 .^ LinRange(-3, 3, 11),
+            cRs=10 .^ LinRange(-3, 3, 11),
             do_ss=true
         )
     else

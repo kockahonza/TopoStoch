@@ -25,9 +25,12 @@ function _general_m3_scan_fast_bit(cca_fact, observables, data, do_ss, cis, r1s,
         r1_i, r2_i, r3_i, alpha_i, eb_i, cP_i, cR_i = ci.I
         cca = cca_fact(r1s[r1_i], r2s[r2_i], r3s[r3_i], alphas[alpha_i], ebs[eb_i], cPs[cP_i], cRs[cR_i])
 
+        if do_ss
+            ss = supersteadystate(cca)
+        end
+
         for (darray, observable) in zip(data, observables)
             if do_ss
-                ss = supersteadystate(cca)
                 darray[ci] = observable(cca, ss)
             else
                 darray[ci] = observable(cca)

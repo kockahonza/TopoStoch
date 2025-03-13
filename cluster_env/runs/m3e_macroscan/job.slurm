@@ -6,5 +6,5 @@
 
 echo echo "echo testing ->" $SLURM_CPUS_PER_TASK $SLURM_CPUS_ON_NODE
 
-time julia -t 20 -L job.jl -e 'macroscans(; testrun=true)'
-# time julia -t $SLURM_CPUS_PER_TASK -L job.jl -e 'macroscans()'
+time julia -t $SLURM_CPUS_PER_TASK -L job.jl -e 'macroscans()'
+# time julia -t 20 -L job.jl -e 'macroscans(; testrun=true)'
