@@ -90,6 +90,85 @@ function general_m3_scan(N, observables, save_fname=nothing,
     data
 end
 
+# Also Model 3 with energetics - aka keeping epsilon_t and delta espilon_r
+function _general_m3e_scan_fast_bit(cca_fact, observables, data, do_ss, cis, r1s, r2s, r3s, alphas, ets, ders, ebs, cPs, cRs)
+    # By default this is 11 but it seems much much better to parallelize here
+    # instead of having a parallel eigensolver
+    prev_blas_num_threads = BLAS.get_num_threads()
+    BLAS.set_num_threads(1)
+
+
+    @threads for ci in cis
+        r1_i, r2_i, r3_i, alpha_i, et_i, der_i, eb_i, cP_i, cR_i = ci.I
+        cca = cca_fact(r1s[r1_i], r2s[r2_i], r3s[r3_i], alphas[alpha_i], ets[et_i], ders[der_i], ebs[eb_i], cPs[cP_i], cRs[cR_i])
+
+        for (darray, observable) in zip(data, observables)
+            if do_ss
+                ss = supersteadystate(cca)
+                darray[ci] = observable(cca, ss)
+            else
+                darray[ci] = observable(cca)
+            end
+        end
+    end
+
+    BLAS.set_num_threads(prev_blas_num_threads)
+end
+function general_m3e_scan(N, observables, save_fname=nothing,
+    obs_names=[f"obs_{i}" for i in 1:length(observables)];
+    r1s=[1.0],
+    r2s=[1.0],
+    r3s=[1.0],
+    alphas=[0.0],
+    ets=[0.0],
+    ders=[0.0],
+    ebs=[0.0],
+    cPs=[1.0],
+    cRs=[1.0],
+    do_ss=true,
+    save_metadata=(;)
+)
+    ca = makeCAGM(N, vars_simplified(; energies=nothing))
+    cca_fact::Function = make_factory(
+        ca,
+        [symvars.sim_rs; symvars.energies;
+            symvars.concentrations[1]; symvars.redconcentration]
+    )
+
+    cis = CartesianIndices(length.((r1s, r2s, r3s, alphas, ets, ders, ebs, cPs, cRs)))
+
+    # prep the data arrays
+    fake_cca = cca_fact(1, 1, 1, 0, 0, 0, 0, 1, 1)
+    if do_ss
+        ss = supersteadystate(fake_cca)
+    end
+    data_types = []
+    for observable in observables
+        obs_return = if do_ss
+            observable(fake_cca, ss)
+        else
+            observable(fake_cca)
+        end
+        push!(data_types, typeof(obs_return))
+    end
+    # kept as a tuple so that _general_m3e_scan_fast_bit hopefully knows the types
+    data = Tuple(Array{dt,length(cis.indices)}(undef, size(cis)) for dt in data_types)
+
+    # run, separated to have a function barrier
+    _general_m3e_scan_fast_bit(cca_fact, observables, data, do_ss, cis, r1s, r2s, r3s, alphas, ets, ders, ebs, cPs, cRs)
+
+    if !isnothing(save_fname)
+        range_names = ["r1s", "r2s", "r3s", "alphas", "ets", "ders", "ebs", "cPs", "cRs"]
+        obs_kwargs = Symbol.(obs_names) .=> data
+        jldsave(save_fname; ca, r1s, r2s, r3s, alphas, ets, ders, ebs, cPs, cRs,
+            range_names, observable_names=obs_names,
+            obs_kwargs..., save_metadata...
+        )
+    end
+
+    data
+end
+
 ################################################################################
 # Setting up different observables
 ################################################################################
@@ -357,26 +436,34 @@ function (rtl::ObsGoingRoundTheLoop{List})(cca)
     vals
 end
 
+# Steady state macroscopic observables
 function obs_ssavgnumlig(cca, ss)
     avgnumlig = 0.0
     for (st, p) in zip(allstates(cca), ss)
         avgnumlig += calc_numligands(st) * p
     end
-    avgnumlig
+    avgnumlig / sum(ss)
+end
+function obs_ssavgenergy(cca, ss)
+    avgenergy = 0.0
+    for (st, p) in zip(allstates(cca), ss)
+        avgenergy += calc_energy(st, cca) * p
+    end
+    avgenergy / sum(ss)
 end
 function obs_ssavgnumofconf(cca, ss, args...)
     avgnumofconf = 0.0
     for (st, p) in zip(allstates(cca), ss)
         avgnumofconf += calc_numofconf(st, args...) * p
     end
-    avgnumofconf
+    avgnumofconf / sum(ss)
 end
 function obs_ssavgnumboundaries(cca, ss)
     avgnumboundaries = 0.0
     for (st, p) in zip(allstates(cca), ss)
         avgnumboundaries += calc_numboundaries(st, cca) * p
     end
-    avgnumboundaries
+    avgnumboundaries / sum(ss)
 end
 
 ################################################################################

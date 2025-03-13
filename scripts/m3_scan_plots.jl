@@ -270,7 +270,6 @@ end
 ################################################################################
 # Specific plots for cluster data
 ################################################################################
-
 function br1p1()
     f = jldopen("cluster_env/runs/m3_bigscan1/bigrun1_N4.jld2")
     scanheatmaps(f, "cPs", "cRs", ["noligs", "allligs", "notense", "onboundary"]; yscale=log10, xscale=log10)
@@ -324,5 +323,6 @@ function br3p3(; kwargs...)
 end
 
 function ms1p1()
-    scansinglescatter(f, "cPs", ["numlig", "numtense", "numboundaries"]; xscale=log10, axis=(; limits=(nothing, (0, 3))))
+    f = jldopen("cluster_env/runs/m3_macroscan/macroscan_N4.jld2")
+    scansinglescatter(f, "cRs", ["numlig", "numtense", "numboundaries"]; xscale=log10, axis=(; limits=(nothing, (0, 3))))
 end
