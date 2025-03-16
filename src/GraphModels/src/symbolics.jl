@@ -2,8 +2,9 @@
 # Substitutions and concretizing symbolic objects
 ################################################################################
 get_variables(::Nothing) = Num[]
-get_variables(term) = unique(Num.(Symbolics.get_variables(term)))
-function get_variables(arr::AbstractArray)
+get_variables(term::Num) = unique(Num.(Symbolics.get_variables(term)))
+get_variables(term::Symbolics.SymbolicUtils.Symbolic) = unique(Num.(Symbolics.get_variables(term)))
+function get_variables(arr::Union{AbstractArray,Tuple})
     variables = Num[]
     for term in arr
         for var in get_variables(term)
@@ -42,6 +43,13 @@ export ssubstitute
 Substitute all variables in a symbolic object and make it concrete with real
 floating point numbers only only (using Float64).
 """
+function substitute_to_float(anything, terms::Dict{Num,Float64})
+    if eltype(anything) <: Number
+        map(t -> Float64(Symbolics.unwrap(substitute(t, terms))), anything)
+    else
+        map(t -> substitute_to_float(t, terms), anything)
+    end
+end
 function substitute_to_float_!(farr, arr, terms::Dict{Num,Float64})
     for i in eachindex(arr, farr)
         farr[i] = Float64(Symbolics.unwrap(substitute(arr[i], terms)))

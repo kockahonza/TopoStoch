@@ -2,13 +2,17 @@ using DrWatson
 @quickactivate "TopoStochSim"
 
 using JLD2
-using GLMakie
 using Printf
 
 using GraphModels # not needed, just here to help the LSP
 using ComplexAllostery
 using ComplexAllostery.Model3
 using LetterCodes
+
+if !(@isdefined nomakie) || !nomakie
+    println("A")
+    using GLMakie
+end
 
 ################################################################################
 # 25-02-04 - looking at the symbolic transmat for patterns

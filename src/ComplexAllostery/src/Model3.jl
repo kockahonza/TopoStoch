@@ -1,6 +1,8 @@
 module Model3
 using ..ComplexAllostery
 
+import GraphModels: get_variables, substitute_to_float
+
 ################################################################################
 # Setting up the variables
 ################################################################################
@@ -132,6 +134,28 @@ function vars_simplified(;
     )
 end
 export vars_simplified
+
+# Making it possible to sub it before making the CA GM
+function get_variables(vars::SystemVars)
+    get_variables((
+        vars.energies,
+        vars.rs,
+        vars.chem_energies,
+        vars.concentrations,
+        vars.thetas,
+        vars.kT
+    ))
+end
+function substitute_to_float(vars::SystemVars, terms::Dict{Num,Float64})
+    SystemVars{Float64}(
+        substitute_to_float(vars.energies, terms),
+        substitute_to_float(vars.rs, terms),
+        substitute_to_float(vars.chem_energies, terms),
+        substitute_to_float(vars.concentrations, terms),
+        substitute_to_float(vars.thetas, terms),
+        substitute_to_float(vars.kT, terms)
+    )
+end
 
 ################################################################################
 # Making the system given SystemVars

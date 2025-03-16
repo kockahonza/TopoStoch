@@ -1,0 +1,52 @@
+\documentclass{article}
+% \usepackage[paperheight=4in,paperwidth=90in,top=5mm,bottom=5mm,left=5mm,right=5mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+
+% Mathy stuff
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage[version=4]{mhchem}
+
+% Visual stuff
+\usepackage{graphics}
+\usepackage{tikz}
+\usetikzlibrary{math}
+\usepackage{stackengine}
+\usepackage{float}
+\usepackage{tcolorbox}
+
+% Misc
+\usepackage{cleveref}
+\usepackage{lipsum}
+
+\allowdisplaybreaks
+
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0em}
+
+\newcommand\set[1]{\ensuremath{\{#1\}}}
+\newcommand\textbff[1]{\textbf{\boldmath #1}}
+\newcommand{\shortnote}[1]{\textit{\footnotesize (#1)}}
+
+\stackMath
+\newcommand{\suf}[2]{\stackunder[0.5pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\duf}[2]{\stackunder[0.5pt]{\stackunder[0.8pt]{\stackunder[1pt]{\ensuremath{#1}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{\rule{\widthof{\ensuremath{#2}}*\real{0.9}}{.1ex}}}{}}
+\newcommand{\su}[1]{\suf{#1}{#1}}
+\newcommand{\du}[1]{\duf{#1}{#1}}
+\newcommand{\ssu}[1]{\scriptsize\su{#1}\normalsize}
+\newcommand{\sdu}[1]{\scriptsize\du{#1}\normalsize}
+
+\newcommand{\pp}{\ensuremath{\partial}}
+
+
+\begin{document}
+\pagenumbering{gobble}
+\begin{equation*}
+    \ce{\text{system} + R_1 + {\cdots} <=>[$r_f$][$r_b$] \text{changed system} + P_1 + {\cdots}}
+\end{equation*}
+\begin{equation*}
+    \frac{r_f}{r_b} = \exp(\beta(\Delta\epsilon + \mu_{R_1} + \cdots - \mu_{P_1} - \cdots))
+\end{equation*}
+\end{document}

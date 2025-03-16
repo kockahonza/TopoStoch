@@ -2,13 +2,17 @@ using DrWatson
 @quickactivate "TopoStochSim"
 
 using JLD2
-using GLMakie
 using Printf
 using MappedArrays
 
 using GraphModels # not needed, just here to help the LSP
 using ComplexAllostery
 using ComplexAllostery.Model3
+
+if !(@isdefined nomakie) || !nomakie
+    println("A")
+    using GLMakie
+end
 
 function scansummary(f::JLD2.JLDFile)
     range_names = f["range_names"]
@@ -215,7 +219,7 @@ function scanmultiscatters(f, xi, observables;
 end
 
 function scansinglescatter(f, xi, observables;
-    xscale=identity, yscale=identity, axis=(;), kwargs...
+    xscale=identity, yscale=identity, axis=(;), dolines=false, kwargs...
 )
     # prep and handle inputs
     range_names = f["range_names"]
@@ -252,6 +256,7 @@ function scansinglescatter(f, xi, observables;
     ax = Axis(fig[2, 1]; xscale, yscale, axis...)
     ax.xlabel = range_names[xi]
     scs = []
+    plotfunc = dolines ? scatterlines! : scatter!
     for (obs_name, obs_label, func) in observables
         data_obs = if isnothing(func)
             make_data_obs(f[obs_name])
@@ -259,7 +264,7 @@ function scansinglescatter(f, xi, observables;
             make_data_obs(mappedarray(func, f[obs_name]))
         end
 
-        sc = scatter!(ax, xs, data_obs; label=obs_name, kwargs...)
+        sc = plotfunc(ax, xs, data_obs; label=obs_name, kwargs...)
         push!(scs, sc)
     end
     axislegend(ax)
