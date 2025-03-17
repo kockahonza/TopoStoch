@@ -26,3 +26,23 @@ function classify_sccs_by_cond(g,
 end
 classify_sccs_by_cond(gm::AbstractGraphModel, args...) = classify_sccs_by_cond(graph(gm), args...)
 export classify_sccs_by_cond
+
+function classify_acs_by_shape(g, acs=attracting_components(g))
+    classes = []
+
+    for ac in acs
+        sg = induced_subgraph(g, ac)[1]
+        iseq = true
+        for e in edges(sg)
+            if !has_edge(sg, e.dst, e.src)
+                iseq = false
+                break
+            end
+        end
+        push!(classes, (iseq,))
+    end
+
+    classes
+end
+classify_acs_by_shape(gm::AbstractGraphModel, args...) = classify_acs_by_shape(graph(gm), args...)
+export classify_acs_by_shape

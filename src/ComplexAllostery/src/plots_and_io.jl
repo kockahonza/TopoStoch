@@ -228,7 +228,8 @@ function plotca_macro(
 
     fap = graphplot(macrograph;
         layout,
-        auto_kwargs...
+        auto_kwargs...,
+        kwargs...
     )
 
     if e_colorbar
@@ -247,6 +248,9 @@ function plotca_macro(
             label="probability"
         )
     end
+
+    fap.axis.xlabel = "number of phosphorylated monomers"
+    fap.axis.ylabel = "number of monomers in square conformation"
 
     if interactive == :auto
         interactive = isa(fap.axis, Axis)

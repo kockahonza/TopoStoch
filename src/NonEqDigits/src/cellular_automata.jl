@@ -66,6 +66,13 @@ function caKssym_F(K01, K10)
 end
 export caKssym_01, caKssym_LR, caKssym_F
 
+# the extra, time symmetries coming into ca_ned_ultrasym_graph
+caKssym_T(K01, K10) = K10, K01
+caKssym_T01(args...) = caKssym_T(caKssym_01(args...)...)
+caKssym_TLR(args...) = caKssym_T(caKssym_LR(args...)...)
+caKssym_TF(args...) = caKssym_T(caKssym_F(args...)...)
+export caKssym_T, caKssym_T01, caKssym_TLR, caKssym_TF
+
 function ca_has01sym(args...)
     args == caKssym_01(args...)
 end
@@ -80,6 +87,31 @@ end
 ca_hasFsym(code) = ca_hasFsym(cacode_to_Ks(code)...)
 ca_hasallsyms(args...) = ca_hasLRsym(args...) && ca_has01sym(args...)
 export ca_has01sym, ca_hasLRsym, ca_hasFsym, ca_hasallsyms
+
+function ca_symclass(args...)
+    has01sym = ca_has01sym(args...)
+    hasLRsym = ca_hasLRsym(args...)
+    if has01sym && hasLRsym
+        :all
+    elseif hasLRsym
+        :h
+    elseif has01sym
+        :g
+    elseif ca_hasFsym(args...)
+        :f
+    else
+        :none
+    end
+end
+export ca_symclass
+
+ca_iseq(K01, K10) = K01 == K10
+ca_iseq(code) = ca_iseq(cacode_to_Ks(code)...)
+export ca_iseq
+
+ca_numenzymes(Ks::Vararg{Any,2}) = sum(count.(x -> x != 0, Ks))
+ca_numenzymes(code) = ca_numenzymes(cacode_to_Ks(code)...)
+export ca_numenzymes
 
 function ca_ned_sym_graph(; noselfsyms=true)
     g = SimpleGraph(2^8)
@@ -129,10 +161,53 @@ function ca_ucodes_bydeg(by=ca_calc_numarrows)
 end
 export ca_ucodes_sorted, ca_ucodes_bydeg
 
+function ca_ned_ultrasym_graph(; noselfsyms=true)
+    g = SimpleGraph(2^8)
+    for code in 0:2^8-1
+        baseKs = cacode_to_Ks(code)
+        Ksafter01 = caKssym_01(baseKs...)
+        KsafterLR = caKssym_LR(baseKs...)
+        KsafterF = caKssym_F(baseKs...)
+        KsafterT01 = caKssym_T01(baseKs...)
+        KsafterTLR = caKssym_TLR(baseKs...)
+        KsafterTF = caKssym_TF(baseKs...)
+        if noselfsyms
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterF...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterT01...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterTLR...) + 1)
+            add_edge_ifnotself!(g, code + 1, Ks_to_cacode(KsafterTF...) + 1)
+        else
+            add_edge!(g, code + 1, Ks_to_cacode(Ksafter01...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterLR...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterF...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterT01...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterTLR...) + 1)
+            add_edge!(g, code + 1, Ks_to_cacode(KsafterTF...) + 1)
+        end
+    end
+    g
+end
+ca_ned_ultrasym_graphplot(g=ca_ned_ultrasym_graph(); kwargs...) = graphplot(g; nlabels=string.(0:255), kwargs...)
+export ca_ned_ultrasym_graph, ca_ned_ultrasym_graphplot
+
+function ca_ultraucodes_sorted(by=identity)
+    sort(minimum.(connected_components(ca_ned_sym_graph())) .- 1; by)
+end
+export ca_ultraucodes_sorted
+
 module CANEDSymGroup
 using ..NonEqDigits
 
 function sm01()
+    mat = fill(0, 8, 8)
+    for i in 1:8
+        mat[i, 9-i] = 1
+    end
+    mat
+end
+function smLR()
     mat = fill(0, 8, 8)
     mat[1, 1] = 1
     mat[2, 3] = 1
@@ -144,14 +219,25 @@ function sm01()
     mat[8, 8] = 1
     mat
 end
-function smLR()
+export sm01, smLR
+
+smG = sm01
+smH = smLR
+function smF()
+    sm01() * smLR()
+end
+export smG, smH, smF
+
+function smT()
+    # hcat(vcat(fill(0,4,4),I(4)), vcat(I(4), fill(0,4,4)))
     mat = fill(0, 8, 8)
-    for i in 1:8
-        mat[i, 9-i] = 1
+    for i in 1:4
+        mat[i+4, i] = 1
+        mat[i, i+4] = 1
     end
     mat
 end
-export sm01, smLR
+export smT
 
 # Can confirm by making a multiplication table that this is in fact what
 # I thought it was, aka a finite abelian group with 3 non-identity elements

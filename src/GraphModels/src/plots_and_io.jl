@@ -176,6 +176,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     felabels=:auto,
     makwargs=x -> (), # mutating function to apply to auto_kwargs just before plotting
     # the graph to actually plot, will be set to graph(gm) by default
+    subset=nothing,
     plotgraph=nothing,
     # the following can only be used for non-symbolics GMs
     ss=:auto,            # calculate steady state?
@@ -184,7 +185,7 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     n_size=15.0,
     n_color=:snow3,
     n_ss_size=:sqrt,
-    n_ss_color=true,
+    n_ss_color=:ss,
     n_ss_colormap=:Oranges,
     n_ss_colorscale=identity,
     n_ss_colorrange=:auto,
@@ -238,13 +239,42 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             else
                 throw(ArgumentError(f"n_ss_size of {n_ss_size} is not recognised"))
             end
+            if !isnothing(subset)
+                auto_kwargs[:node_size] = auto_kwargs[:node_size][subset]
+            end
         end
         # do node color mapping which can also only be based on ss
-        if n_ss_color
-            auto_kwargs[:node_color] = ss
+        if n_ss_color == false
+            n_ss_color = nothing
+        end
+        if !isnothing(n_ss_color)
+            # set the colors and maybe fail
+            ncolors =
+                if n_ss_color == :ss
+                    ss
+                elseif n_ss_color == :relss
+                    ss .* numstates(gm)
+                else
+                    throw(ArgumentError(f"n_ss_color of {n_ss_color} is not recognised"))
+                end
+            if !isnothing(subset)
+                ncolors = ncolors[subset]
+            end
+
+            auto_kwargs[:node_color] = ncolors
+
+            # fill in smart defaults base off of the colors
+            if n_ss_colorbar_label == :auto
+                if n_ss_color == :ss
+                    n_ss_colorbar_label = "Occupation probability"
+                elseif n_ss_color == :relss
+                    n_ss_colorbar_label = "Relative occupation probability"
+                end
+            end
+
             if n_ss_colorrange == :auto
-                max_weight = maximum(ss)
-                min_weight = minimum(ss)
+                max_weight = maximum(ncolors)
+                min_weight = minimum(ncolors)
                 if (max_weight - min_weight) < colorrange_threshold
                     mm = (max_weight + min_weight) / 2.0
                     min_weight = mm - colorrange_threshold / 2.0
@@ -262,9 +292,15 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
     # Make sure code sizes and colors are set to some array for later modifications
     if !haskey(auto_kwargs, :node_size)
         auto_kwargs[:node_size] = [n_size for _ in 1:numstates(gm)]
+        if !isnothing(subset)
+            auto_kwargs[:node_size] = auto_kwargs[:node_size][subset]
+        end
     end
     if !haskey(auto_kwargs, :node_color)
         auto_kwargs[:node_color] = [n_color for _ in 1:numstates(gm)]
+        if !isnothing(subset)
+            auto_kwargs[:node_color] = auto_kwargs[:node_color][subset]
+        end
     end
 
     # Color edges, from here we may need plotgraph
@@ -341,6 +377,9 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             end
             colors = weight.(edges(plotgraph))
         end
+        if !isnothing(subset)
+            colors = colors[subset]
+        end
         auto_kwargs[:edge_color] = colors
 
         if e_colorrange == :auto
@@ -380,6 +419,10 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         elseif !(isnothing(fnlabels) || (fnlabels == false))
             throw(ArgumentError(f"fnlabels of {fnlabels} is not recognised"))
         end
+        if haskey(auto_kwargs, :nlabels) && !isnothing(subset)
+            auto_kwargs[:nlabels] = auto_kwargs[:nlabels][subset]
+        end
+
         if felabels == :auto
             if !(F <: AbstractFloat)
                 felabels = :repr
@@ -398,9 +441,17 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         elseif !(isnothing(felabels) || (felabels == false))
             throw(ArgumentError(f"felabels of {felabels} is not recognised"))
         end
+        if haskey(auto_kwargs, :elabels) && !isnothing(subset)
+            auto_kwargs[:elabels] = auto_kwargs[:elabels][subset]
+        end
     end
 
     makwargs(auto_kwargs)
+
+    if !isnothing(subset)
+        plotgraph = induced_subgraph(plotgraph, subset)[1]
+        layout = layout[subset]
+    end
 
     plot = graphplot!(ax, plotgraph;
         layout,
@@ -415,28 +466,28 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
         p_make_interactive(ax, plot)
     end
 
+    cbari = 2
     if !isnothing(axparent)
         if !isnothing(e_color) && ((e_colorbar == :auto) || e_colorbar)
             if e_colorbar_label == :auto
                 e_colorbar_label = string(e_color)
             end
-            Colorbar(axparent[1, 2];
+            Colorbar(axparent[1, cbari];
                 colormap=e_colormap,
                 colorrange=e_colorrange,
                 scale=e_colorscale,
                 label=e_colorbar_label
             )
+            cbari += 1
         end
-        if !isnothing(ss) && n_ss_color && ((n_ss_colorbar == :auto) || n_ss_colorbar)
-            if n_ss_colorbar_label == :auto
-                n_ss_colorbar_label = "Occupation probability"
-            end
-            Colorbar(axparent[1, 3];
+        if !isnothing(ss) && !isnothing(n_ss_color) && ((n_ss_colorbar == :auto) || n_ss_colorbar)
+            Colorbar(axparent[1, cbari];
                 colormap=n_ss_colormap,
                 colorrange=n_ss_colorrange,
                 scale=n_ss_colorscale,
                 label=n_ss_colorbar_label
             )
+            cbari += 1
         end
     end
 
@@ -484,7 +535,7 @@ function plotgm(gm::AbstractGraphModel, args...; kwargs...)
 end
 function plotgm_pd_(gm::AbstractGraphModel;
     layout=nothing, roffset_devs=nothing,
-    lgraph=nothing, plotgraph=nothing, kwargs...
+    lgraph=nothing, plotgraph=nothing, figure=(;), axis=(;), kwargs...
 )
     if lgraph == false
         lgraph = graph(gm)
@@ -497,9 +548,9 @@ function plotgm_pd_(gm::AbstractGraphModel;
         end
     end
 
-    fig = Figure()
+    fig = Figure(; figure...)
     do_layout_rslt = p_do_layout(gm, layout, roffset_devs, lgraph)
-    ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels)
+    ax = p_make_ax(do_layout_rslt.dim, fig[1, 1], do_layout_rslt.axis_labels; axis...)
 
     plot = plotgm_!(ax, gm, do_layout_rslt;
         axparent=fig,
