@@ -193,7 +193,7 @@ ca_ned_ultrasym_graphplot(g=ca_ned_ultrasym_graph(); kwargs...) = graphplot(g; n
 export ca_ned_ultrasym_graph, ca_ned_ultrasym_graphplot
 
 function ca_ultraucodes_sorted(by=identity)
-    sort(minimum.(connected_components(ca_ned_sym_graph())) .- 1; by)
+    sort(minimum.(connected_components(ca_ned_ultrasym_graph())) .- 1; by)
 end
 export ca_ultraucodes_sorted
 
