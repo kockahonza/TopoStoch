@@ -1,0 +1,97 @@
+3min total, 1+3 slides
+
+want to focus on motivation
+
+motivation: non-eq allosteric systems ha
+
+
+Hi, so for the past couple of months I have been working on something that can be put under the general 
+
+Hi, for the last year or so I have been working on models of out-of-equilibrium allostery, in particular the project started in hopes of finding a biologically realistic model that realises a type of topologically protected states in the stochastic dynamics.
+
+
+
+Hi, for the last year or so I have been working on models of out-of-equilibrium allostery, starting off looking mostly for a type of topological state.
+
+
+
+So in the broadest strokes I will be talking about models of non-equilibrium allostery.
+ why do we care? well because we know of non-equilibrium allosteric systems
+
+
+Random notes:
+-------------
+    Macromolecule may be a good word Wodak uses it!
+    
+
+
+Actual script
+-------------
+Hello everybody, so for the past year or so I've been working on models of out-of-equilibrium allostery, in particular we started off very much looking for a type of topologically protected state, though I won't talk about that here.
+
+First of all, what is allostery. Well, in the broadest strokes it is some sort of interaction between some distant sites (usually binding sites) on a macromolecule/molecular complex.
+It is best known through allosteric regulation/cell signaling where 
+In particular it is most known for
+
+
+Actual script 2
+-------------
+Hello, I'm Jan and for the past year or so I've been working on models of out of equilibrium allostery.
+
+Many functions in biology are carried out by macromolecular complexes in which parts/subunits of that complex talk to and coordinate with each other.
+Some examples are cooperative binding in Hemoglobin or allosteric regulation in the Ribosome.
+And allostery is the overarching theory of this communication between distant sites (on a complex), it is most associated with the MWC and KNF models both of which have been succesfully applied in many different settings.
+
+However all major allostery theories are purely equilibrium theories, despite the fact that there are many (functional) complexes that couple to dissipative reactions such as ATP hydrolysis.
+For example the cyanobacterial circadian clock protein KaiC shows stable free-running oscillations, something that could not take place in equilibrium.
+
+Hence the question we ask in our research is: What distinct classes of new behaviour does an out-of-equilibrium drive allow in allostery and how does biology take advantage of them?
+
+And how do we answer it? We develop statistical physics models with a couple of core ingedients and use graph theoretic methods to classify their behaviour/dynamics.
+Those core ingredients being that our systems are composed of identical subunits that interact with their neighbors and that all transitions are thermodynamically consistent (they obey local detailed balance).
+
+In one model, strongly inspired by the mentioned KaiC clock, each subunit can be in one of 2 conformations and phosphorylate/bind one ligand.
+In this model, we look for dynamical states similar to topologically protected edge currents in condensed matter systems, which could offer an explanation of the observed KaiC robustness to the noise present in biological systems.
+And what you see in the diagram is a steady state of such a system, each node corresponding to a group of states with the same macroscopic/observable properties (namely ...) and there does seem to be something resembling an edge current.
+
+
+With this model we explore behaviour similar to topologically protected edge currents in condensed matter systems.
+
+In this diagram
+
+And in this diagram where each node is a group of macroscopically distinguishable states of the complex with colors denoting the probability of occupying that group of states in the steady state and the arrows are the steady state probability current which forms clear loops around the bulk.
+
+In this diagram each node is a group of macroscopically distinguishable states of the complex with colors denoting the probability of occupying that group of states in the steady state and the arrows are the steady state probability current which forms clear loops around the bulk.
+
+
+
+And if you'd like to know more please do come talk to me at todays poster session, the poster is number 2.
+
+
+Broad strokes plan+notes divided by broad-strokes sections/slides:
+-------------
+First sentence I'm somewhat struggling with. Do I start with a "Hello"?, do I essentially repeat the title, or do I say I'm a first year phd student/that this is a work in progress project/provide some context? But this probably isn't all that important.
+
+So what is allostery? - Allostery is long range communication/signalling/interactions.
+You may have heard about it in heamoglobin/coop binding etc. (mention 2-3 things).
+
+However you only really hear about it in equilibrium context.
+Is there non-eq allostery? Yes, show evidence including Kai in particular and some others (this slide shall have citations).
+
+Somehow "zoom out" of the biological/structural picture and get accross we're looking at it from a more abstract/coarse-grained/general angle.
+We look for general patterns in non-eq allosteric systems.
+
+Then essentially do the our approach section from poster:
+Statphysy models, identical subnuits with local/NN interactions (this makes it allostery), thermodynamically consistent/LDB!
+
+
+Finally I ought to show some plots, I think I'll be running low on time so I think I will only discuss one model but not sure which
+    If I go for digits model.
+        Pros: the diagrams are nice and get it accross very clearly there's a range of distinct behaviours, the CA connection is nice too.
+        Cons: I think it will be very difficult to not make it look like a very arbitrary model but maybe this isn't a big deal?
+    The older allosteric model:
+        Pros: I get to mention futile cycles, talking about ATP/ADP and P might be nice and clear to people. I get to mention topological states which would be nice given its in the original abstract too.
+        Cons: I think the plots themselves may be a little underwhelming? It's nice but not as eye-catching maybe?
+
+Conclusion: not too sure what to say given there's not really major results, but I guess something along:
+We propose minimal non-eq allosteric models in which we can identify new and clearly distinct types of behaviour which could help explain ?? not too sure at this point what to say

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="94.637283mm"
+   height="15.228452mm"
+   viewBox="0 0 94.637297 15.228452"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   sodipodi:docname="allostery_diagram.svg"
+   inkscape:export-filename="allostery_diagram.pdf"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.1754205"
+     inkscape:cx="172.61031"
+     inkscape:cy="23.673584"
+     inkscape:window-width="1596"
+     inkscape:window-height="949"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g95" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="marker72"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path72" />
+    </marker>
+    <rect
+       x="862.22986"
+       y="830.4292"
+       width="320.47226"
+       height="83.989426"
+       id="rect48" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-102.72987,-115.10854)">
+    <g
+       id="g95"
+       inkscape:label="Allostery diagram"
+       transform="matrix(0.09525,0,0,0.09525,68.253712,42.708698)"
+       style="display:inline">
+      <path
+         id="rect21-4"
+         style="display:inline;fill:#b3b3b3;fill-opacity:1;stroke:none;stroke-width:0.94488;stroke-dasharray:none;stroke-opacity:1"
+         d="m 507.27717,825.49428 v 33.0703 c 7.82775,-3.9e-4 14.17365,6.34505 14.17383,14.17281 4.3e-4,7.82817 -6.34565,14.17429 -14.17383,14.1739 v 33.07029 h 94.48831 v -33.07029 c -7.82782,-1.3e-4 -14.17333,-6.34609 -14.1729,-14.1739 1.8e-4,-7.8274 6.34551,-14.17269 14.1729,-14.17281 v -33.0703 z"
+         sodipodi:nodetypes="ccccccccccc" />
+      <path
+         id="rect21"
+         style="display:inline;fill:#b3b3b3;fill-opacity:1;stroke:none;stroke-width:0.94488;stroke-dasharray:none;stroke-opacity:1"
+         d="m 819.46004,825.49427 v 33.0703 a 14.173126,14.173125 0 0 1 14.17383,14.1728 14.173126,14.173125 0 0 1 -14.17383,14.1739 v 33.0703 h 94.48831 v -33.0703 a 14.173126,14.173125 0 0 1 -14.1729,-14.1739 14.173126,14.173125 0 0 1 14.1729,-14.1728 v -33.0703 z" />
+      <path
+         id="path21"
+         style="display:inline;fill:#b3b3b3;fill-opacity:1;stroke:none;stroke-width:0.94488;stroke-dasharray:none;stroke-opacity:1"
+         d="m 1310.4074,825.49378 c -20.6801,0.0215 -38.9427,13.49032 -45.0722,33.24121 6.9053,1.07098 11.9995,7.01505 12.0009,14.00289 0,6.98623 -5.1,12.92684 -12.0039,13.9961 6.1273,19.75467 24.3921,33.22702 45.0752,33.2481 20.6951,-0.003 38.9795,-13.47434 45.1143,-33.23929 -6.9228,-1.05241 -12.0394,-7.00261 -12.043,-14.00491 0,-7.00229 5.1202,-12.95249 12.043,-14.0049 -6.1348,-19.76491 -24.4192,-33.23645 -45.1143,-33.2392 z"
+         sodipodi:nodetypes="ccccccccc" />
+      <circle
+         style="display:inline;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:1.88976;stroke-dasharray:none;stroke-opacity:1"
+         id="path14-1"
+         cx="377.0726"
+         cy="782.02924"
+         r="14.173281" />
+      <circle
+         style="display:inline;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:1.88976;stroke-dasharray:none;stroke-opacity:1"
+         id="path14-1-6"
+         cx="819.46008"
+         cy="872.73792"
+         r="14.173281" />
+      <circle
+         style="display:inline;fill:#ffcc00;fill-opacity:1;stroke:#000000;stroke-width:1.88976;stroke-dasharray:none;stroke-opacity:1"
+         id="path14-1-4"
+         cx="1265.3322"
+         cy="872.73792"
+         r="14.173281" />
+      <path
+         style="display:inline;fill:#1a1a1a;fill-opacity:1;stroke:#000000;stroke-width:3.02362;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker72)"
+         d="m 626.52135,872.73795 142.32758,-3e-5"
+         id="path23"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="display:inline;fill:#1a1a1a;fill-opacity:1;stroke:#000000;stroke-width:3.02362;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker72)"
+         d="m 938.82997,872.73792 280.93233,10e-6"
+         id="path23-2"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:#1a1a1a;stroke-width:3.02362;stroke-dasharray:6.04724, 3.02362;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker72)"
+         d="m 390.15244,807.82159 c 2.0383,34.69192 36.55813,64.91634 90.42917,64.91634"
+         id="path25"
+         sodipodi:nodetypes="cc" />
+      <text
+         xml:space="preserve"
+         style="font-size:37.037px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;display:inline;fill:#1a1a1a;fill-opacity:1;stroke:none;stroke-width:3.02362;stroke-dasharray:6.04724, 3.02362;stroke-dashoffset:0;stroke-opacity:1"
+         x="407.89685"
+         y="787.58478"
+         id="text29"><tspan
+           sodipodi:role="line"
+           id="tspan29"
+           x="407.89685"
+           y="787.58478"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.037px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1a1a1a">incoming ligand</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:37.037px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;display:inline;fill:#1a1a1a;fill-opacity:1;stroke:none;stroke-width:3.02362;stroke-dasharray:6.04724, 3.02362;stroke-dashoffset:0;stroke-opacity:1"
+         x="650.12787"
+         y="857.69141"
+         id="text29-1"><tspan
+           sodipodi:role="line"
+           id="tspan29-7"
+           x="650.12787"
+           y="857.69141"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.037px;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1a1a1a">binds</tspan></text>
+      <text
+         xml:space="preserve"
+         id="text48"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.037px;line-height:1;font-family:Montserrat;-inkscape-font-specification:'Montserrat, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect48);display:inline;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:3.02362;stroke-dasharray:6.04724, 3.02362;stroke-dashoffset:0;stroke-opacity:1"
+         transform="translate(62.198863,-40.630536)"><tspan
+           x="868.55856"
+           y="859.84053"
+           id="tspan3"><tspan
+             style="fill:#1a1a1a"
+             id="tspan1">causes a change
+</tspan></tspan><tspan
+           x="884.15119"
+           y="896.87752"
+           id="tspan5"><tspan
+             style="fill:#1a1a1a"
+             id="tspan4">in the complex</tspan></tspan></text>
+    </g>
+  </g>
+</svg>
