@@ -44,16 +44,7 @@ end
 export make_ca_ned
 
 ################################################################################
-# Simple calculations, stats, properties etc.
-################################################################################
-function ca_calc_numarrows(K01, K10)
-    count(!iszero, K01) + count(!iszero, K10)
-end
-ca_calc_numarrows(code) = ca_calc_numarrows(cacode_to_Ks(code)...)
-export ca_calc_numarrows
-
-################################################################################
-# Dealing with symmetries and enumerating all codes
+# Basic symmetry operations and tests
 ################################################################################
 function caKssym_01(K01, K10)
     [K10[2, 2] K10[2, 1]; K10[1, 2] K10[1, 1]], [K01[2, 2] K01[2, 1]; K01[1, 2] K01[1, 1]]
@@ -65,13 +56,6 @@ function caKssym_F(K01, K10)
     caKssym_LR(caKssym_01(K01, K10)...)
 end
 export caKssym_01, caKssym_LR, caKssym_F
-
-# the extra, time symmetries coming into ca_ned_ultrasym_graph
-caKssym_T(K01, K10) = K10, K01
-caKssym_T01(args...) = caKssym_T(caKssym_01(args...)...)
-caKssym_TLR(args...) = caKssym_T(caKssym_LR(args...)...)
-caKssym_TF(args...) = caKssym_T(caKssym_F(args...)...)
-export caKssym_T, caKssym_T01, caKssym_TLR, caKssym_TF
 
 function ca_has01sym(args...)
     args == caKssym_01(args...)
@@ -87,6 +71,29 @@ end
 ca_hasFsym(code) = ca_hasFsym(cacode_to_Ks(code)...)
 ca_hasallsyms(args...) = ca_hasLRsym(args...) && ca_has01sym(args...)
 export ca_has01sym, ca_hasLRsym, ca_hasFsym, ca_hasallsyms
+
+function are_sym_related(Ks1, Ks2)
+    if Ks1 == Ks2
+        :equal
+    else
+        Ks1_01sym = caKssym_01(Ks1...)
+        if Ks1_01sym == Ks2
+            :sym01
+        elseif caKssym_LR(Ks1...) == Ks2
+            :symLR
+        elseif caKssym_LR(Ks1_01sym...) == Ks2
+            :symF
+        else
+            nothing
+        end
+    end
+end
+function are_sym_related(code1::Integer, code2::Integer)
+    Ks1 = cacode_to_Ks(code1)
+    Ks2 = cacode_to_Ks(code2)
+    are_sym_related(Ks1, Ks2)
+end
+export are_sym_related
 
 function ca_symclass(args...)
     has01sym = ca_has01sym(args...)
@@ -113,6 +120,100 @@ ca_numenzymes(Ks::Vararg{Any,2}) = sum(count.(x -> x != 0, Ks))
 ca_numenzymes(code) = ca_numenzymes(cacode_to_Ks(code)...)
 export ca_numenzymes
 
+# Keeping for compatibility
+ca_calc_numarrows = ca_numenzymes
+export ca_calc_numarrows
+
+function symeq_code_label(code; short=false)
+    Ks = cacode_to_Ks(code)
+    iseq = ca_iseq(Ks...)
+    symlabel = if ca_has01sym(Ks...)
+        if ca_hasLRsym(Ks...)
+            "gh"
+        else
+            "h"
+        end
+        "g"
+    else
+        nothing
+    end
+
+    label_part = if !iseq && isnothing(symlabel) # non-eq no syms
+        @sprintf "%d" code
+    elseif iseq && isnothing(symlabel) # eq no syms
+        @sprintf "%d (eq)" code
+    elseif !iseq && !isnothing(symlabel) # non-eq has sym
+        @sprintf "%d (%s)" code symlabel
+    elseif iseq && !isnothing(symlabel) # eq has sym
+        @sprintf "%d (eq,%s)" code symlabel
+    end
+
+    if short
+        label_part
+    else
+        "Rule " * label_part
+    end
+end
+export symeq_code_label
+
+################################################################################
+# More complex symmetry bits
+################################################################################
+function find_eq_parent(K01, K10)
+    eqK = map(x -> iszero(x[1]) && iszero(x[2]) ? 0 : 1, zip(K01, K10))
+    Ks_to_cacode(eqK, eqK)
+end
+find_eq_parent(code) = find_eq_parent(cacode_to_Ks(code)...)
+export find_eq_parent
+
+function find_eq_parent_ucode(args...; ucodes=ca_ucodes_bydeg())
+    peqcode = find_eq_parent(args...)
+    for ucode in ucodes
+        if ca_iseq(ucode) && !isnothing(are_sym_related(peqcode, ucode))
+            return ucode
+        end
+    end
+end
+export find_eq_parent_ucode
+
+function full_code_label(code; short=false, ucodes=ca_ucodes_bydeg())
+    Ks = cacode_to_Ks(code)
+    symlabel = if ca_has01sym(Ks...)
+        if ca_hasLRsym(Ks...)
+            "gh"
+        else
+            "h"
+        end
+        "g"
+    else
+        nothing
+    end
+
+    eqlabel = if ca_iseq(Ks...)
+        "eq"
+    else
+        string(find_eq_parent_ucode(Ks...; ucodes))
+    end
+
+    label_part = if isnothing(symlabel) # no syms
+        @sprintf "%d (%s)" code eqlabel
+    else # has sym
+        @sprintf "%d (%s,%s)" code eqlabel symlabel
+    end
+
+    if short
+        label_part
+    else
+        "Rule " * label_part
+    end
+end
+export full_code_label
+
+include("CANEDSymGroup.jl")
+
+################################################################################
+# Listing "unique" codes
+################################################################################
 function ca_ned_sym_graph(; noselfsyms=true)
     g = SimpleGraph(2^8)
     for code in 0:2^8-1
@@ -161,6 +262,13 @@ function ca_ucodes_bydeg(by=ca_calc_numarrows)
 end
 export ca_ucodes_sorted, ca_ucodes_bydeg
 
+# the extra, time symmetries coming into ca_ned_ultrasym_graph (time symmetry means eq!)
+caKssym_T(K01, K10) = K10, K01
+caKssym_T01(args...) = caKssym_T(caKssym_01(args...)...)
+caKssym_TLR(args...) = caKssym_T(caKssym_LR(args...)...)
+caKssym_TF(args...) = caKssym_T(caKssym_F(args...)...)
+export caKssym_T, caKssym_T01, caKssym_TLR, caKssym_TF
+
 function ca_ned_ultrasym_graph(; noselfsyms=true)
     g = SimpleGraph(2^8)
     for code in 0:2^8-1
@@ -196,54 +304,6 @@ function ca_ultraucodes_sorted(by=identity)
     sort(minimum.(connected_components(ca_ned_ultrasym_graph())) .- 1; by)
 end
 export ca_ultraucodes_sorted
-
-module CANEDSymGroup
-using ..NonEqDigits
-
-function sm01()
-    mat = fill(0, 8, 8)
-    for i in 1:8
-        mat[i, 9-i] = 1
-    end
-    mat
-end
-function smLR()
-    mat = fill(0, 8, 8)
-    mat[1, 1] = 1
-    mat[2, 3] = 1
-    mat[3, 2] = 1
-    mat[4, 4] = 1
-    mat[5, 5] = 1
-    mat[6, 7] = 1
-    mat[7, 6] = 1
-    mat[8, 8] = 1
-    mat
-end
-export sm01, smLR
-
-smG = sm01
-smH = smLR
-function smF()
-    sm01() * smLR()
-end
-export smG, smH, smF
-
-function smT()
-    # hcat(vcat(fill(0,4,4),I(4)), vcat(I(4), fill(0,4,4)))
-    mat = fill(0, 8, 8)
-    for i in 1:4
-        mat[i+4, i] = 1
-        mat[i, i+4] = 1
-    end
-    mat
-end
-export smT
-
-# Can confirm by making a multiplication table that this is in fact what
-# I thought it was, aka a finite abelian group with 3 non-identity elements
-# each with rank 2. (didn't check associativity tbf)
-
-end
 
 ################################################################################
 # Reading and dealing with the standard CA classifications
