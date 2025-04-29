@@ -127,15 +127,12 @@ export ca_calc_numarrows
 function symeq_code_label(code; short=false)
     Ks = cacode_to_Ks(code)
     iseq = ca_iseq(Ks...)
-    symlabel = if ca_has01sym(Ks...)
-        if ca_hasLRsym(Ks...)
-            "gh"
-        else
-            "h"
-        end
-        "g"
-    else
+
+    symclass = ca_symclass(Ks...)
+    symlabel = if symclass == :none
         nothing
+    else
+        string(symclass)
     end
 
     label_part = if !iseq && isnothing(symlabel) # non-eq no syms
@@ -178,15 +175,12 @@ export find_eq_parent_ucode
 
 function full_code_label(code; short=false, ucodes=ca_ucodes_bydeg())
     Ks = cacode_to_Ks(code)
-    symlabel = if ca_has01sym(Ks...)
-        if ca_hasLRsym(Ks...)
-            "gh"
-        else
-            "h"
-        end
-        "g"
-    else
+
+    symclass = ca_symclass(Ks...)
+    symlabel = if symclass == :none
         nothing
+    else
+        string(symclass)
     end
 
     eqlabel = if ca_iseq(Ks...)
