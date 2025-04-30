@@ -173,27 +173,32 @@ function find_eq_parent_ucode(args...; ucodes=ca_ucodes_bydeg())
 end
 export find_eq_parent_ucode
 
-function full_code_label(code; short=false, ucodes=ca_ucodes_bydeg())
+function full_code_label(code; short=false, ucodes=ca_ucodes_bydeg(), numenzymes=false)
     Ks = cacode_to_Ks(code)
 
-    symclass = ca_symclass(Ks...)
-    symlabel = if symclass == :none
-        nothing
-    else
-        string(symclass)
-    end
+    quantities = String[]
 
     eqlabel = if ca_iseq(Ks...)
         "eq"
     else
         string(find_eq_parent_ucode(Ks...; ucodes))
     end
+    push!(quantities, eqlabel)
 
-    label_part = if isnothing(symlabel) # no syms
-        @sprintf "%d (%s)" code eqlabel
-    else # has sym
-        @sprintf "%d (%s,%s)" code eqlabel symlabel
+    symclass = ca_symclass(Ks...)
+    symlabel = if symclass == :none
+        ""
+    else
+        string(symclass)
     end
+    push!(quantities, symlabel)
+
+    if numenzymes
+        push!(quantities, string(ca_numenzymes(code)))
+    end
+
+    bracketed_bit = join(filter(!isempty, quantities), ",")
+    label_part = @sprintf "%d (%s)" code bracketed_bit
 
     if short
         label_part
