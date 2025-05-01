@@ -791,6 +791,18 @@ function mattranscis(nrows, ncols)
 end
 export mattranscis
 
+function get_ac_coloring_kwargs(gm; hcolor=:black, bcolor=:snow2)
+    g = graph(gm)
+    hns = vcat(attracting_components(g)...)
+    isac = [i in hns for i in 1:nv(g)]
+
+    node_color = [x ? hcolor : bcolor for x in isac]
+    edge_color = [isac[e.dst] ? hcolor : bcolor for e in edges(g)]
+
+    (; e_color=false, node_color, edge_color)
+end
+export get_ac_coloring_kwargs
+
 ################################################################################
 # Saving
 ################################################################################
