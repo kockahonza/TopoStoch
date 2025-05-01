@@ -797,7 +797,7 @@ function get_ac_coloring_kwargs(gm; hcolor=:firebrick, bcolor=:snow2)
     isac = [i in hns for i in 1:nv(g)]
 
     node_color = [x ? hcolor : bcolor for x in isac]
-    edge_color = [isac[e.dst] ? hcolor : bcolor for e in edges(g)]
+    edge_color = [(isac[e.src] && isac[e.dst]) ? hcolor : bcolor for e in edges(g)]
 
     (; e_color=false, node_color, edge_color)
 end
