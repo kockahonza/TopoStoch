@@ -156,8 +156,14 @@ export symeq_code_label
 ################################################################################
 # More complex symmetry bits
 ################################################################################
-function find_eq_parent(K01, K10)
-    eqK = map(x -> iszero(x[1]) && iszero(x[2]) ? 0 : 1, zip(K01, K10))
+function find_eq_parent_K(K01, K10)
+    map(x -> iszero(x[1]) && iszero(x[2]) ? 0 : 1, zip(K01, K10))
+end
+find_eq_parent_K(code) = find_eq_parent_K(cacode_to_Ks(code)...)
+export find_eq_parent_K
+
+function find_eq_parent(args...)
+    eqK = find_eq_parent_K(args...)
     Ks_to_cacode(eqK, eqK)
 end
 find_eq_parent(code) = find_eq_parent(cacode_to_Ks(code)...)
