@@ -49,12 +49,15 @@ export make_ca_ned
 function caKssym_01(K01, K10)
     [K10[2, 2] K10[2, 1]; K10[1, 2] K10[1, 1]], [K01[2, 2] K01[2, 1]; K01[1, 2] K01[1, 1]]
 end
+caKssym_01(code) = caKssym_01(cacode_to_Ks(code)...)
 function caKssym_LR(K01, K10)
     transpose(K01), transpose(K10)
 end
+caKssym_LR(code) = caKssym_LR(cacode_to_Ks(code)...)
 function caKssym_F(K01, K10)
     caKssym_LR(caKssym_01(K01, K10)...)
 end
+caKssym_F(code) = caKssym_F(cacode_to_Ks(code)...)
 export caKssym_01, caKssym_LR, caKssym_F
 
 function ca_has01sym(args...)
@@ -266,6 +269,161 @@ function ca_ucodes_bydeg(by=ca_calc_numarrows)
     uniques
 end
 export ca_ucodes_sorted, ca_ucodes_bydeg
+
+function ca_ucodes_f1()
+    [
+        # EQ [0 0; 0 0]
+        204,
+        # EQ [0 0; 0 1]
+        108,
+        76, # [0 0; 0 0] [0 0; 0 1]
+        236, # [0 0; 0 1] [0 0; 0 0]
+        # EQ [0 0; 1 0]
+        156,
+        140, # [0 0; 0 0] [0 0; 1 0]
+        # EQ [1 0; 0 1]
+        105,
+        # 3 enzymes
+        104, # [0 0; 0 1] [1 0; 0 1]
+        73, # [1 0; 0 0] [1 0; 0 1]
+        # 2 enzymes
+        72, # [0 0; 0 0] [1 0; 0 1]
+        232, # [0 0; 0 1] [1 0; 0 0]
+        77, # [1 0; 0 0] [0 0; 0 1]
+        # EQ [0 1; 1 0]
+        150,
+        # 3 enzymes
+        134, # [0 1; 0 0] [0 1; 1 0]
+        # 2 enzymes
+        132, # [0 0; 0 0] [0 1; 1 0]
+        142, # [0 1; 0 0] [0 0; 1 0]
+        # EQ [0 0; 1 1]
+        60,
+        # 3 enzymes
+        44, # [0 0; 0 1] [0 0; 1 1]
+        28, # [0 0; 1 0] [0 0; 1 1]
+        124, # [0 0; 1 1] [0 0; 0 1]
+        188, # [0 0; 1 1] [0 0; 1 0]
+        # 2 enzymes
+        12, # [0 0; 0 0] [0 0; 1 1]
+        252, # [0 0; 1 1] [0 0; 0 0]
+        172, # [0 0; 0 1] [0 0; 1 0]
+        92, # [0 0; 1 0] [0 0; 0 1]
+        # EQ [1 0; 1 1]
+        57,
+        # 5 enzymes
+        56, # [0 0; 1 1] [1 0; 1 1]
+        41, # [1 0; 0 1] [1 0; 1 1]
+        25, # [1 0; 1 0] [1 0; 1 1]
+        # 4 enzymes
+        40, # [0 0; 0 1] [1 0; 1 1]
+        24, # [0 0; 1 0] [1 0; 1 1]
+        9, # [1 0; 0 0] [1 0; 1 1]
+        120, # [0 0; 1 1] [1 0; 0 1]
+        184, # [0 0; 1 1] [1 0; 1 0]
+        45, # [1 0; 0 1] [0 0; 1 1]
+        29, # [1 0; 1 0] [0 0; 1 1]
+        # 3 enzymes
+        8, # [0 0; 0 0] [1 0; 1 1]
+        13, # [1 0; 0 0] [0 0; 1 1]
+        88, # [0 0; 1 0] [1 0; 0 1]
+        168, # [0 0; 0 1] [1 0; 1 0]
+        # EQ [0 1; 1 1]
+        54,
+        # 5 enzymes
+        38, # [0 1; 0 1] [0 1; 1 1]
+        22, # [0 1; 1 0] [0 1; 1 1]
+        62, # [0 1; 1 1] [0 0; 1 1]
+        182, # [0 1; 1 1] [0 1; 1 0]
+        # 4 enzymes
+        36, # [0 0; 0 1] [0 1; 1 1]
+        126, # [0 1; 1 1] [0 0; 0 1]
+        6, # [0 1; 0 0] [0 1; 1 1]
+        190, # [0 1; 1 1] [0 0; 1 0]
+        46, # [0 1; 0 1] [0 0; 1 1]
+        166, # [0 1; 0 1] [0 1; 1 0]
+        30, # [0 1; 1 0] [0 0; 1 1]
+        # 3 enzymes
+        4, # [0 0; 0 0] [0 1; 1 1]
+        254, # [0 1; 1 1] [0 0; 0 0]
+        14, # [0 1; 0 0] [0 0; 1 1]
+        164, # [0 0; 0 1] [0 1; 1 0]
+        174, # [0 1; 0 1] [0 0; 1 0]
+        94, # [0 1; 1 0] [0 0; 0 1]
+        # EQ [1 1; 1 1]
+        51,
+        # 7 enzymes
+        50, # [0 1; 1 1] [1 1; 1 1]
+        35, # [1 1; 0 1] [1 1; 1 1]
+        19, # [1 1; 1 0] [1 1; 1 1]
+        # 6 enzymes
+        34, # [0 1; 0 1] [1 1; 1 1]
+        18, # [0 1; 1 0] [1 1; 1 1]
+        33, # [1 0; 0 1] [1 1; 1 1]
+        3, # [1 1; 0 0] [1 1; 1 1]
+        58, # [0 1; 1 1] [1 0; 1 1]
+        178, # [0 1; 1 1] [1 1; 1 0]
+        43, # [1 1; 0 1] [1 0; 1 1]
+        23, # [1 1; 1 0] [0 1; 1 1]
+        27, # [1 1; 1 0] [1 0; 1 1]
+        # 5 enzymes
+        1, # [1 0; 0 0] [1 1; 1 1]
+        2, # [0 1; 0 0] [1 1; 1 1]
+        32, # [0 0; 0 1] [1 1; 1 1]
+        37, # [1 0; 0 1] [0 1; 1 1]
+        7, # [1 1; 0 0] [0 1; 1 1]
+        42, # [0 1; 0 1] [1 0; 1 1]
+        26, # [0 1; 1 0] [1 0; 1 1]
+        11, # [1 1; 0 0] [1 0; 1 1]
+        162, # [0 1; 0 1] [1 1; 1 0]
+        122, # [0 1; 1 1] [1 0; 0 1]
+        # 4 enzymes
+        0, # [0 0; 0 0] [1 1; 1 1]
+        5, # [1 0; 0 0] [0 1; 1 1]
+        10, # [0 1; 0 0] [1 0; 1 1]
+        160, # [0 0; 0 1] [1 1; 1 0]
+        170, # [0 1; 0 1] [1 0; 1 0]
+        90, # [0 1; 1 0] [1 0; 0 1]
+        15, # [1 1; 0 0] [0 0; 1 1]
+    ]
+end
+export ca_ucodes_f1
+
+function ca_test_ucodes_f1()
+    f1 = ca_ucodes_f1()
+    g = ca_ned_sym_graph(noselfsyms=true)
+
+    ispresent = falses(256)
+    for c in f1
+        if c < 0 || c > 255
+            @error "has invalid codes"
+            return false
+        end
+        if ispresent[c+1]
+            @error (@sprintf "code %d appears multiple times in f1" c)
+            return false
+        else
+            ispresent[c+1] = true
+        end
+    end
+
+    for cc in connected_components(g)
+        num_codes_from_cc_in_f1 = 0
+        for vi in cc
+            c = vi - 1
+            if c in f1
+                num_codes_from_cc_in_f1 += 1
+            end
+        end
+        if num_codes_from_cc_in_f1 != 1
+            @error (@sprintf "cc %s has multiple codes in f1" string(cc .- 1))
+            return false
+        end
+    end
+
+    return true
+end
+export ca_test_ucodes_f1
 
 # the extra, time symmetries coming into ca_ned_ultrasym_graph (time symmetry means eq!)
 caKssym_T(K01, K10) = K10, K01
