@@ -2,7 +2,7 @@
 
 julia_version = "1.10.9"
 manifest_format = "2.0"
-project_hash = "63acce93420ba945c5a3cea14cd382a06d5543c2"
+project_hash = "c9213a34d2099837a3842792c08f6482b61d65cc"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e2478490447631aedba0823d4d7a80b2cc8cdb32"
@@ -1833,6 +1833,12 @@ git-tree-sha1 = "c009236e222df68e554c7ce5c720e4a33cc0c23f"
 uuid = "7269a6da-0436-5bbc-96c2-40638cbb6118"
 version = "0.5.3"
 
+[[deps.MetaGraphsNext]]
+deps = ["Graphs", "JLD2", "SimpleTraits"]
+git-tree-sha1 = "1e3b196ecbbf221d4d3696ea9de4288bea4c39f9"
+uuid = "fa8bd995-216d-47f1-8a91-f3b68fbeb377"
+version = "0.7.3"
+
 [[deps.MicroCollections]]
 deps = ["Accessors", "BangBang", "InitialValues"]
 git-tree-sha1 = "44d32db644e84c75dab479f1bc15ee76a1a3618f"
@@ -1937,7 +1943,7 @@ uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
 
 [[deps.NonEqDigits]]
-deps = ["CSV", "DataFrames", "GraphModels", "Printf", "Reexport"]
+deps = ["CSV", "DataFrames", "GraphModels", "GraphvizDotLang", "Printf", "Reexport"]
 path = "src/NonEqDigits"
 uuid = "b54bc958-a1aa-42b9-8f67-21320138491b"
 version = "0.1.0"

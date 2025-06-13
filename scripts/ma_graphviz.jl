@@ -1,7 +1,11 @@
+using DrWatson;
+@quickactivate "TopoStochSim";
+
+using GraphModels
 using NonEqDigits
 using GraphvizDotLang: digraph, subgraph, node, edge
 
-function kaka(ned::NonEqDigitsGM{Loop,2,L};
+function plot_0s_v_1s_gv(ned::NonEqDigitsGM{Loop,2,L};
     force_order=true,
     double_arrows=true,
     kwargs...

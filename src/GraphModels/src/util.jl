@@ -33,3 +33,29 @@ function copyand(f!, args...; kwargs...)
     end
 end
 export copyand
+
+function make_grid(n;
+    aspect_ratio=1.0, prioritize=:none,
+    min_rows=1, max_rows=typemax(Int),
+    min_cols=1, max_cols=typemax(Int)
+)
+    # Calculate initial number of columns based on aspect ratio
+    cols = ceil(Int, sqrt(n * aspect_ratio))
+    rows = ceil(Int, n / cols)
+
+    # Adjust based on prioritization
+    if prioritize == :rows
+        rows = min(max(min_rows, rows), max_rows)
+        cols = ceil(Int, n / rows)
+    elseif prioritize == :cols
+        cols = min(max(min_cols, cols), max_cols)
+        rows = ceil(Int, n / cols)
+    end
+
+    # Ensure the grid fits within the specified limits
+    rows = min(max(min_rows, rows), max_rows)
+    cols = min(max(min_cols, cols), max_cols)
+
+    return rows, cols
+end
+export make_grid
