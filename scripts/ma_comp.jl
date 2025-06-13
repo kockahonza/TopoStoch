@@ -357,15 +357,30 @@ function gv_compgraph(cg;
             g |> node(cg[v])
         end
     elseif cluster_by == :numones
-        clusters = Dict{Int,Any}()
+        clusters = Dict{Int,Tuple{Any,Vector{Int}}}()
         for v in labels(cg)
             numones = count('1', cg[v])
             if !haskey(clusters, numones)
-                clusters[numones] = subgraph(g,
-                    (@sprintf "cluster %d" numones),
-                )
+                clusters[numones] = (subgraph(g,
+                        (@sprintf "cluster %d" numones),
+                    ), [v])
             end
-            clusters[numones] |> node(cg[v])
+            xx = clusters[numones]
+            xx[1] |> node(cg[v])
+            push!(xx[2], v)
+        end
+        numspresent = sort(collect(keys(clusters)))
+        for i in 1:(length(numspresent)-1)
+            src_cluster_vs = clusters[numspresent[i]][2]
+            dst_cluster_vs = clusters[numspresent[i+1]][2]
+            for src_v in src_cluster_vs
+                for dst_v in dst_cluster_vs
+                    g |> edge(cg[src_v], cg[dst_v];
+                        style="invis",
+                        weight="100"
+                    )
+                end
+            end
         end
     elseif cluster_by == :sccs
         sccs = strongly_connected_components(cg)
@@ -379,7 +394,7 @@ function gv_compgraph(cg;
         throw(ArgumentError("Unknown cluster_by value: $cluster_by"))
     end
 
-    for (src, dst) in edge_labels(cg)
+    for (src, dst) in collect(edge_labels(cg))
         g |> edge(cg[src], cg[dst];
             label=(@sprintf "%d" cg[src, dst][1]),
             # weight="10",
@@ -388,6 +403,84 @@ function gv_compgraph(cg;
 
     g
 end
+
+function gv_compgraph_sccs(cg;
+    show_cond=true,
+    skip_singles=false,
+    kwargs...
+)
+    g = digraph(;
+        rankdir="LR",
+        ranksep="1",
+        compound="true",
+        kwargs...
+    )
+
+    code_sccs = strongly_connected_components(cg)
+    cond = condensation(cg, code_sccs)
+    sccs = [map(c -> label_for(cg, c), code_scc) for code_scc in code_sccs]
+
+    used_sscs = 1:length(sccs)
+    if skip_singles
+        used_sscs = findall(x -> length(x) > 1, sccs)
+    end
+
+    cluster_names = [(@sprintf "cluster %d" i) for i in 1:length(used_sscs)]
+    clusters = [subgraph(g, cname) for cname in cluster_names]
+    for (i, scc) in enumerate(sccs[used_sscs])
+        for v in scc
+            clusters[i] |> node(cg[v])
+        end
+    end
+    fake_cluster_nodes = [(@sprintf "fcnode %d" ci) for ci in 1:length(clusters)]
+    for (fcn, c) in zip(fake_cluster_nodes, clusters)
+        c |> node(fcn;
+            shape="point",
+            style="invis"
+        )
+    end
+
+    for scc in sccs[used_sscs]
+        for v1 in scc
+            for v2 in scc
+                if v1 == v2
+                    continue
+                end
+                if haskey(cg, v1, v2)
+                    g |> edge(cg[v1], cg[v2];
+                        label=(@sprintf "%d" cg[v1, v2][1]),
+                        # weight="10",
+                    )
+                end
+            end
+        end
+    end
+
+    if show_cond
+        for (c1i, scc1i) in enumerate(used_sscs)
+            for (c2i, scc2i) in enumerate(used_sscs)
+                if scc1i == scc2i
+                    continue
+                end
+                if has_edge(cond, scc1i, scc2i)
+                    c1name = cluster_names[c1i]
+                    c2name = cluster_names[c2i]
+                    g |> edge(
+                        fake_cluster_nodes[c1i],
+                        fake_cluster_nodes[c2i];
+                        ltail=c1name,
+                        lhead=c2name,
+                        # style="invis",
+                        # weight="100"
+                    )
+                end
+            end
+        end
+    end
+
+    g
+end
+
 
 ################################################################################
 # Version 1, don't use
