@@ -34,6 +34,15 @@ end
 normalized_adjacency_matrix(gm::AbstractGraphModel) = normalized_adjacency_matrix(graph(gm))
 
 ################################################################################
+# Version 2.5 - accounting for shifts/rotations
+################################################################################
+function make_ned_meta_graph(L, code)
+    ned = make_ca_ned(L, code; show=false)
+    g = graph(ned)
+    states = allstates(ned)
+end
+
+################################################################################
 # Version 2
 ################################################################################
 function make_full_singlestate_compgraph(L, codes;
