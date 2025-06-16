@@ -791,14 +791,19 @@ function mattranscis(nrows, ncols)
 end
 export mattranscis
 
-function get_ac_coloring_kwargs(g; hcolor=:firebrick, bcolor=:snow2)
+function get_ac_coloring_kwargs_simple(g; hcolor=:firebrick, bcolor=:snow2)
     hns = vcat(attracting_components(g)...)
     isac = [i in hns for i in 1:nv(g)]
 
     node_color = [x ? hcolor : bcolor for x in isac]
     edge_color = [isac[e.src] ? hcolor : bcolor for e in edges(g)]
 
-    (; e_color=false, node_color, edge_color)
+    (; node_color, edge_color)
+end
+export get_ac_coloring_kwargs_simple
+
+function get_ac_coloring_kwargs(g; hcolor=:firebrick, bcolor=:snow2)
+    (; e_color=false, get_ac_coloring_kwargs_simple(g; hcolor, bcolor)...)
 end
 get_ac_coloring_kwargs(gm::AbstractGraphModel; kwargs...) = get_ac_coloring_kwargs(graph(gm); kwargs...)
 export get_ac_coloring_kwargs

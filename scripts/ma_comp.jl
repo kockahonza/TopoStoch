@@ -36,10 +36,325 @@ normalized_adjacency_matrix(gm::AbstractGraphModel) = normalized_adjacency_matri
 ################################################################################
 # Version 2.5 - accounting for shifts/rotations
 ################################################################################
-function make_ned_meta_graph(L, code)
+function make_ned_meta_graph(L, code;
+    merge_shifted=false
+)
     ned = make_ca_ned(L, code; show=false)
     g = graph(ned)
-    states = allstates(ned)
+    states = collect(allstates(ned))
+
+    nmg = MetaGraph(
+        DiGraph();
+        label_type=Vector{Int},
+        vertex_data_type=String,
+        edge_data_type=Float64,
+        weight_function=identity,
+        default_weight=0.0,
+        graph_data=(;
+            code, L,
+            desc="all state ned graph for code $code and L=$L"
+        )
+    )
+
+    for s in states
+        nmg[s] = join(s)
+    end
+
+    for e in edges(g)
+        nmg[states[e.src], states[e.dst]] = get_weight(g, e.src, e.dst)
+    end
+
+    if merge_shifted
+        group_shifted_states_mg(nmg)
+    else
+        nmg
+    end
+end
+
+function group_shifted_states_mg(nmg)
+    nmg_metadata = nmg[]
+
+    grouped_nmg = MetaGraph(
+        DiGraph();
+        label_type=Vector{Int},
+        vertex_data_type=String,
+        edge_data_type=Float64,
+        weight_function=identity,
+        default_weight=0.0,
+        graph_data=(;
+            nmg[]..., desc="merged ned graph for code $(nmg_metadata.code) and L=$(nmg_metadata.L)"
+        )
+    )
+
+    states = labels(nmg)
+    ustates, state_to_ustate_is = arg_group_ned_states(states)
+
+    for us in ustates
+        grouped_nmg[us] = join(us)
+    end
+
+    for e in edges(nmg)
+        sc = e.src
+        dc = e.dst
+        s = label_for(nmg, sc)
+        d = label_for(nmg, dc)
+        us = ustates[state_to_ustate_is[sc]]
+        ud = ustates[state_to_ustate_is[dc]]
+        if !haskey(grouped_nmg, us, ud)
+            grouped_nmg[us, ud] = nmg[s, d]
+        else
+            grouped_nmg[us, ud] += nmg[s, d]
+        end
+    end
+
+    grouped_nmg
+end
+
+function states_related_by_shift(st1, st2)
+    if length(st1) != length(st2)
+        return false
+    elseif sum(st1) != sum(st2)
+        return false
+    else
+        for o in 0:length(st1)-1
+            are_equal = true
+            for i in 1:length(st1)
+                if st1[i] != st2[mod1(i + o, length(st2))]
+                    are_equal = false
+                    break
+                end
+            end
+            if are_equal
+                return true
+            end
+        end
+        return false
+    end
+end
+
+function arg_group_ned_states(states)
+    unique_rules = []
+    group_is = fill(-1, length(states))
+    for (st_i, st) in enumerate(states)
+        found_previous = false
+        for (ur_i, ur) in enumerate(unique_rules)
+            if states_related_by_shift(st, ur)
+                found_previous = true
+                group_is[st_i] = ur_i
+                if st > ur
+                    unique_rules[ur_i] = st
+                end
+                break
+            end
+        end
+        if !found_previous
+            push!(unique_rules, st)
+            group_is[st_i] = length(unique_rules)
+        end
+    end
+    unique_rules, group_is
+end
+
+function group_ned_states(states)
+    results = Dict{eltype(states),Vector{eltype(states)}}()
+    for st in states
+        found_previous = false
+        for k in keys(results)
+            if states_related_by_shift(st, k)
+                found_previous = true
+                push!(results[k], st)
+                break
+            end
+        end
+        if !found_previous
+            results[st] = [st]
+        end
+    end
+    collect(values(results))
+end
+
+function plot_nmg!(ax, nmg;
+    nlabels=true,
+    ecolors=true,
+    edge_attr=(;),
+    kwargs...
+)
+    auto_kwargs = Dict{Symbol,Any}()
+    if nlabels
+        auto_kwargs[:nlabels] = [nmg[l] for l in labels(nmg)]
+    end
+    if ecolors && !haskey(kwargs, :edge_color)
+        edge_color = [nmg[s, d] for (s, d) in edge_labels(nmg)]
+        ecmin, ecmax = extrema(edge_color)
+        if !(ecmin == ecmax)
+            auto_kwargs[:edge_color] = edge_color
+        else
+            @warn "All edges have the same value, skipping colors"
+        end
+    end
+
+    auto_kwargs[:edge_attr] = edge_attr
+    auto_kwargs[:arrow_attr] = edge_attr
+
+    graphplot!(ax, nmg; auto_kwargs..., kwargs...)
+end
+
+function plot_nmg(nmg;
+    layout=Spring(dim=2),
+    add_colorbars=true,
+    kwargs...
+)
+    if !isa(layout, AbstractArray)
+        layout = layout(nmg)
+    end
+    dim = length(layout[1])
+
+    fig = Figure()
+    ax = if dim == 2
+        Axis(fig[1, 1])
+    else
+        LScene(fig[1, 1])
+    end
+    p = plot_nmg!(ax, nmg; layout, kwargs...)
+
+    if add_colorbars
+        @show add_colorbars
+        if p.edge_color[] != Makie.Automatic()
+            cb = Colorbar(fig[1, 2], p.arrow_plot[])
+        end
+    end
+
+    Makie.FigureAxisPlot(fig, ax, p)
+end
+
+function plot_nmg_acs(nmg; kwargs...)
+    plot_nmg(nmg; get_ac_coloring_kwargs_simple(nmg)..., add_colorbars=false, kwargs...)
+end
+
+function make_compgraph_from_metagraphs(L, codes;
+    transprob_threshold=1000 * eps(),
+    keep_max_only=true,
+)
+    many_nmgs = [make_ned_meta_graph(L, c; merge_shifted=true) for c in codes]
+    states = sort(collect(labels(many_nmgs[1])))
+    for nmg in many_nmgs[2:end]
+        lstates = sort(collect(labels(nmg)))
+        if lstates != states
+            throw(ArgumentError("All metagraphs must have the same states"))
+        end
+    end
+
+    ss_acs_dict = Dict{Int,Vector{Int}}()
+    for ci in 1:length(many_nmgs)
+        acs = attracting_components(many_nmgs[ci])
+        for ac in acs
+            # ignore non-single-state acs at this point
+            if length(ac) == 1
+                ac = ac[1]
+
+                c = codes[ci]
+                if haskey(ss_acs_dict, ac)
+                    push!(ss_acs_dict[ac], c)
+                else
+                    ss_acs_dict[ac] = [c]
+                end
+            end
+        end
+    end
+    ss_acs = sort(collect(keys(ss_acs_dict)))
+    numacs = length(ss_acs)
+
+    cgraph = MetaGraph(
+        DiGraph();
+        label_type=Int,
+        vertex_data_type=String,
+        edge_data_type=Vector{Tuple{Int,Float64}},
+        graph_data="ma comp graph"
+    )
+    # add all the acs along with their labels
+    for ac in ss_acs
+        cgraph[ac] = join(NonEqDigits.itostate_safe(ac, 2, L))
+    end
+
+    splitprobers = make_splitprober.(many_nmgs)
+    for src_ac in ss_acs
+        for (ci, c) in enumerate(codes)
+            if c in ss_acs_dict[src_ac]
+                continue # skip self-edges
+            end
+            for dst_ac in ss_acs
+                if dst_ac != src_ac # skip self-edges
+                    # now both are guaranteed to be acs of the given rule
+                    # and we just need to find the probability of the system
+                    # moving from src_ac to dst_ac under the given rule
+                    tp = splitprobers[ci](src_ac, dst_ac)
+                    if tp > transprob_threshold
+                        if haskey(cgraph, src_ac, dst_ac)
+                            push!(cgraph[src_ac, dst_ac], (c, tp))
+                        else
+                            cgraph[src_ac, dst_ac] = [(c, tp)]
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if !keep_max_only
+        cgraph
+    else
+        reduce_allcodes_compgraph(cgraph)
+    end
+end
+
+function merge_compgraph(cg)
+    L = cg[].L
+
+    itos(i) = NonEqDigits.itostate_safe(i, 2, L)
+
+    mcg = MetaGraph(
+        DiGraph();
+        label_type=Int,
+        vertex_data_type=String,
+        edge_data_type=Tuple{Int,Float64},
+        graph_data="ma comp graph"
+    )
+
+    unique_states = []
+    unique_state_ids = []
+    sti_to_usti = Dict{Int,Int}()
+    for sti in labels(cg)
+        st = itos(sti)
+        usti = findfirst(ust -> states_related_by_shift(ust, st), unique_states)
+        if isnothing(usti)
+            push!(unique_state_ids, sti)
+            push!(unique_states, st)
+            usti = length(unique_state_ids)
+        end
+        sti_to_usti[sti] = usti
+    end
+
+    for usti in unique_state_ids
+        mcg[usti] = cg[usti]
+    end
+
+    for (src_sti, dst_sti) in edge_labels(cg)
+        src_usti = unique_state_ids[sti_to_usti[src_sti]]
+        dst_usti = unique_state_ids[sti_to_usti[dst_sti]]
+
+        if !haskey(mcg, src_usti, dst_usti)
+            mcg[src_usti, dst_usti] = cg[src_sti, dst_sti]
+        else
+            (ne_val, ne_code) = cg[src_sti, dst_sti]
+            prev = mcg[src_usti, dst_usti]
+            if ne_val > prev[1]
+                mcg[src_usti, dst_usti] = (ne_val, ne_code)
+            end
+        end
+    end
+
+    # unique_state_ids, sti_to_usti
+    mcg
 end
 
 ################################################################################
@@ -79,7 +394,7 @@ function make_full_singlestate_compgraph(L, codes;
         label_type=Int,
         vertex_data_type=String,
         edge_data_type=Vector{Tuple{Int,Float64}},
-        graph_data="ma comp graph"
+        graph_data=(; L, codes, desc="ma comp graph")
     )
     # add all the acs along with their labels
     for ac in ss_acs
@@ -118,12 +433,13 @@ function make_full_singlestate_compgraph(L, codes;
 end
 
 function reduce_allcodes_compgraph(accg)
+    accg_md = accg[]
     scgraph = MetaGraph(
         DiGraph();
         label_type=Int,
         vertex_data_type=String,
         edge_data_type=Tuple{Int,Float64},
-        graph_data="ma comp graph"
+        graph_data=(; L=accg_md.L, codes=accg_md.codes, desc="reduced ma comp graph")
     )
     for l in labels(accg)
         scgraph[l] = accg[l]
@@ -137,7 +453,7 @@ function reduce_allcodes_compgraph(accg)
 end
 
 # Figuring out splitting probabilities
-function condense_acs(g)
+function condense_acs(g::SimpleWeightedDiGraph)
     all_acs = attracting_components(g)
     nonsingle_acs = filter(ac -> length(ac) != 1, all_acs)
 
@@ -489,7 +805,6 @@ function gv_compgraph_sccs(cg;
 
     g
 end
-
 
 ################################################################################
 # Version 1, don't use
