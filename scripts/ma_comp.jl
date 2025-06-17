@@ -420,9 +420,9 @@ function reduce_allcodes_compgraph_v2(
 end
 
 function gv_compgraph_sccs_v2(cg;
+    elabel=:first,
     show_cond=true,
     filter_sccs=nothing,
-    elabel=:first,
     kwargs...
 )
     g = digraph(;
@@ -506,6 +506,75 @@ function gv_compgraph_sccs_v2(cg;
 
     g
 end
+
+function gv_compgraph_v2(cg;
+    elabel=:first,
+    cluster_by=nothing,
+    kwargs...
+)
+    g = digraph(;
+        rankdir="LR",
+        ranksep="1",
+        kwargs...
+    )
+
+    if isnothing(cluster_by)
+        for v in labels(cg)
+            g |> node(cg[v])
+        end
+    elseif cluster_by == :numones
+        clusters = Dict{Int,Tuple{Any,Vector{Int}}}()
+        for v in labels(cg)
+            numones = count('1', cg[v])
+            if !haskey(clusters, numones)
+                clusters[numones] = (subgraph(g,
+                        (@sprintf "cluster %d" numones),
+                    ), [v])
+            end
+            xx = clusters[numones]
+            xx[1] |> node(cg[v])
+            push!(xx[2], v)
+        end
+        numspresent = sort(collect(keys(clusters)))
+        for i in 1:(length(numspresent)-1)
+            src_cluster_vs = clusters[numspresent[i]][2]
+            dst_cluster_vs = clusters[numspresent[i+1]][2]
+            for src_v in src_cluster_vs
+                for dst_v in dst_cluster_vs
+                    g |> edge(cg[src_v], cg[dst_v];
+                        style="invis",
+                        weight="100"
+                    )
+                end
+            end
+        end
+    elseif cluster_by == :sccs
+        sccs = strongly_connected_components(cg)
+        clusters = [subgraph(g, (@sprintf "cluster %d" i)) for i in 1:length(sccs)]
+        for (i, scc) in enumerate(sccs)
+            for v in scc
+                clusters[i] |> node(cg[v])
+            end
+        end
+    else
+        throw(ArgumentError("Unknown cluster_by value: $cluster_by"))
+    end
+
+    for (src, dst) in collect(edge_labels(cg))
+        eval = cg[src, dst]
+        if elabel == :first
+            label = string(eval[1][1])
+        elseif elabel == :all
+            label = join(string.(eval[1]), ",")
+        elseif elabel == :firstwithp
+            label = (@sprintf "%d, %.3g" eval[1][1] eval[2])
+        end
+        g |> edge(cg[src], cg[dst]; label)
+    end
+
+    g
+end
+
 
 # FIX: Don't use, misses soem edges!
 function merge_compgraph(cg)
