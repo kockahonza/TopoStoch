@@ -231,68 +231,66 @@ function plot_nmg_acs(nmg; kwargs...)
     plot_nmg(nmg; get_ac_coloring_kwargs_simple(nmg)..., add_colorbars=false, kwargs...)
 end
 
-function make_compgraph_from_metagraphs(L, codes;
+function make_full_reduced_singlestate_compgraph(L, codes;
     transprob_threshold=1000 * eps(),
-    keep_max_only=true,
+    keep_max_only=false,
 )
-    many_nmgs = [make_ned_meta_graph(L, c; merge_shifted=true) for c in codes]
-    states = sort(collect(labels(many_nmgs[1])))
-    for nmg in many_nmgs[2:end]
-        lstates = sort(collect(labels(nmg)))
-        if lstates != states
-            throw(ArgumentError("All metagraphs must have the same states"))
-        end
-    end
+    nmgs = [make_ned_meta_graph(L, code; merge_shifted=true) for code in codes]
 
-    ss_acs_dict = Dict{Int,Vector{Int}}()
-    for ci in 1:length(many_nmgs)
-        acs = attracting_components(many_nmgs[ci])
+    # keys are those states which are a single state ac for some rule, values
+    # are those rules which have it as a single-state ac
+    ssac_states_to_codes = Dict{Vector{Int},Vector{Int}}()
+
+    for ci in 1:length(codes)
+        nmg = nmgs[ci]
+        acs = attracting_components(nmg)
         for ac in acs
             # ignore non-single-state acs at this point
             if length(ac) == 1
-                ac = ac[1]
+                ssac_code = ac[1]
+                ssac = label_for(nmg, ssac_code)
 
                 c = codes[ci]
-                if haskey(ss_acs_dict, ac)
-                    push!(ss_acs_dict[ac], c)
+                if haskey(ssac_states_to_codes, ssac)
+                    push!(ssac_states_to_codes[ssac], c)
                 else
-                    ss_acs_dict[ac] = [c]
+                    ssac_states_to_codes[ssac] = [c]
                 end
             end
         end
     end
-    ss_acs = sort(collect(keys(ss_acs_dict)))
-    numacs = length(ss_acs)
+    ssac_states = sort(collect(keys(ssac_states_to_codes)))
+    numssacs = length(ssac_states)
 
     cgraph = MetaGraph(
         DiGraph();
-        label_type=Int,
+        label_type=Vector{Int},
         vertex_data_type=String,
         edge_data_type=Vector{Tuple{Int,Float64}},
-        graph_data="ma comp graph"
+        graph_data=(; L, codes, desc="reduced ma comp graph")
     )
     # add all the acs along with their labels
-    for ac in ss_acs
-        cgraph[ac] = join(NonEqDigits.itostate_safe(ac, 2, L))
+    for ssac in ssac_states
+        cgraph[ssac] = join(ssac)
     end
 
-    splitprobers = make_splitprober.(many_nmgs)
-    for src_ac in ss_acs
+    splitprobers = make_splitprober_mg.(nmgs)
+    for src_ssac in ssac_states
         for (ci, c) in enumerate(codes)
-            if c in ss_acs_dict[src_ac]
+            if c in ssac_states_to_codes[src_ssac]
                 continue # skip self-edges
             end
-            for dst_ac in ss_acs
-                if dst_ac != src_ac # skip self-edges
+            for dst_ssac in ssac_states
+                if dst_ssac != src_ssac # skip self-edges
                     # now both are guaranteed to be acs of the given rule
                     # and we just need to find the probability of the system
                     # moving from src_ac to dst_ac under the given rule
-                    tp = splitprobers[ci](src_ac, dst_ac)
+                    tp = splitprobers[ci](src_ssac, dst_ssac)
                     if tp > transprob_threshold
-                        if haskey(cgraph, src_ac, dst_ac)
-                            push!(cgraph[src_ac, dst_ac], (c, tp))
+                        if haskey(cgraph, src_ssac, dst_ssac)
+                            push!(cgraph[src_ssac, dst_ssac], (c, tp))
                         else
-                            cgraph[src_ac, dst_ac] = [(c, tp)]
+                            cgraph[src_ssac, dst_ssac] = [(c, tp)]
                         end
                     end
                 end
@@ -307,6 +305,209 @@ function make_compgraph_from_metagraphs(L, codes;
     end
 end
 
+function condense_acs_mg(mg::MetaGraph{L,V,E,G}) where {L,V,E,G}
+    all_acs = attracting_components(mg)
+    nonsingle_ac_codes = filter(ac -> length(ac) != 1, all_acs)
+
+    _taken_codes = reduce(vcat, nonsingle_ac_codes; init=Int[])
+
+    # these will be the vertices in the partially condensed graph
+    code_groups = []
+    for v in 1:nv(mg)
+        if !(v in _taken_codes)
+            push!(code_groups, [v])
+        end
+    end
+    code_groups = vcat(code_groups, nonsingle_ac_codes)
+    label_groups = [label_for.(Ref(mg), cg) for cg in code_groups]
+
+    # return label_groups
+
+    sc_graph = SimpleWeightedDiGraph{Int,Float64}(length(code_groups))
+    for (g1i, g1) in enumerate(label_groups)
+        # can ignore non-single groups as they are acs and so have no outgoing edges
+        if length(g1) == 1
+            label1 = g1[1]
+            for (g2i, g2) in enumerate(label_groups)
+                if g1i == g2i
+                    continue # tbf there should be none so this shoulnd't be needed
+                end
+                total_weight = 0.0
+                for label2 in g2
+                    if haskey(mg, label1, label2)
+                        total_weight += mg[label1, label2]
+                    end
+                end
+                if total_weight > 0.0
+                    prev_weight = get_weight(sc_graph, g1i, g2i)
+                    add_edge!(sc_graph, g1i, g2i, prev_weight + total_weight)
+                end
+            end
+        end
+    end
+
+    label_groups, sc_graph
+end
+
+function make_splitprober_mg(g; error_if_not_ssac=false)
+    label_groups, sc_graph = condense_acs_mg(g)
+    group_is_ac = falses(length(label_groups))
+    for gi in 1:nv(sc_graph)
+        if isempty(outneighbors(sc_graph, gi))
+            group_is_ac[gi] = true
+        end
+    end
+
+    T = normalized_adjacency_matrix(sc_graph)
+    lookup_matrix = inv(I(nv(sc_graph)) - T)
+
+    function (l1, l2) # going from v1 to v2
+        end_group_i = findfirst(x -> l2 in x, label_groups)
+        if !group_is_ac[end_group_i] || (length(label_groups[end_group_i]) > 1)
+            if error_if_not_ssac
+                throw(ArgumentError("The end group is not a single-state ac"))
+            else
+                # 0. chance of splitting off to a non-ac state
+                # and we disregard chances of reaching a particular state in a non-single-state ac as it's unclear
+                return 0.0
+            end
+        end
+
+        start_group_i = findfirst(x -> l1 in x, label_groups)
+        if group_is_ac[start_group_i]
+            return start_group_i == end_group_i ? 1.0 : 0.0
+        else
+            # so now we know the end state is a valid single-state ac
+            # and that the start state is not a part of an ac
+            return lookup_matrix[start_group_i, end_group_i]
+        end
+    end
+end
+
+function reduce_allcodes_compgraph_v2(
+    accg::MetaGraph{C,G,L,V,Vector{Tuple{Int,Float64}}},
+    threshold=1000 * eps()
+) where {C,G,L,V}
+    @show G
+    accg_md = accg[]
+    scgraph = MetaGraph(
+        G();
+        label_type=L,
+        vertex_data_type=V,
+        edge_data_type=Tuple{Vector{Int},Float64},
+        graph_data=(; L=accg_md.L, codes=accg_md.codes, desc="reduced ma comp graph")
+    )
+    for l in labels(accg)
+        scgraph[l] = accg[l]
+    end
+    for (s, d) in edge_labels(accg)
+        full = accg[s, d]
+        maxp = maximum(x -> x[2], full)
+        goodenough_codes = []
+        goodenough_vals = []
+        for (c, v) in full
+            if v >= maxp - threshold
+                push!(goodenough_codes, c)
+                push!(goodenough_vals, v)
+            end
+        end
+        codes = sort(goodenough_codes)
+        v = sum(goodenough_vals) / length(goodenough_vals)
+
+        scgraph[s, d] = (codes, v)
+    end
+    scgraph
+end
+
+function gv_compgraph_sccs_v2(cg;
+    show_cond=true,
+    filter_sccs=nothing,
+    elabel=:first,
+    kwargs...
+)
+    g = digraph(;
+        rankdir="LR",
+        ranksep="1",
+        compound="true",
+        kwargs...
+    )
+
+    code_sccs = strongly_connected_components(cg)
+    cond = condensation(cg, code_sccs)
+    sccs = [map(c -> label_for(cg, c), code_scc) for code_scc in code_sccs]
+
+    if isnothing(filter_sccs)
+        used_sscs = 1:length(sccs)
+    else
+        if isa(filter_sccs, Integer)
+            xx = filter_sccs
+            filter_sccs = x -> length(x) >= xx
+        end
+        used_sscs = findall(filter_sccs, sccs)
+    end
+
+    cluster_names = [(@sprintf "cluster %d" i) for i in 1:length(used_sscs)]
+    clusters = [subgraph(g, cname) for cname in cluster_names]
+    for (i, scc) in enumerate(sccs[used_sscs])
+        for v in scc
+            clusters[i] |> node(cg[v])
+        end
+    end
+    fake_cluster_nodes = [(@sprintf "fcnode %d" ci) for ci in 1:length(clusters)]
+    for (fcn, c) in zip(fake_cluster_nodes, clusters)
+        c |> node(fcn;
+            shape="point",
+            style="invis"
+        )
+    end
+
+    for scc in sccs[used_sscs]
+        for v1 in scc
+            for v2 in scc
+                if v1 == v2
+                    continue
+                end
+                if haskey(cg, v1, v2)
+                    eval = cg[v1, v2]
+                    if elabel == :first
+                        label = string(eval[1][1])
+                    elseif elabel == :all
+                        label = join(string.(eval[1]), ",")
+                    elseif elabel == :firstwithp
+                        label = (@sprintf "%d, %.3g" eval[1][1] eval[2])
+                    end
+                    g |> edge(cg[v1], cg[v2]; label)
+                end
+            end
+        end
+    end
+
+    if show_cond
+        for (c1i, scc1i) in enumerate(used_sscs)
+            for (c2i, scc2i) in enumerate(used_sscs)
+                if scc1i == scc2i
+                    continue
+                end
+                if has_edge(cond, scc1i, scc2i)
+                    c1name = cluster_names[c1i]
+                    c2name = cluster_names[c2i]
+                    g |> edge(
+                        fake_cluster_nodes[c1i],
+                        fake_cluster_nodes[c2i];
+                        ltail=c1name,
+                        lhead=c2name,
+                        # style="invis",
+                        # weight="100"
+                    )
+                end
+            end
+        end
+    end
+
+    g
+end
+
+# FIX: Don't use, misses soem edges!
 function merge_compgraph(cg)
     L = cg[].L
 
@@ -428,16 +629,16 @@ function make_full_singlestate_compgraph(L, codes;
     if !keep_max_only
         cgraph
     else
-        reduce_allcodes_compgraph(cgraph)
+        reduce_allcodes_compgraph_v2(cgraph)
     end
 end
 
-function reduce_allcodes_compgraph(accg)
+function reduce_allcodes_compgraph(accg::MetaGraph{C,G,L,V,Vector{Tuple{Int,Float64}}}) where {C,G,L,V}
     accg_md = accg[]
     scgraph = MetaGraph(
-        DiGraph();
-        label_type=Int,
-        vertex_data_type=String,
+        G();
+        label_type=L,
+        vertex_data_type=V,
         edge_data_type=Tuple{Int,Float64},
         graph_data=(; L=accg_md.L, codes=accg_md.codes, desc="reduced ma comp graph")
     )
