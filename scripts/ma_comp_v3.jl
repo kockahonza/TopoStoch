@@ -256,9 +256,11 @@ function plot_nmg(nmg;
     p = plot_nmg!(ax, nmg; layout, kwargs...)
 
     if add_colorbars
-        @show add_colorbars
-        if p.edge_color[] != Makie.Automatic()
+        if p.edge_color[] isa Vector
             cb = Colorbar(fig[1, 2], p.arrow_plot[])
+        else
+            @show typeof(p.edge_color[])
+            @debug "skipping colorbars as edge_color is a $(typeof(p.edge_color[]))"
         end
     end
 
@@ -321,7 +323,7 @@ function make_ssac_compgraphs(L, codes;
         transprob_threshold = x -> x > _xax
     end
 
-    splitprobers = make_splitprober_mg.(nmgs)
+    splitprobers = make_ssac_splitprober.(nmgs)
     for src_ssac in ssac_states
         for (ci, c) in enumerate(codes)
             if c in ssac_states_to_codes[src_ssac]
@@ -360,7 +362,7 @@ Returns an anonymous function that can be passed two states of the graph g
 the second of which has to be a single-state ac. Will return the probability
 that if started in the first state that the system will end up in the second state.
 """
-function make_splitprober_mg(g; error_if_not_ssac=false)
+function make_ssac_splitprober(g; error_if_not_ssac=false)
     label_groups, sc_graph = condense_acs_mg(g)
     group_is_ac = falses(length(label_groups))
     for gi in 1:nv(sc_graph)
@@ -866,4 +868,54 @@ function plot_compgraph(cg;
     graphplot(cg;
         auto_kwargs..., kwargs...
     )
+end
+
+################################################################################
+# Basins of attractions
+################################################################################
+function get_ac_split_probs(nmg)
+end
+
+function make_full_splitprober(g; threshold=1000 * eps())
+    label_groups, sc_graph = condense_acs_mg(g)
+    group_is_ac = falses(length(label_groups))
+    for gi in 1:nv(sc_graph)
+        if isempty(outneighbors(sc_graph, gi))
+            group_is_ac[gi] = true
+        end
+    end
+
+    T = normalized_adjacency_matrix(sc_graph)
+    lookup_matrix = inv(I(nv(sc_graph)) - T)
+
+    function (st) # going from v1 to v2
+        start_group_i = findfirst(x -> st in x, label_groups)
+        if isnothing(start_group_i)
+            throw(ArgumentError("The start state $st is not present"))
+        end
+        # @show start_group_i st label_groups
+        if group_is_ac[start_group_i]
+            Dict{eltype(label_groups),Float64}(label_groups[start_group_i] => 1.0)
+        else
+            rslt = Dict{eltype(label_groups),Float64}()
+            for eg_i in 1:length(label_groups)
+                if group_is_ac[eg_i]
+                    p = lookup_matrix[start_group_i, eg_i]
+                    if p > threshold
+                        rslt[label_groups[eg_i]] = p
+                    end
+                end
+            end
+            total = sum(values(rslt))
+            if abs(total - 1) > threshold
+                @warn "Getting a full split prob vector with probability not equal to 1! The total is $total"
+            end
+
+            for k in keys(rslt)
+                rslt[k] /= total
+            end
+
+            rslt
+        end
+    end
 end

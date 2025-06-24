@@ -32,30 +32,39 @@
 \pagenumbering{gobble}
 \begin{center}
 	\LARGE
-	\textbf{Molecular Automata} \\
+	\textbf{Molecular Automata \ldots} \\
+	% \textbf{Non-equilibrium protein complexes as molecular automata} \\
+	% \textbf{Molecular computation on allosteric complexes} \\
 	\vspace{0.3em}
 	\normalsize
-	\textit{Jan Kocka, Jaime Agudo-Canalejo, Kabir Husain} \\
 	\vspace{1em}
 \end{center}
 
 \begin{abstract}
-	% Background
-	% Cells must somehow store information/have memory and make decisions... \\
-	Cells store and process information, largely through regulatory networks etc. but overall this is not understood at the level of information processing.
+	% Intro
+	Understanding how cells make decisions in response to stimuli is a major challenge in biology today.
+	\ldots but it is still not understood at the level of information processing.
 	Considerable effort is also being put into devising synthetic biological systems which can process information, a field known as molecular computation.
-	Both fields are focused on DNA being the memory which stores information with molecular machines operating on it.
+	In both fields DNA plays a crucial role facilitating memory.
+	% Both fields are focused on DNA being the memory which stores information with molecular machines operating on it.
 	However, this is not necessarily the case, we look at the information storage capability of an out-of-equilibrium allosteric complex.
-	% What we/the model
+
+	% What we do/the model
 	Here we build a thermodynamically consistent kinetic model of a molecular complex made of identical subunits each in one of two states (e.g., structural conformations, phosphorylation).
 	We then analyse the dynamics of the complex as we allow each subunit's state to be changed by driven enzymes which act conditionally based on the states of the subunit's neighbours.
-    We identify a set of simplest such systems and identify a one-to-one mapping between those and elementary cellular automata rules.
-    % We identify and use a one-to-one mapping between each of a set of minimal such systems to an elementary cellular automata rule.
+	We find a set of simplest such systems and identify a one-to-one mapping between them and elementary cellular automata rules.
+	Among these rules we find a rich set of behaviours, including multistability and dynamical steady states of various geometries including oscillators.
+	Many restrict the available state-space of the complex into a set of stable states.
+	If we then consider changing the rule (corresponding to changing which enzymes are present) we can deterministically manipulate the complex between certain states to varying degrees based on the size and symmetry of the complex.
 
-    Want to get accross: we look at the simplest/minimal systems of which there are a discrete count of, we find a one-to-one mapping to ECA rule (which we use to identify symmetries)
+    We can also identify error-correcting rules which are the most stable subject to random changes and identify their limits.
 
-	We identify a rich set of behaviours including multi-stability and dynamical steady states in various geometries.
-    We further draw an analoogy of each of the 256 possible minimal rules to a corresponding cellular automata rule and highlight the difference.
+	% NOTE: Want to get accross: we look at the simplest/minimal systems of which there are a discrete count of, we find a one-to-one mapping to ECA rule (which we use to identify symmetries)
+	% NOTE: Maybe mention how they differ too? - stochastic and one change at a time
+
+
+	% We identify a rich set of behaviours including multistability and dynamical steady states in various geometries.
+	% We further draw an analoogy of each of the 256 possible minimal rules to a corresponding cellular automata rule and highlight the difference.
 	% We identify a one to one map between such systems and elementary cellular automata rules and point out the differences.
 
 	% We study the behaviour of a complex made of identical subunits, each in one of two states (e.g., structural conformations, phosphorylation).
@@ -91,10 +100,9 @@
 % 	\includegraphics[width=\textwidth]{diagram/diagram_circly2.pdf}
 % \end{figure}
 
-\newpage
-
-\newpage
-\section{New Notes}
+% \newpage
+\vspace{3em}
+\section{New Notes/Outline/Points to mention}
 \begin{itemize}
 	\item describe the model
 	      \begin{itemize}
@@ -115,7 +123,12 @@
 			            \item more complex components, including plane/2D like structures
 		            \end{itemize}
 		      \item we look at
-              \item can provide insights on the "error correction" ideas of Crick and others - can have a rule that error corrects but nothing else and can put limits on it from the nearest neighbour limit (no global counting)
+		      \item can provide insights on the "error correction" ideas of Crick and others - can have a rule that error corrects but nothing else and can put limits on it from the nearest neighbour limit (no global counting)
+	      \end{itemize}
+	\item context/significance
+	      \begin{itemize}
+		      \item Molecular computation? It is relevant, worth noting that MC is generally on DNA so this is perhaps a new perspective?
+		      \item Allostery? it is related but not sure what
 	      \end{itemize}
 \end{itemize}
 
