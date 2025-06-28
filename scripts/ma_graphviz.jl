@@ -27,7 +27,7 @@ function plot_0s_v_1s_gv(ned::NonEqDigitsGM{Loop,2,L};
         push!(cluster_is[cluster_index], i)
     end
     if force_order
-        for ci in 1:(L-1)
+        for ci in 1:(length(cluster_is)-1)
             for i1 in cluster_is[ci]
                 for i2 in cluster_is[ci+1]
                     g |> edge(string(i1), string(i2);

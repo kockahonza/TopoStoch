@@ -871,9 +871,55 @@ function plot_compgraph(cg;
 end
 
 ################################################################################
-# Basins of attractions
+# Basins of attractions general
 ################################################################################
-function get_ac_split_probs(nmg)
+function all_rules_with_all0sand1s(L, rules=0:255;
+    onlyacs=false,
+    merge_shifted=false,
+    return_all=false
+)
+    all0s = fill(0, L)
+    all1s = fill(1, L)
+    rslt = []
+
+    for r in rules
+        nmg = make_ned_meta_graph(L, r; merge_shifted)
+        if isempty(outneighbor_labels(nmg, all0s)) &&
+           isempty(outneighbor_labels(nmg, all1s))
+            if onlyacs
+                acs = attracting_components(nmg)
+                if length(acs) != 2
+                    continue
+                end
+            end
+            push!(rslt, r)
+        end
+    end
+
+    ucodes = ca_ucodes_f1()
+    sb = []
+    for r in rslt
+        eqp = find_eq_parent_ucode(r; ucodes)
+        rne = ca_numenzymes(r)
+        eqpne = ca_numenzymes(eqp)
+        push!(sb, (eqpne, eqp, rne))
+    end
+    ii = sortperm(sb)
+
+    if return_all
+        rslt[ii], sb[ii]
+    else
+        rslt[ii]
+    end
+end
+
+function get_all_ac_split_probs(nmg::MetaGraph{C,G,L}) where {C,G,L}
+    ff = make_full_splitprober(nmg)
+    d = Dict{L,Dict{Vector{L},Float64}}()
+    for l in labels(nmg)
+        d[l] = ff(l)
+    end
+    d
 end
 
 function make_full_splitprober(g; threshold=1000 * eps())
@@ -918,4 +964,222 @@ function make_full_splitprober(g; threshold=1000 * eps())
             rslt
         end
     end
+end
+
+################################################################################
+# All 0s vs all 1s, mostly plotting
+################################################################################
+function get_all0sv1s_colors(nmg::MetaGraph{C,G,LT};
+    colormap=ColorSchemes.RdBu_4,
+    colorrange=(0.0, 1.0),
+    # colorscale=identity,
+    checks=true,
+) where {C,G,LT}
+    if checks
+        acs = attracting_components(nmg)
+        if length(acs) != 2
+            throw(ArgumentError("The given nmg does not have exactly two acs, it has $(length(acs))"))
+        end
+        hasall0s = false
+        hasall1s = false
+        for ac in acs
+            if length(ac) != 1
+                throw(ArgumentError("The given nmg does not have single-state acs, it has $ac"))
+            end
+            st = label_for(nmg, ac[1])
+            if all(x -> x == 0, st)
+                hasall0s = true
+            end
+            if all(x -> x == 1, st)
+                hasall1s = true
+            end
+        end
+        if !hasall0s || !hasall1s
+            throw(ArgumentError("The given nmg does not have all 0s and all 1s states as acs"))
+        end
+    end
+
+    L = nmg[].L
+    all0sstate = fill(0, L)
+    all1sstate = fill(1, L)
+
+    color_vals = Dict{LT,Float64}()
+    ff = make_full_splitprober(nmg)
+
+    for l in labels(nmg)
+        sps = ff(l)
+        color_vals[l] = get(sps, [all0sstate], 0.0)
+
+        if checks
+            if length(keys(sps)) == 1
+                ac = collect(keys(sps))[1]
+                if (ac != [all0sstate]) && (ac != [all1sstate])
+                    @warn "The state $l has split probabilities to $ac, which is not all 0s or all 1s"
+                end
+            elseif length(keys(sps)) == 2
+                ac1 = collect(keys(sps))[1]
+                ac2 = collect(keys(sps))[2]
+
+                if !(
+                    ((ac1 == [all0sstate]) && (ac2 == [all1sstate])) ||
+                    ((ac1 == [all1sstate]) && (ac2 == [all0sstate]))
+                )
+                    @warn "The state $l has split probabilities to $ac1 and $ac2, which are not all 0s and all 1s"
+                end
+            else
+                @warn "The state $l does not have exactly two split probabilities, it has $(length(keys(sps)))"
+            end
+        end
+    end
+
+    if isnothing(colorrange)
+        mincv, maxcv = extrema(values(color_vals))
+    else
+        mincv, maxcv = colorrange
+    end
+    deltacv = maxcv
+
+    colors = Dict{LT,Color}()
+    for k in keys(color_vals)
+        v = (color_vals[k] - mincv) / deltacv
+        colors[k] = get(colormap, v)
+    end
+
+    colors
+end
+
+function get_all0sv1s_colors_v2(nmg::MetaGraph{C,G,LT};
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+) where {C,G,LT}
+    L = nmg[].L
+    all0sstate = fill(0, L)
+    all1sstate = fill(1, L)
+
+    colors = Dict{LT,Color}()
+    ff = make_full_splitprober(nmg)
+
+    for l in labels(nmg)
+        sps = ff(l)
+        prob_all0s = get(sps, [all0sstate], 0.0)
+        prob_nonextreme = 0.0
+        for ac in keys(sps)
+            if ac != [all0sstate] && ac != [all1sstate]
+                prob_nonextreme += sps[ac]
+            end
+        end
+        c0v1s = get(cmap0sv1s, prob_all0s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        colors[l] = get(cmap, prob_nonextreme)
+    end
+
+    colors
+end
+
+function all0sv1s_colors_v2_colorbar(N=100;
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+)
+    probs_all0s = range(0.0, 1.0, N)
+    probs_nonextreme = range(0.0, 1.0, N)
+
+    function func(pall0s, pnonextreme)
+        c0v1s = get(cmap0sv1s, pall0s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        get(cmap, pnonextreme)
+    end
+
+    fap = heatmap(probs_all0s, probs_nonextreme, func)
+    fap.axis.xlabel = "probability of all 1s vs all 0s"
+    fap.axis.ylabel = "probability of reaching any other ac"
+
+    fap
+end
+
+function all0sv1s_p1(nmg;
+    force_order=true,
+    double_arrows=true,
+    colors=nothing,
+    kwargs...
+)
+    L = nmg[].L
+    g = digraph(;
+        rankdir="LR",
+        ranksep="1",
+        kwargs...
+    )
+
+    node_clusters = [subgraph(g, (@sprintf "cluster %s" string(i))) for i in 0:L]
+    cluster_is = [[] for _ in 0:L]
+
+    for l in labels(nmg)
+        label = nmg[l]
+        num_ones = count('1', label)
+        cluster_index = 1 + num_ones
+        push!(cluster_is[cluster_index], label)
+
+        auto_kwargs = (;)
+        if !isnothing(colors)
+            auto_kwargs = (; auto_kwargs...,
+                style="filled",
+                color="#" * hex(colors[l]),
+                # fontcolor="azure4"
+            )
+        end
+
+        node_clusters[cluster_index] |> node(label;
+            label, auto_kwargs...
+        )
+    end
+    if force_order
+        for ci in 1:(length(cluster_is)-1)
+            for l1 in cluster_is[ci]
+                for l2 in cluster_is[ci+1]
+                    g |> edge(l1, l2;
+                        style="invis",
+                        # weight="100"
+                    )
+                end
+            end
+        end
+    end
+
+    if double_arrows
+        for i in 1:nv(nmg)
+            for j in (i+1):nv(nmg)
+                il = label_for(nmg, i)
+                jl = label_for(nmg, j)
+                itoj = haskey(nmg, il, jl)
+                jtoi = haskey(nmg, jl, il)
+                if itoj && jtoi
+                    g |> edge(nmg[il], nmg[jl];
+                        dir="both",
+                        # weight="10"
+                    )
+                elseif itoj
+                    g |> edge(
+                        nmg[il],
+                        nmg[jl];
+                        # weight="10"
+                    )
+                elseif jtoi
+                    g |> edge(
+                        nmg[jl],
+                        nmg[il];
+                        # weight="10"
+                    )
+                end
+            end
+        end
+    else
+        for (s, d) in edges(graph(ned))
+            g |> edge(
+                string(e.src),
+                string(e.dst);
+                # weight="10"
+            )
+        end
+    end
+
+    g
 end

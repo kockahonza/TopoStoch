@@ -1,44 +1,76 @@
-\documentclass[11pt]{article}
-\usepackage[top=20mm,bottom=30mm,left=20mm,right=20mm]{geometry}
+\documentclass[aps, prx, letter, superscriptaddress, amsfonts, amssymb, amsmath, reprint, showkeys, nofootinbib, twoside, onecolumn]{revtex4-2}
+\usepackage[english]{babel}
+\usepackage[sort&compress]{natbib}
 \usepackage[utf8]{inputenc}
-\usepackage{parskip}
-\usepackage{abstract}
-
-% Mathy stuff
+\usepackage[colorinlistoftodos, color=green!40, prependcaption]{todonotes}
+\usepackage{amsthm}
+\usepackage{mathtools}
 \usepackage{physics}
-\usepackage{siunitx}
-\usepackage{amsmath}
 \usepackage[version=4]{mhchem}
-
-% Visual stuff
-\usepackage{graphics}
-\usepackage{tikz}
-\usetikzlibrary{math}
-\usepackage{stackengine}
-\usepackage{float}
-
-% Misc
-\usepackage{hyperref}
-\usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+%\usepackage[left=23mm,right=13mm,top=35mm,columnsep=15pt]{geometry} 
+\usepackage{adjustbox}
+\usepackage{placeins}
+\usepackage[T1]{fontenc}
 \usepackage{lipsum}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage[hypertexnames=false]{hyperref}
+%\setlength{\marginparwidth}{2.5cm}
+\hypersetup{colorlinks=true,citecolor=blue,linkcolor=blue,urlcolor=black}
 
-\renewcommand{\abstractname}{}    % clear the title
-\renewcommand{\absnamepos}{empty} % originally center
+\newcommand{\am}{\textcolor{red}}
 
-\setlength{\parskip}{2ex}
-\setlength{\parindent}{0em}
+% fixing the problem of Package babel Error: You haven't defined the language 'en' yet.
+\renewcommand{\selectlanguage}[1]{}
+
+\def\cor{\color{black}}
+\def\cof{\color{black}}
+\def\cob{\color{orange}}
+
+% Kabir's shortcuts
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+\def\bmu{\begin{multline}}
+\def\bea{\begin{eqnarray}}
+\def\eea{\end{eqnarray}}
+\def\n{{\bf n}}
+\def\J{{\bf J}}
+\def\p{\partial}
+\def\nn{\nonumber}
+\def\f{\frac}
+\def\cor{\color{red}}
+\def\cob{\color{blue}}
+\newcommand{\edit}[1]{\textcolor{red}{{#1}}}
+\def\l{\left(}
+\def\r{\right)}
+\def\fou{\widetilde}
+\def\grad{\vec{\nabla}}
+\def\rhat{\hat{\mathbf{r}}}
+\def\that{\hat{\mathbf{e}}_{\theta}}
+\newcommand{\iu}{{i\mkern1mu}}
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
+\newcommand{\me}{\mathrm{e}}
+\def\mbf{\mathbf}
+
+\newcommand{\Lagr}{\mathcal{L}}
 
 \begin{document}
-\pagenumbering{gobble}
-\begin{center}
-	\LARGE
-	% \textbf{Molecular Automata \ldots} \\
-	\textbf{Non-equilibrium Protein Complexes as\\Molecular Automata} \\
-	% \textbf{Molecular computation on allosteric complexes} \\
-	\vspace{0.3em}
-	\normalsize
-	\vspace{1em}
-\end{center}
+ 
+\title{Non-equilibrium Protein Complexes as Molecular Automata}
+\author{Jan Kocka}
+\address{Department of Physics and Astronomy, University College London, London WC1E 6BT, United Kingdom}
+\author{Kabir Husain}
+\thanks{These authors contributed equally. Email: kabir.husain@ucl.ac.uk, j.agudo-canalejo@ucl.ac.uk}
+%\email{kabir.husain@ucl.ac.uk}
+\address{Department of Physics and Astronomy, University College London, London WC1E 6BT, United Kingdom}
+\address{Laboratory for Molecular Cell Biology, University College London, London WC1E 6BT, United Kingdom}
+\author{Jaime Agudo-Canalejo}
+\thanks{These authors contributed equally. Email: kabir.husain@ucl.ac.uk, j.agudo-canalejo@ucl.ac.uk}
+%\email{j.agudo-canalejo@ucl.ac.uk}
+\address{Department of Physics and Astronomy, University College London, London WC1E 6BT, United Kingdom}
+
 
 \begin{abstract}
 	% Intro
@@ -99,116 +131,112 @@
 	% More broadly, our results demonstrate that stereotyped dynamics can arise purely from non-equilibrium kinetic effects, without the need for an underlying energy landscape to channel them.
 \end{abstract}
 
-% \vfill
-% \begin{figure}[H]
-% 	\centering
-% 	\includegraphics[width=\textwidth]{diagram/diagram_circly2.pdf}
-% \end{figure}
+\maketitle
 
-% \newpage
-\vspace{5em}
-\section{New Notes/Outline/Points to mention}
-\begin{itemize}
-	\item describe the model
-	      \begin{itemize}
-		      \item Identical subunits
-		      \item Out-of-equilibrium + kinetic model
-		      \item Rates depend on nearest neighbors
-		      \item Thermodynamically consistent, but maximally driven
-	      \end{itemize}
-	\item what we find
-	      \begin{itemize}
-		      \item connection to cellular automata (classic model of computation)
-		      \item rich set of behaviours
-		      \item identify analyze attracting components (attractors) which include
-		            \begin{itemize}
-			            \item multistability and dynamical steady states
-			            \item individual states (with basins of attraction)
-			            \item loops (directed or not), single state or branching, of either travelling waves or transitioning between all 0s and all 1s
-			            \item more complex components, including plane/2D like structures
-		            \end{itemize}
-		      \item we look at
-		      \item can provide insights on the "error correction" ideas of Crick and others - can have a rule that error corrects but nothing else and can put limits on it from the nearest neighbour limit (no global counting)
-	      \end{itemize}
-	\item context/significance
-	      \begin{itemize}
-		      \item Molecular computation? It is relevant, worth noting that MC is generally on DNA so this is perhaps a new perspective?
-		      \item Allostery? it is related but not sure what
-	      \end{itemize}
-\end{itemize}
-
-\newpage
-\section{Old New Notes}
-\subsection{Questions and things to discuss}
-\begin{itemize}
-	\item Title! Right now it is very clunky. Should it include "thermodynamically consistent"?
-	\item Conclusion bit! Very much not sure about it as it is -- is it too short? Should I specifically cite the paper I do there as that really proposes a similar but different model for it, or should I instead highlight the locality difference we add to it? Not sure
-	\item In order to expand the conclusion I need to slightly cut down something.
-	\item Should I reference the figure from the abstract?
-	\item Little Things \begin{itemize}
-		      \item Should I explicitly list what our futile cycle is? It's a bit long and perhaps obvious but I think it's nice to give a concrete, simple thing to visualize.
-		      \item I should probably check that using "artificially" where I do is appropriate.
-		      \item "this robustness" $\rightarrow$ "biological robustness"?
-		      \item Is "We consider" acceptable language?
-	      \end{itemize}
-\end{itemize}
-
-\subsection{General}
-\begin{itemize}
-	\item So going for \textbf{Clocks, timers and cell cycle dynamics} topic
-	\item Can I squeeze in "non-Hermitian topology" somewhere (I have some references for it, and it is relevant)?
-\end{itemize}
-
-\newpage
-\section{Old Notes}
-\paragraph{Format}
-For POL2025 (the one due on the 6th) it should be 250 words, include references and up to 1 figure.
-\paragraph{Topic}
-I need to choose one of a list of topics.
-Perhaps the closest might be: \textbf{"Biomolecular assemblies and condensates"} given that the main model is of an allosteric assembly?
-Others that may be relevant:
-\begin{itemize}
-	\item "Patterns, waves, transport, collective phenomena, and microswimmers" -- there's collective phenomena! but idk about microswimmers
-	\item "Clocks, timers and cell cycle dynamics" -- if we lean into KaiABC then maybe
-	\item "Protein structure, dynamics and interactions" -- cause I guess the polymer as I've been calling it would realistically be a protein?
-	\item "Emerging Areas in the Physics of Life" -- idk what this is but probably not
-\end{itemize}
-
-\subsection{Questions}
-\begin{itemize}
-	\item Approach to talk about a project that has only just started?
-	\item Should I be talking about allostery or not so much? It seems relevant and as an interesting topic but it's not really a core ingredient in it.
-	\item I'm a bit worried that the only "result" is a bit obvious once you think about it. If we add a penalty for NN having different conformation then of course the ones with all the same conformation will be preferred. Then if all are in conformation 1 (tense) then they are ATP driven to bind ligands so they do so. After that they are by our choice of parameters not favoured to debind hence the only thing they can do is change conformation. The same sort of reasoning then completes the cycle.
-	\item Is an ArXiV citation admissible here?
-\end{itemize}
-
-\subsection{Key points to cover}
-\begin{itemize}
-	\item stochastic systems
-	\item futile cycles
-	\item non-equilibrium dynamics
-	\item allostery
-	\item system features
-	      \begin{itemize}
-		      \item complex -- high dimensional network, not pen-and-paper tractable
-		      \item locality -- unlike the previous models, have NNs, can model waves along the polymer
-		      \item discrete configurational space
-		      \item Thermodynamically consistent? idk if this is the right wording
-	      \end{itemize}
-	\item Search for topological states/patterns in realistic systems (this means starting from the ground up with (non-equilibrium) statphys, LDB, no arbitrary choices) with futile cycles
-	\item the futile cycle is implemented via physical parameters by coupling to two physically reasonable asymmetrical processes
-\end{itemize}
-
-% \subsection{"Formula"}
-% \paragraph{Title/Topic}
-% \paragraph{Motivation}
-% Topological phases have been a hot topic in physics ever since the quantum hall effect.
-% Recently their study has been extended to non-Hermitian systems such as a non-reciprocal stochastic processes.
-% \paragraph{Problem}
-% Idrk?
-% \paragraph{Study design}
+% \section{Introduction}
 %
-% \paragraph{Predictions and results}
-% \paragraph{Conclusions}
-
+% It is increasingly recognised that the route towards molecular computation is via multi-stable systems, with each stable state representing a distinct logical state or memory. In physical systems, these often correspond to multiple minima in the underlying energy landscape, as in (spin) glasses, self-folding origami, or multifarious self-assembly. A similar framework is invoked in biological systems (even beyond neuroscience), though these are often discussed in the language of attractors and fixed points in some underlying dynamical system: as in the Waddington landscape of development, or multistable fates in gene regulatory networks.
+%
+% Beyond natural systems, there is a growing interest in building synthetic, multistable circuits at the molecular scale. However, outside of a few instances, synthetic implementations are centred around DNA: either in conjunction with DNA-binding proteins, as in circuits made of synthetic transcription factors or site-specific DNA recombinases, or alone as in strand-displacement circuits assembled in-vitro. In contrast, natural biological signal processing often involves large, multi-protein complexes that `compute' via post-translational modifications. The design rules that underlie the computational capabilities of such protein circuits remain broadly unknown.
+%
+% In 1984, Francis Crick proposed a particular mechanism by which individual molecular complexes can harbour long-term memory despite stochasticity and molecular turn-over. The basis of his construction was a dimer of monomers that can each be activated (e.g., phosphorylated) by an enzyme. If, as he argued, the enzyme only acts on a monomer when the other monomer is already activated, then the dimer is capable of storing two distinct steady states: both monomers unactivated, or both activated. Crucially, as in von Neumann's error-correcting codes, the fully activated dimer is robust to stochastic perturbations: erroneous deactivation of one monomer is rapidly corrected by the enzyme. 
+% % CamKII
+%
+% % Papers/Ideas:
+%
+% % Lee Adelman: Science (DNA computing with oligos)
+% % Lisman 1985 + Crick 1984
+% % Does each rule-set encode an error-correcting code? Robust to one-mutations.
+%
+% \section{Results}
+%
+% \subsection{Mapping molecular complexes to automata}
+%
+% We consider a complex made of $N$ identical monomers arranged in a cyclic polymer. Each monomer can take one of two states (representing, e.g., structural conformation or post-translational modifications such as phosphorylation), with the entire state $i$ of the complex denoted by a binary string, e.g. $i \in \{0000, 0001,..., 0101,... \}$ for $N=4$. The state of the complex changes when monomers transition between states, with rates $k_{i \to j}$. As each monomer makes physical contact with two neighbours, we allow these rates to depend on the states of neighbouring monomers.
+%
+% Similar models have been previously studied in the context of equilibrium allosteric complexes such as haemoglobin. There, the rates $k_{ij}$ are constrained to satisfy detailed balance,
+% \begin{equation}    
+% k^{\text{(allo)}}_{ij} \propto \exp(\beta(\epsilon_i - \epsilon_j)),
+% \end{equation}
+% \noindent where $\epsilon_i$ ($\epsilon_j$) is the energy of the complex before (after) the transition.
+%
+% In contrast, here we assume that there is no energetic preference for any of the states in the complex. Instead, the transitions are driven out of equilibrium by coupling to a (free) energy source such as a clamped reservoir of cytosolic ATP. Such a transition arises naturally when the transitions are enabled by an ATP-consuming enzyme (e.g., a kinase), or when the complex itself has ATP hydrolysis activity (as in AAA-ATPases such as the molecular clock KaiC).
+%
+% We consider the case in which each change of state is catalysed by a dedicated enzyme $\alpha$ whose activity depends on the state of the neighbouring monomers (e.g., a kinase that is recruited to a monomer only when both neighbours are phosphorylated). If all reactions couple to a single energy source, represented by an environmental reservoir clamped to a chemical potential $\Delta \mu > 0$, then the rate at which enzyme $\alpha$ catalyses the change of state $i \to j$ is
+% % As such we build a kinetic model where each transition may take place as a result of a number of reaction mechanisms, each of which may be biased but must be reversible to maintain thermodynamic consistency.
+% % These mechanisms then look as
+% % \begin{equation}
+% %     \text{enzyme } $\alpha$ + \cdots\overline{i0j}\cdots \ce{<=>[$r^{(\alpha)}_{\text{mech},ij,f}$][$r_{\text{mech},ij,b}$]} \cdots\overline{i1j}\cdots + \text{env}'
+% % \end{equation}
+% % \noindent in which the change of state of the environment is represented by the transformation $\text{env} \to \text{env}$ 
+% % where if the transition is to be biased, the environment must have been affected in some way.
+% % This can be encapsulated by the chemical potential $\mu_\text{mech}$ with the resulting transition rates being
+% \begin{equation}
+%     k^{(\alpha)}_{i \to j} = K_{\alpha} \frac{e^{\beta \Delta \mu}}{e^{\beta \Delta \mu} + 1},
+% \end{equation}
+% \noindent where $K_{\alpha}$ is the overall kinetic rate of the reaction, which includes the cellular concentration of enzyme $\alpha$. To be thermodynamically consistent, this same enzyme must also catalyse the reverse reaction with rate
+% \begin{equation}
+%     k^{(\alpha)}_{j \to i} = K_{\alpha} \frac{1}{e^{\beta \Delta \mu} + 1}.
+% \end{equation}
+% \indent As we have assumed that all states of the complex are energetically equivalent, these rates satisfy detailed balance only when $\Delta \mu = 0$. Note that while enzyme $\alpha$ preferentially drives the reaction $i \to j$, another enzyme $\beta$ might couple to the energy reservoir to drive the reverse reaction $j \to i$ (as in the famous `push-pull' regulatory motifs).
+% % \begin{align}
+% % 	 & r_{\text{mech},ij,f} = K_{\text{mech},ij} \frac{\exp(\beta\mu_\text{mech})}{\exp(\beta\mu_\text{mech})+1} \label{eq:rfmech} \\
+% % 	 & r_{\text{mech},ij,b} = K_{\text{mech},ij} \frac{1}{\exp(\beta\mu_\text{mech})+1} \label{eq:rbmech}
+% % \end{align}
+% % where $K_{\text{mech},ij}$ is a matrix specifying how that mechanism depends on the affected monomer's neighbours and the overall rate of the reaction mechanism.
+% % \indent In the limit of a strong non-equilibrium driving, $\Delta \mu \to \infty$, the model is specified entirely by two matrices $U$ and $D$.
+%
+% In practice, biological systems are strongly driven ($\beta\Delta \mu \gg 1$), such that reverse reactions do not occur on physiologically-relevant timescales. We therefore take the strongly-driven limit ($\Delta \mu  \to \infty$) and, for simplicity, suppose that each $K_{\alpha}$ takes on a constant non-zero value $K$ or is $0$ (i.e., the enzyme is present or absent). Later in the paper, we will relax both assumptions.
+%
+% In this limit, the dynamics of a complex is fully specified by the presence or absence of each enzyme type $\alpha$. There are eight possible enzymes: four `up' enzymes that catalyse the state change $0 \to 1$, and four `down' enzymes that catalyse the reverse reaction, depending on the possible states of the neighbouring monomers, shown schematically in Fig.~\ref{fig:1}.
+% % numbers grouped into two $2 \times 2$ matrices, $K_\text{up}$ and $K_\text{down}$. 
+% % To identify the most distinct behaviours we look at systems where all present mechanisms are equally likely to act ($K_{\text{mech},ij}$ only takes values of 0 or 1) and all are maximally driven $\mu_\text{mech} \rightarrow \pm\infty$.
+% % Any such system can be fully specified by 8 numbers of 0 or 1 each specifying whether a particular transition of a monomer is possible based on its state and the state of its neighbours.
+% We group these into two binary matrices $K^\text{up}$ and $K^\text{down}$, where, e.g., the element $K^\text{up}_{00}$ being 1 or 0 means that the transition
+% $$\cdots 000 \cdots \rightarrow \cdots 010 \cdots$$ 
+% \noindent can or cannot take place. Each pair of $K^\text{up}$ and $K^\text{down}$ specifies a Markov chain that operates on the state space of the protein complex.
+%
+% Notably, each of these systems can be thought of as analogous to a cellular automata rule.
+% A cellular automata rule specifies the discrete time dynamics of a string of digits by prescribing to each digit which state it will take after the next step based on the states of itself and its neighbours.
+% Molecular automata differ in that the transitions are stochastic, they happen one at a time and at random times.
+% However, there is still a one to one map between the two and hence we will refer to the different systems of our model by their corresponding rule number. (*This should either include a diagram or reference a figure with a diagram?*)
+%
+% \subsection{Symmetries and classification}
+% In addition to just having a correspondence, the two also follow the same symmetries.
+% These are helpful to narrow down a search of the different rules as many of them will give the same behaviour subject to a changing the labels of the states.
+% There are two symmetries of note, exchanging all 0s and 1s and reversing the complex/string.
+% These form an Abelian group of symmetries the only other element being their combination and the identity.
+%
+%
+%
+%
+% \begin{figure*}
+%     \centering
+%     % \includegraphics[scale=1]{FigureSmall/2024-05-08 Proofreading unified}
+%     \caption{\textbf{Non-equilibrium transitions in an allosteric complex realise cellular automata rules.}   
+%     }\label{fig:1}
+% \end{figure*}
+%
+% \begin{figure*}
+%     \centering
+%     % \includegraphics[scale=1]{FigureSmall/2024-05-08 Proofreading unified}
+%     \caption{\textbf{Conformations are funnelled into distinct stable attractors.}   
+%     }\label{fig:2}
+% \end{figure*}
+%
+% \begin{figure*}
+%     \centering
+%     % \includegraphics[scale=1]{FigureSmall/2024-05-08 Proofreading unified}
+%     \caption{\textbf{Oscillations, branching cycles, and travelling domains in non-equilibrium attracting components.} 
+%     }\label{fig:3}
+% \end{figure*}
+%
+% \begin{figure*}
+%     \centering
+%     % \includegraphics[scale=1]{FigureSmall/2024-05-08 Proofreading unified}
+%     \caption{\textbf{Finite driving leads to multi-stability and stochastic transitions.} ...\textbf{x} Bistable rule sets differ in their basins of attractions and therefore the dynamics of switching, allowing for sculptable thresholders. 
+%     }\label{fig:4}
+% \end{figure*}
+%
 \end{document}
+
