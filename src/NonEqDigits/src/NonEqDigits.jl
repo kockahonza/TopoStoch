@@ -173,6 +173,9 @@ export add_mech_BNN!
 
 neg_int(x::Int) = iszero(x) ? 1 : 0
 
+# Should probably be a separate package but I can't be bothered
+include("MolecularAutomata.jl")
+
 ################################################################################
 # Adding other bits
 ################################################################################
