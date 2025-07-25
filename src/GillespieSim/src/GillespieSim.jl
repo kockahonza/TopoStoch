@@ -144,12 +144,17 @@ Returns the time until next transition and the destination
 """
 function next_step(gs::Gillespie{T,F}) where {T,F}
     delta_time = randexp(gs.rng, F) / gs.r0s[gs.cur_state]
-    next_state = sample(
-        gs.rng,
-        gs.cached_neighbors[gs.cur_state],
-        gs.cached_neighbor_rates[gs.cur_state]
-    )
-    (delta_time, next_state)
+    ns = gs.cached_neighbors[gs.cur_state]
+    if isempty(ns)
+        nothing
+    else
+        next_state = sample(
+            gs.rng,
+            gs.cached_neighbors[gs.cur_state],
+            gs.cached_neighbor_rates[gs.cur_state]
+        )
+        (delta_time, next_state)
+    end
 end
 
 """
@@ -206,7 +211,12 @@ function run_gillespie!(gs::Gillespie;
     exit = false
     while !exit
         # Make a step
-        (delta_time, next_state) = next_step(gs)
+        ns = next_step(gs)
+        if isnothing(ns)
+            return
+        end
+
+        (delta_time, next_state) = ns
         gs.cur_time += delta_time
         gs.cur_state = next_state
         sim_steps += 1
