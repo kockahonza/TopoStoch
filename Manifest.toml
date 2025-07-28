@@ -2,7 +2,7 @@
 
 julia_version = "1.10.10"
 manifest_format = "2.0"
-project_hash = "3c64b03b44ba5d95e5779770e36f11bbcdd054ed"
+project_hash = "55ffdd2611368a790f868595fa047779002be81c"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "be7ae030256b8ef14a441726c4c37766b90b93a3"
@@ -1094,6 +1094,12 @@ deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "
 git-tree-sha1 = "2670cf32dcf0229c9893b895a9afe725edb23545"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 version = "0.5.9"
+
+[[deps.Geppetto]]
+deps = ["InlineStrings", "Random"]
+git-tree-sha1 = "237695430787a880a6a4d83d491ba511bd75b4a0"
+uuid = "7616020f-7d25-45ac-879d-3d4711576aab"
+version = "0.1.0"
 
 [[deps.GettextRuntime_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll"]
