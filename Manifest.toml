@@ -2,7 +2,7 @@
 
 julia_version = "1.10.10"
 manifest_format = "2.0"
-project_hash = "55ffdd2611368a790f868595fa047779002be81c"
+project_hash = "6098514083e7d9dc5ca1a720ef08d15c7449c6f4"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "be7ae030256b8ef14a441726c4c37766b90b93a3"
@@ -1131,6 +1131,22 @@ git-tree-sha1 = "35fbd0cefb04a516104b8e183ce0df11b70a3f1a"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.84.3+0"
 
+[[deps.GraphIO]]
+deps = ["DelimitedFiles", "Graphs", "SimpleTraits"]
+git-tree-sha1 = "664e1b185ce510c477ea3be2933ef8347928079e"
+uuid = "aa1b3936-2fda-51b9-ab35-c553d3a640a2"
+version = "0.7.1"
+
+    [deps.GraphIO.extensions]
+    GraphIOLGCompressedExt = "CodecZlib"
+    GraphIOParserCombinator = "ParserCombinator"
+    GraphIOXML = "EzXML"
+
+    [deps.GraphIO.weakdeps]
+    CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+    EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
+    ParserCombinator = "fae87a5f-d1ad-5cf0-8f61-c941e1580b46"
+
 [[deps.GraphMakie]]
 deps = ["DataStructures", "GeometryBasics", "Graphs", "LinearAlgebra", "Makie", "NetworkLayout", "PolynomialRoots", "SimpleTraits", "StaticArrays"]
 git-tree-sha1 = "707de559f03a9a9734039266d3563404460982a2"
@@ -1148,6 +1164,12 @@ deps = ["ArnoldiMethod", "Colors", "Compose", "DelimitedFiles", "Graphs", "Linea
 git-tree-sha1 = "4a616fbb4f4df5c51447192eba327da342a329b0"
 uuid = "a2cc645c-3eea-5389-862e-a155d0052231"
 version = "0.6.1"
+
+[[deps.GraphViz]]
+deps = ["FileIO", "Graphviz_jll", "Requires"]
+git-tree-sha1 = "da5580b236c5b6bb634e96ca35dcd7eaeeac1bd1"
+uuid = "f526b714-d49f-11e8-06ff-31ed36ee7ee0"
+version = "0.2.0"
 
 [[deps.Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]

@@ -3,8 +3,12 @@ using DrWatson;
 
 using GraphModels
 using NonEqDigits
+using GraphvizDotLang
 using GraphvizDotLang: digraph, subgraph, node, edge, attr
 using ColorSchemes
+
+using PythonCall
+pd = pyimport("pydot")
 
 function plot_0s_v_1s_gv(ned::NonEqDigitsGM{Loop,2,L};
     force_order=true,
@@ -81,8 +85,9 @@ end
 
 function molaut_gv(ma::MolAut;
     cluster=false,
-    force_layout=false,
+    force_layout=cluster,
     simple_nodes=false,
+    dim_nonacs=nothing,
     highlight_acs=nothing,
     edge_colormap=nothing,
     kwargs...
@@ -107,7 +112,10 @@ function molaut_gv(ma::MolAut;
     if highlight_acs == true
         highlight_acs = "crimson"
     end
-    if !isnothing(highlight_acs)
+    if dim_nonacs == true
+        dim_nonacs = "gray"
+    end
+    if !isnothing(highlight_acs) || !isnothing(dim_nonacs)
         acs = attracting_components(mg)
         vs_in_acs = reduce(vcat, acs)
     end
@@ -119,6 +127,11 @@ function molaut_gv(ma::MolAut;
                 rslt[:color] = highlight_acs
             end
         end
+        if !isnothing(dim_nonacs)
+            if !(code_for(mg, l) in vs_in_acs)
+                rslt[:color] = dim_nonacs
+            end
+        end
 
         rslt
     end
@@ -126,22 +139,7 @@ function molaut_gv(ma::MolAut;
     # add all nodes to graph
     if cluster
         clusters = [subgraph(g, "cluster_$(i)_ones") for i in 0:ma.L]
-
-        if force_layout
-            fake_cluster_nodes = [(@sprintf "fcnode %d" i) for i in 0:ma.L]
-            for (fcn, c) in zip(fake_cluster_nodes, clusters)
-                c |> node(fcn;
-                    shape="point",
-                    style="invis"
-                )
-            end
-            for i in 2:length(fake_cluster_nodes)
-                g |> edge(fake_cluster_nodes[i-1], fake_cluster_nodes[i];
-                    style="invis",
-                    weight="100"
-                )
-            end
-        end
+        cluster_labels = [[] for _ in 1:length(clusters)]
 
         for l in labels(mg)
             num1s = count(x -> x == 1, l)
@@ -149,6 +147,20 @@ function molaut_gv(ma::MolAut;
             c |> node(mg[l];
                 node_style(l)...
             )
+            push!(cluster_labels[1+num1s], l)
+        end
+
+        if force_layout
+            for ci in 1:(length(cluster_labels)-1)
+                for s in cluster_labels[ci]
+                    for d in cluster_labels[ci+1]
+                        g |> edge(mg[s], mg[d];
+                            style="invis",
+                            weight="100"
+                        )
+                    end
+                end
+            end
         end
     else
         for l in labels(mg)
@@ -187,6 +199,11 @@ function molaut_gv(ma::MolAut;
                 rslt[:color] = highlight_acs
             end
         end
+        if !isnothing(dim_nonacs)
+            if !(code_for(mg, s) in vs_in_acs) || !(code_for(mg, d) in vs_in_acs)
+                rslt[:color] = dim_nonacs
+            end
+        end
 
         rslt
     end
@@ -199,4 +216,63 @@ function molaut_gv(ma::MolAut;
     end
 
     g
+end
+
+function parse_dot_positions(fname; size=nothing)
+    g = pd.graph_from_dot_file(fname)[0]
+
+    # make a list of all nodes that we later filter through
+    nodes = collect(g.get_nodes())
+    for sg in g.get_subgraphs()
+        for n in sg.get_nodes()
+            push!(nodes, n)
+        end
+    end
+
+    rslt = Dict()
+
+    i = 0
+    for n in nodes
+        name = pyconvert(String, n.get_name())
+        if occursin(r"^[01]{6}$", name)
+            i += 1
+
+            l = [x == '0' ? 0 : (x == '1' ? 1 : throw(ErrorException("could not parse name"))) for x in name]
+
+            posstring = pyconvert(String, n.get_pos())[2:end-1]
+            pos = parse.(Float64, split(posstring, ","))
+
+            rslt[l] = pos
+        end
+    end
+
+    if !isnothing(size)
+        if i != size
+            throw(ArgumentError("did not find the expected number of nodes"))
+        end
+    end
+
+    rslt
+end
+
+"""
+Output of this can be used as a layout for plotgm
+"""
+function get_gv_layout_positions(ma::MolAut;
+    kwargs...
+)
+    g = molaut_gv(ma; kwargs...)
+
+    fname = tempname() * ".dot"
+    GraphvizDotLang.save(g, fname; format="dot")
+
+    posdict = parse_dot_positions(fname; size=2^ma.L)
+
+    poslist = []
+    for v in 1:nv(ma.mg)
+        l = label_for(ma.mg, v)
+        push!(poslist, posdict[l])
+    end
+
+    poslist
 end

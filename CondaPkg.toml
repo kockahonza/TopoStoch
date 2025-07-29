@@ -1,2 +1,10 @@
 [deps]
+matplotlib = ""
 networkx = ""
+graphviz = ""
+pyvis = ""
+numpy = ""
+
+[pip.deps]
+graphviz = ""
+pydot = ""

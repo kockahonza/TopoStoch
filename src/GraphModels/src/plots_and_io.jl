@@ -39,7 +39,7 @@ function p_set_axis_labels!(ax::Makie.AbstractAxis, axis_labels=[])
     end
 end
 
-function p_make_ax(dim, maybeax, axis_labels=nothing; useaxis3=false)
+function p_make_ax(dim, maybeax, axis_labels=nothing; useaxis3=false, kwargs...)
     if isa(maybeax, Makie.AbstractAxis)
         # If it is already an ax then just do checks and return it
         if isa(maybeax, Axis) && (dim != 2)
@@ -56,12 +56,12 @@ function p_make_ax(dim, maybeax, axis_labels=nothing; useaxis3=false)
 
     # Creates the ax if not already existing
     ax = if dim == 2
-        Axis(place)
+        Axis(place; kwargs...)
     elseif dim == 3
         if !useaxis3
-            LScene(place)
+            LScene(place; kwargs...)
         else
-            Axis3(place)
+            Axis3(place; kwargs...)
         end
     else
         throw(ArgumentError("the layout dimension was not 2 or 3"))
