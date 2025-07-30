@@ -90,6 +90,7 @@ function molaut_gv(ma::MolAut;
     dim_nonacs=nothing,
     highlight_acs=nothing,
     edge_colormap=nothing,
+    node_colors=nothing,
     kwargs...
 )
     mg = ma.mg
@@ -122,11 +123,23 @@ function molaut_gv(ma::MolAut;
     function node_style(l)
         rslt = Dict{Symbol,Any}()
 
-        if !isnothing(highlight_acs)
-            if code_for(mg, l) in vs_in_acs
-                rslt[:color] = highlight_acs
+        if !isnothing(node_colors)
+            rslt[:fillcolor] = "#" * hex(node_colors[l])
+            rslt[:style] = "filled"
+            if !isnothing(highlight_acs)
+                if code_for(mg, l) in vs_in_acs
+                    rslt[:color] = highlight_acs
+                    rslt[:penwidth] = "4"
+                end
+            end
+        else
+            if !isnothing(highlight_acs)
+                if code_for(mg, l) in vs_in_acs
+                    rslt[:color] = highlight_acs
+                end
             end
         end
+
         if !isnothing(dim_nonacs)
             if !(code_for(mg, l) in vs_in_acs)
                 rslt[:color] = dim_nonacs
@@ -259,7 +272,9 @@ end
 Output of this can be used as a layout for plotgm
 """
 function get_gv_layout_positions(ma::MolAut;
-    kwargs...
+    normalize_x=false,
+    normalize_y=false,
+    kwargs...,
 )
     g = molaut_gv(ma; kwargs...)
 
@@ -273,6 +288,35 @@ function get_gv_layout_positions(ma::MolAut;
         l = label_for(ma.mg, v)
         push!(poslist, posdict[l])
     end
+
+    if normalize_x != false
+        if normalize_x == true
+            normalize_x = (0, ma.L)
+        end
+
+        xs = getindex.(poslist, 1)
+        xmin, xmax = extrema(xs)
+
+        normxs = normalize_x[1] .+ ((xs .- xmin) ./ (xmax - xmin)) .* (normalize_x[2] - normalize_x[1])
+        for i in 1:length(poslist)
+            poslist[i][1] = normxs[i]
+        end
+    end
+
+    if normalize_y != false
+        if normalize_y == true
+            normalize_y = (0, ma.L)
+        end
+
+        ys = getindex.(poslist, 2)
+        xmin, xmax = extrema(ys)
+
+        normxs = normalize_y[1] .+ ((ys .- xmin) ./ (xmax - xmin)) .* (normalize_y[2] - normalize_y[1])
+        for i in 1:length(poslist)
+            poslist[i][2] = normxs[i]
+        end
+    end
+
 
     poslist
 end

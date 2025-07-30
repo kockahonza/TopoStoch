@@ -8,6 +8,9 @@ using GraphvizDotLang: digraph, subgraph, node, edge
 using MetaGraphsNext
 using DataFrames
 
+using TernaryDiagrams
+using PythonCall
+
 ################################################################################
 # Util
 ################################################################################
@@ -1062,13 +1065,23 @@ function get_all0sv1s_colors_v2(nmg::MetaGraph{C,G,LT};
     for l in labels(nmg)
         sps = ff(l)
         prob_all0s = get(sps, [all0sstate], 0.0)
+        prob_all1s = get(sps, [all1sstate], 0.0)
         prob_nonextreme = 0.0
         for ac in keys(sps)
             if ac != [all0sstate] && ac != [all1sstate]
                 prob_nonextreme += sps[ac]
             end
         end
-        c0v1s = get(cmap0sv1s, prob_all0s)
+
+        val_0sv1s = if prob_all0s == 0.0
+            0.0
+        else
+            prob_all0s / (prob_all0s + prob_all1s)
+        end
+
+        # val_0sv1s = prob_all1s
+
+        c0v1s = get(cmap0sv1s, val_0sv1s)
         cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
         colors[l] = get(cmap, prob_nonextreme)
     end
@@ -1095,6 +1108,246 @@ function all0sv1s_colors_v2_colorbar(N=100;
 
     fap
 end
+
+function all0sv1s_colors_v2_colorbar_v2!(ax, N=100;
+    epsilon=0.0,
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+)
+    function func(prob_all0s, prob_nonextreme)
+        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
+
+        val_0sv1s = if prob_all0s == 0.0
+            0.0
+        else
+            prob_all0s / (prob_all0s + prob_all1s)
+        end
+
+        # val_0sv1s = prob_all1s
+
+        c0v1s = get(cmap0sv1s, val_0sv1s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        get(cmap, prob_nonextreme)
+    end
+
+    p0s = []
+    p1s = []
+    pes = []
+    cval = []
+    color = []
+
+    for p0 in range(epsilon, 1.0 - epsilon, N)
+        for p1 in range(epsilon, 1.0 - p0 - epsilon, N)
+            pelse = 1.0 - p0 - p1
+            if (pelse <= epsilon) || (pelse >= (1.0 - epsilon))
+                continue
+            end
+            push!(p0s, p0)
+            push!(p1s, p1)
+            push!(pes, pelse)
+
+            push!(cval, rand() * p1 - p0)
+            push!(color, func(p0, pelse))
+        end
+    end
+
+    ternaryscatter!(ax, p0s, p1s, pes; color=color, marker=:circle)
+    # ternarycontourf!(ax, p0s, p1s, pes, cval; levels=10)
+
+    ternaryaxis!(ax;
+        labelx="p0",
+        labely="p1",
+        labelz="pelse",
+    )
+    xlims!(ax, -0.2, 1.2)
+    ylims!(ax, -0.3, 1.1)
+    hidedecorations!(ax)
+
+    nothing
+end
+
+function all0sv1s_colors_v2_colorbar_v3!(ax, N=100;
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+)
+    function func(prob_all0s, prob_nonextreme)
+        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
+
+        val_0sv1s = if prob_all0s == 0.0
+            0.0
+        else
+            prob_all0s / (prob_all0s + prob_all1s)
+        end
+
+        # val_0sv1s = prob_all1s
+
+        c0v1s = get(cmap0sv1s, val_0sv1s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        get(cmap, prob_nonextreme)
+    end
+
+    p0s = []
+    p1s = []
+    pes = []
+    color = []
+
+    for p0 in range(0.0, 1.0, N)
+        for p1 in range(0.0, 1.0 - p0, N)
+            pelse = 1.0 - p0 - p1
+            push!(p0s, p0)
+            push!(p1s, p1)
+            push!(pes, pelse)
+
+            push!(color, func(p0, pelse))
+        end
+    end
+
+
+
+    nothing
+end
+
+function all0sv1s_colors_v2_colorbar_v4!(ax, N=100;
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+)
+    function func(prob_all0s, prob_nonextreme)
+        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
+
+        val_0sv1s = if prob_all0s == 0.0
+            0.0
+        else
+            prob_all0s / (prob_all0s + prob_all1s)
+        end
+
+        # val_0sv1s = prob_all1s
+
+        c0v1s = get(cmap0sv1s, val_0sv1s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        get(cmap, prob_nonextreme)
+    end
+
+    p0s = []
+    p1s = []
+    pes = []
+    color = []
+
+    for p0 in range(0.0, 1.0, N)
+        for p1 in range(0.0, 1.0 - p0, N)
+            pelse = 1.0 - p0 - p1
+            push!(p0s, p0)
+            push!(p1s, p1)
+            push!(pes, pelse)
+
+            push!(color, func(p0, pelse))
+        end
+    end
+
+    poly!(ax, [(0, 0), (1 / 2, sqrt(3) / 2), (1, 0)];
+        color=:transparent,
+        strokecolor=:black,
+        strokewidth=1.0
+    )
+
+    # surface!(p1s, p0s)
+
+    nothing
+end
+
+function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+)
+    function func(prob_all0s, prob_nonextreme)
+        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
+
+        val_0sv1s = if prob_all0s == 0.0
+            0.0
+        else
+            prob_all0s / (prob_all0s + prob_all1s)
+        end
+
+        # val_0sv1s = prob_all1s
+
+        c0v1s = get(cmap0sv1s, val_0sv1s)
+        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
+        get(cmap, prob_nonextreme)
+    end
+
+    # make the mesh
+    vertices = []
+    # centers = []
+    colors = []
+    vi_rows = []
+
+    a = 1 / (N - 1)
+    vi = 1
+    for ri in 1:N
+        push!(vi_rows, [])
+        for j in 1:(N-ri+1)
+            push!(vi_rows[ri], vi)
+
+            y = (ri - 1) * (sqrt(3) / 2) * a
+            x = (ri - 1) * (a / 2) + a * (j - 1)
+            pos = [x, y]
+
+            push!(vertices, pos)
+
+            pe = (2 / sqrt(3)) * y
+            p0 = 1 - x - y / sqrt(3)
+            p1 = x - y / sqrt(3)
+
+
+            # color = get(ColorSchemes.viridis, p1)
+            color = func(p0, pe)
+            push!(colors, color)
+
+            # face_center = pos .+ [a / 2, (sqrt(3) / 4) * a]
+            # @show face_center
+            # push!(centers, face_center)
+
+            vi += 1
+        end
+    end
+
+    faces = []
+    for ri in 1:N
+        # bulk
+        for j in 2:(N-ri+1-1)
+            push!(faces, [vi_rows[ri][j], vi_rows[ri][j+1], vi_rows[ri+1][j]])
+            push!(faces, [vi_rows[ri][j], vi_rows[ri+1][j], vi_rows[ri+1][j-1]])
+        end
+        # left edge
+        if ri != N
+            push!(faces, [vi_rows[ri][1], vi_rows[ri][2], vi_rows[ri+1][1]])
+        end
+    end
+
+    length.(vi_rows)
+    vi_rows
+
+    vertices = reduce(vcat, transpose.(vertices))
+    faces = reduce(vcat, transpose.(faces))
+
+    p = mesh!(ax, vertices, faces;
+        color=colors,
+        #     shading=NoShading,
+        interpolate=false
+    )
+    poly!(ax, [(0, 0), (1 / 2, sqrt(3) / 2), (1, 0)];
+        color=:transparent,
+        strokecolor=:black,
+        strokewidth=1.0
+    )
+
+    # scatter!(fap.axis, getindex.(centers, 1), getindex.(centers, 2))
+
+    # fap.axis.xticks = range(0., 1., (N-1)+1)
+    # fap.axis.yticks = range(0., sqrt(3) / 2, (N-1)+1)
+
+    p
+end
+
 
 function all0sv1s_p1(nmg;
     force_order=true,
@@ -1182,4 +1435,39 @@ function all0sv1s_p1(nmg;
     end
 
     g
+end
+
+function get_all0sv1s_avg_splitprobs(nmg::MetaGraph{C,G,LT};
+    cmap0sv1s=ColorSchemes.RdBu_4,
+    nondetcolor=ColorSchemes.viridis[end],
+) where {C,G,LT}
+    L = nmg[].L
+    all0sstate = fill(0, L)
+    all1sstate = fill(1, L)
+
+    colors = Dict{LT,Color}()
+    p0s = [[] for _ in 0:L]
+    p1s = [[] for _ in 0:L]
+    pxs = [[] for _ in 0:L]
+
+    ff = make_full_splitprober(nmg)
+
+    for l in labels(nmg)
+        sps = ff(l)
+        prob_all0s = get(sps, [all0sstate], 0.0)
+        prob_all1s = get(sps, [all1sstate], 0.0)
+        prob_nonextreme = 0.0
+        for ac in keys(sps)
+            if ac != [all0sstate] && ac != [all1sstate]
+                prob_nonextreme += sps[ac]
+            end
+        end
+
+        num1s = count(x -> x == 1, l)
+        push!(p0s[num1s+1], prob_all0s)
+        push!(p1s[num1s+1], prob_all1s)
+        push!(pxs[num1s+1], prob_nonextreme)
+    end
+
+    0:L, mean.(p0s), mean.(p1s), mean.(pxs)
 end
