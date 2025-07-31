@@ -1166,94 +1166,6 @@ function all0sv1s_colors_v2_colorbar_v2!(ax, N=100;
     nothing
 end
 
-function all0sv1s_colors_v2_colorbar_v3!(ax, N=100;
-    cmap0sv1s=ColorSchemes.RdBu_4,
-    nondetcolor=ColorSchemes.viridis[end],
-)
-    function func(prob_all0s, prob_nonextreme)
-        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
-
-        val_0sv1s = if prob_all0s == 0.0
-            0.0
-        else
-            prob_all0s / (prob_all0s + prob_all1s)
-        end
-
-        # val_0sv1s = prob_all1s
-
-        c0v1s = get(cmap0sv1s, val_0sv1s)
-        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
-        get(cmap, prob_nonextreme)
-    end
-
-    p0s = []
-    p1s = []
-    pes = []
-    color = []
-
-    for p0 in range(0.0, 1.0, N)
-        for p1 in range(0.0, 1.0 - p0, N)
-            pelse = 1.0 - p0 - p1
-            push!(p0s, p0)
-            push!(p1s, p1)
-            push!(pes, pelse)
-
-            push!(color, func(p0, pelse))
-        end
-    end
-
-
-
-    nothing
-end
-
-function all0sv1s_colors_v2_colorbar_v4!(ax, N=100;
-    cmap0sv1s=ColorSchemes.RdBu_4,
-    nondetcolor=ColorSchemes.viridis[end],
-)
-    function func(prob_all0s, prob_nonextreme)
-        prob_all1s = 1.0 - prob_all0s - prob_nonextreme
-
-        val_0sv1s = if prob_all0s == 0.0
-            0.0
-        else
-            prob_all0s / (prob_all0s + prob_all1s)
-        end
-
-        # val_0sv1s = prob_all1s
-
-        c0v1s = get(cmap0sv1s, val_0sv1s)
-        cmap = ColorScheme(range(c0v1s, nondetcolor, 100))
-        get(cmap, prob_nonextreme)
-    end
-
-    p0s = []
-    p1s = []
-    pes = []
-    color = []
-
-    for p0 in range(0.0, 1.0, N)
-        for p1 in range(0.0, 1.0 - p0, N)
-            pelse = 1.0 - p0 - p1
-            push!(p0s, p0)
-            push!(p1s, p1)
-            push!(pes, pelse)
-
-            push!(color, func(p0, pelse))
-        end
-    end
-
-    poly!(ax, [(0, 0), (1 / 2, sqrt(3) / 2), (1, 0)];
-        color=:transparent,
-        strokecolor=:black,
-        strokewidth=1.0
-    )
-
-    # surface!(p1s, p0s)
-
-    nothing
-end
-
 function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
     cmap0sv1s=ColorSchemes.RdBu_4,
     nondetcolor=ColorSchemes.viridis[end],
@@ -1312,7 +1224,7 @@ function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
 
     faces = []
     for ri in 1:N
-        # bulk
+        # bulk and right edge
         for j in 2:(N-ri+1-1)
             push!(faces, [vi_rows[ri][j], vi_rows[ri][j+1], vi_rows[ri+1][j]])
             push!(faces, [vi_rows[ri][j], vi_rows[ri+1][j], vi_rows[ri+1][j-1]])
@@ -1331,7 +1243,7 @@ function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
 
     p = mesh!(ax, vertices, faces;
         color=colors,
-        #     shading=NoShading,
+        shading=NoShading,
         interpolate=false
     )
     poly!(ax, [(0, 0), (1 / 2, sqrt(3) / 2), (1, 0)];
@@ -1340,6 +1252,12 @@ function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
         strokewidth=1.0
     )
 
+    hidedecorations!(ax)
+
+    text!(ax, 0, 0; text="All 0s", align=(:left, :top))
+    text!(ax, 1, 0; text="All 1s", align=(:right, :top))
+    text!(ax, 1/2, sqrt(3)/2; text="Other acs", align=(:center, :bottom))
+
     # scatter!(fap.axis, getindex.(centers, 1), getindex.(centers, 2))
 
     # fap.axis.xticks = range(0., 1., (N-1)+1)
@@ -1347,7 +1265,6 @@ function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
 
     p
 end
-
 
 function all0sv1s_p1(nmg;
     force_order=true,
