@@ -30,15 +30,16 @@ function Ks_to_cacode(K01, K10)
 end
 export cacode_to_Ks, Ks_to_cacode
 
-function make_ca_ned(L, code; show=true)
+function make_ca_ned(L, code; show=true, mu=Inf, epsilon=0.0)
     ned = NonEqDigitsGM(2, L)
     K01, K10 = cacode_to_Ks(code)
     if show
         @show K01
         @show K10
     end
-    add_mech_BNN!(ned, Inf, K01)
-    add_mech_BNN!(ned, -Inf, K10)
+    add_mech_BNN!(ned, mu, K01)
+    add_mech_BNN!(ned, -mu, K10)
+    add_ned_noise!(ned, epsilon)
     ned
 end
 export make_ca_ned

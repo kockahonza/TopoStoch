@@ -171,6 +171,25 @@ function add_mech_BNN!(ned::NonEqDigitsGM{S,2,L}, mu, K) where {S,L}
 end
 export add_mech_BNN!
 
+function add_ned_noise!(ned::NonEqDigitsGM{S,2,L}, epsilon) where {S,L}
+    for st_i in 1:numstates(ned)
+        st = itostate(st_i, ned)
+        for di in 1:L
+            if st[di] == 0
+                new_d = 1
+            else # implied that it is 1 from D==2
+                new_d = 0
+            end
+
+            dest_st = copy(st)
+            dest_st[di] = new_d
+
+            inc_edge!(graph(ned), st_i, statetoi(dest_st, ned), epsilon)
+        end
+    end
+end
+export add_ned_noise!
+
 neg_int(x::Int) = iszero(x) ? 1 : 0
 
 # Should probably be a separate package but I can't be bothered

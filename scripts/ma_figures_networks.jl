@@ -6,6 +6,8 @@ using GLMakie
 using JLD2
 using Geppetto
 
+includet("ma_colors.jl")
+includet("ned_ca_s1_stats.jl")
 includet("ma_graphviz.jl")
 
 single_col_width = 324 # corresponds to 3+3/8 in as state in PR guidelines
@@ -22,6 +24,28 @@ other_kwargs = (;
     arrow_size=6.0,
 )
 
+function get_ac_coloring_extra_kwargs(g)
+    acs = attracting_components(g)
+    ac_classes = ac_eq_class.(Ref(g), acs)
+
+    node_color = [MAColors.gray1() for _ in 1:nv(g)]
+    for (ac, class) in zip(acs, ac_classes)
+        for v in ac
+            if class == :single
+                node_color[v] = MAColors.ac_ss()
+            elseif class == :eq
+                node_color[v] = MAColors.ac_nss_eq()
+            elseif class == :neq
+                node_color[v] = MAColors.ac_nss_neq()
+            end
+        end
+    end
+
+    edge_color = [node_color[e.src] for e in edges(g)]
+
+    (; e_color=false, node_color, edge_color)
+end
+
 function f2_r124_v1(; kwargs...)
     # some saved/hardcoded positions to use
     pp1 = Point{2,Float32}[[3.0, 3.0], [1.3281027, 7.801583], [8.788723, 2.4386742], [1.8143778, 7.417807], [0.9566255, 3.6729279], [2.4552433, 6.4659653], [8.283378, 2.8011382], [2.4852808, 6.883159], [6.147224, 9.510905], [4.2407727, 7.2257137], [7.427527, 3.7925913], [3.9467535, 6.7221065], [1.5572437, 3.8586738], [2.966725, 6.0116615], [7.585234, 3.3046503], [3.342512, 6.3276653], [3.945704, 0.62469023], [4.041539, 2.5424602], [5.8668523, 2.7930262], [4.130808, 3.308027], [2.5206087, 3.803837], [3.6487694, 4.712955], [6.1536965, 3.302475], [4.117363, 4.3492246], [6.008791, 8.908372], [4.784686, 7.020344], [6.853893, 4.3067975], [4.564082, 6.3090115], [2.3925226, 4.11248], [3.5494123, 5.3562384], [6.720627, 3.76296], [4.106907, 5.4935226], [9.115075, 6.567199], [8.527446, 6.3390207], [7.7925787, 5.6941795], [7.7078905, 6.0132933], [5.0220795, 5.0884323], [5.7609415, 5.2533126], [7.173354, 5.5075984], [6.6926003, 5.6359873], [6.110993, 7.773186], [5.9986854, 7.1002054], [6.3149033, 5.6771326], [5.9652653, 6.226559], [4.395176, 4.7655463], [4.9200416, 5.722167], [6.4562545, 5.2027903], [5.813485, 5.4821115], [4.0718455, 1.2303998], [4.2473364, 2.066916], [5.312384, 2.9888923], [4.5840364, 2.9728065], [3.1116984, 4.0472164], [3.8456006, 4.2576814], [5.5302587, 3.6746464], [4.664177, 3.981581], [5.8204093, 8.069906], [5.503597, 7.097015], [6.179469, 5.098191], [5.4311023, 5.9643598], [3.4126747, 4.4565], [4.1496544, 4.882143], [5.9767957, 4.469583], [5.2476373, 4.422474]]
@@ -32,7 +56,7 @@ function f2_r124_v1(; kwargs...)
     faa = plotgm(ma;
         layout=pp1,
         flabels=false,
-        get_ac_coloring_kwargs(ma; hcolor=:black, bcolor=:snow3)...,
+        get_ac_coloring_extra_kwargs(ma.mg)...,
         # nlabels=["000000"; fill("", 62); "111111"],
         # nlabels_align=(:center, :top),
         # nlabels_offset=Point2f(0.0, -0.05),
@@ -64,7 +88,7 @@ function f2_r142_v1(; kwargs...)
     faa = plotgm(ma;
         layout=pp2,
         flabels=false,
-        get_ac_coloring_kwargs(ma; hcolor=:black, bcolor=:snow3)...,
+        get_ac_coloring_extra_kwargs(ma.mg)...,
         # nlabels=["000000"; fill("", 62); "111111"],
         # nlabels_align=(:center, :top),
         # nlabels_offset=Point2f(0.0, -0.05),
@@ -97,7 +121,7 @@ function f2_r170_v1(; kwargs...)
     faa = plotgm(ma;
         layout=pos,
         flabels=false,
-        get_ac_coloring_kwargs(ma; hcolor=:black, bcolor=:snow3)...,
+        get_ac_coloring_extra_kwargs(ma.mg)...,
         # nlabels=["000000"; fill("", 62); "111111"],
         # nlabels_align=(:center, :top),
         # nlabels_offset=Point2f(0.0, -0.05),
@@ -137,7 +161,7 @@ function f2_r240_v1(; kwargs...)
     faa = plotgm(ma;
         layout=pos,
         flabels=false,
-        get_ac_coloring_kwargs(ma; hcolor=:black, bcolor=:snow3)...,
+        get_ac_coloring_extra_kwargs(ma.mg)...,
         # nlabels=["000000"; fill("", 62); "111111"],
         # nlabels_align=(:center, :top),
         # nlabels_offset=Point2f(0.0, -0.05),

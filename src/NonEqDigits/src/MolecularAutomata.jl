@@ -5,8 +5,11 @@ struct MolAut{S<:Symmetry} <: AbstractGraphModel{Float64}
     reduced::Bool
     mg::MetaGraph{Int,SimpleDiGraph{Int},Vector{Int},String,Float64}
 end
-function MolAut(L, rule::Int; reduced=false)
-    ned = make_ca_ned(L, rule; show=false)
+function MolAut(L, rule::Int;
+    reduced=false,
+    kwargs...
+)
+    ned = make_ca_ned(L, rule; show=false, kwargs...)
     g = graph(ned)
     states = collect(allstates(ned))
 

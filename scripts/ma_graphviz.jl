@@ -231,7 +231,7 @@ function molaut_gv(ma::MolAut;
     g
 end
 
-function parse_dot_positions(fname; size=nothing)
+function parse_dot_positions(fname, L)
     g = pd.graph_from_dot_file(fname)[0]
 
     # make a list of all nodes that we later filter through
@@ -244,10 +244,11 @@ function parse_dot_positions(fname; size=nothing)
 
     rslt = Dict()
 
+    regex = Regex("^[01]{$L}\$")
     i = 0
     for n in nodes
         name = pyconvert(String, n.get_name())
-        if occursin(r"^[01]{6}$", name)
+        if occursin(regex, name)
             i += 1
 
             l = [x == '0' ? 0 : (x == '1' ? 1 : throw(ErrorException("could not parse name"))) for x in name]
@@ -260,8 +261,8 @@ function parse_dot_positions(fname; size=nothing)
     end
 
     if !isnothing(size)
-        if i != size
-            throw(ArgumentError("did not find the expected number of nodes"))
+        if i != 2^L
+            throw(ArgumentError("did not find the expected number of nodes size=$size found nodes is $i fname=$fname"))
         end
     end
 
@@ -281,7 +282,9 @@ function get_gv_layout_positions(ma::MolAut;
     fname = tempname() * ".dot"
     GraphvizDotLang.save(g, fname; format="dot")
 
-    posdict = parse_dot_positions(fname; size=2^ma.L)
+    posdict = parse_dot_positions(fname, ma.L)
+
+    rm(fname)
 
     poslist = []
     for v in 1:nv(ma.mg)
@@ -316,7 +319,6 @@ function get_gv_layout_positions(ma::MolAut;
             poslist[i][2] = normxs[i]
         end
     end
-
 
     poslist
 end

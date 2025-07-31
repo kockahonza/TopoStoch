@@ -402,7 +402,8 @@ function plotgm_!(ax, gm::AbstractGraphModel{F}, (; dim, layout);
             colorrange=e_colorrange,
             colorscale=e_colorscale
         )
-        auto_kwargs[:arrow_attr] = auto_kwargs[:edge_attr] = edge_colormap_attrs
+        auto_kwargs[:arrow_attr] = edge_colormap_attrs
+        auto_kwargs[:edge_attr] = edge_colormap_attrs
     end
 
     # Label nodes and or edges
