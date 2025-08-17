@@ -30,6 +30,37 @@ function Ks_to_cacode(K01, K10)
 end
 export cacode_to_Ks, Ks_to_cacode
 
+function print_cacode_enzymes(r)
+    K01, K10 = cacode_to_Ks(r)
+    enzymes = []
+    if K01[1, 1] == 1
+        push!(enzymes, "000")
+    end
+    if K01[1, 2] == 1
+        push!(enzymes, "001")
+    end
+    if K01[2, 1] == 1
+        push!(enzymes, "100")
+    end
+    if K01[2, 2] == 1
+        push!(enzymes, "101")
+    end
+    if K10[1, 1] == 1
+        push!(enzymes, "010")
+    end
+    if K10[1, 2] == 1
+        push!(enzymes, "011")
+    end
+    if K10[2, 1] == 1
+        push!(enzymes, "110")
+    end
+    if K10[2, 2] == 1
+        push!(enzymes, "111")
+    end
+    println("rule $r -> " * join(enzymes, ", "))
+end
+export print_cacode_enzymes
+
 function make_ca_ned(L, code; show=true, mu=Inf, epsilon=0.0)
     ned = NonEqDigitsGM(2, L)
     K01, K10 = cacode_to_Ks(code)

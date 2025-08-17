@@ -7,6 +7,7 @@ using ColorSchemes
 using GraphvizDotLang: digraph, subgraph, node, edge
 using MetaGraphsNext
 using DataFrames
+using DataFramesMeta
 
 using TernaryDiagrams
 using PythonCall
@@ -1254,9 +1255,9 @@ function all0sv1s_colors_v2_colorbar_v5!(ax, N=20;
 
     hidedecorations!(ax)
 
-    text!(ax, 0, 0; text="All 0s", align=(:left, :top))
-    text!(ax, 1, 0; text="All 1s", align=(:right, :top))
-    text!(ax, 1/2, sqrt(3)/2; text="Other acs", align=(:center, :bottom))
+    text!(ax, -0.05, -0.01; text=L"\mathbf{0}", align=(:left, :bottom))
+    text!(ax, 1.05, -0.01; text=L"\mathbf{1}", align=(:right, :bottom))
+    text!(ax, 1 / 2, sqrt(3) / 2; text="Other", align=(:center, :top))
 
     # scatter!(fap.axis, getindex.(centers, 1), getindex.(centers, 2))
 

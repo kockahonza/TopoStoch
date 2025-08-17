@@ -146,9 +146,10 @@ function add_mech_BNN!(ned::NonEqDigitsGM{S,2,L}, mu, K) where {S,L}
         st = itostate(st_i, ned)
         for di in 1:L
             lni, rni = neighbor_indices(di, ned)
-            lnd = st[lni] # left and right neighbor digits
-            rnd = st[rni]
-            if !isnothing(lnd) && !isnothing(rnd) # this might be static!
+            if !isnothing(lni) && !isnothing(rni) # this might be static!
+                lnd = st[lni] # left and right neighbor digits
+                rnd = st[rni]
+
                 kval = K[lnd+1, rnd+1]
 
                 # this is done in this particular way so that it works with mu = +-Inf
